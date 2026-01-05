@@ -1,9 +1,38 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Your "Balanced Dual Theme" Palette */
+  --color-background: #FFF9F5;        /* Light warm white */
+  --color-foreground: #1A1A1A;        /* Soft black */
+  
+  --color-primary: #D4A5A5;           /* Rose Gold */
+  --color-primary-foreground: #FFFFFF;
+  
+  --color-secondary: #2D2D2D;         /* Charcoal */
+  --color-secondary-foreground: #FFFFFF;
+  
+  --color-muted: #F5E6E8;             /* Soft Rose (Borders) */
+  --color-muted-foreground: #64748B;
+  
+  --color-card: #FFFFFF;
+  --color-card-foreground: #1A1A1A;
+  
+  /* Standard utilities for charts/borders if needed later */
+  --color-border: #F5E6E8;
+  --color-input: #F5E6E8;
+  --color-ring: #D4A5A5;
+  
+  --radius-lg: 0.5rem;
+  --radius-md: calc(0.5rem - 2px);
+  --radius-sm: calc(0.5rem - 4px);
+}
+
+/* Tailwind v4 automatically creates utility classes from the variables above.
+  Ex: --color-background becomes 'bg-background', 'text-background', etc.
+*/
 
 @layer base {
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
 }
