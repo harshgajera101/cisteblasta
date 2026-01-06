@@ -56,9 +56,18 @@ const OrderIntentSchema = new Schema(
     deliveryDistance: { type: Number },
     deliveryCharge: { type: Number },
     
+    // UPDATED STATUS LIST (Crucial for Phase 5)
     status: { 
       type: String, 
-      enum: ["PENDING", "CONFIRMED", "DELIVERED", "CANCELLED"], 
+      enum: [
+        "PENDING",              // 1. New Order (Leads)
+        "CONFIRMED",            // 2. Sister Accepted (Pending)
+        "PREPARING",            // 3. Baking (Ongoing)
+        "READY",                // 4. Packed (Ongoing)
+        "OUT_FOR_DELIVERY",     // 5. On the way (Ongoing)
+        "DELIVERED",            // 6. Done (History)
+        "CANCELLED"             // 7. Rejected (History)
+      ], 
       default: "PENDING" 
     },
   },
