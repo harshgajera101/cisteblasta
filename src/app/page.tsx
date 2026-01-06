@@ -2,6 +2,7 @@ import Navbar from "@/components/shared/Navbar";
 import Hero from "@/components/shared/Hero";
 import ProductCard from "@/components/ui/ProductCard";
 import { products } from "@/lib/placeholder-data"; 
+import Footer from "@/components/shared/Footer";
 
 export default function Home() {
   const bestSellers = products.filter(p => p.isBestSeller).slice(0, 4);
@@ -49,6 +50,8 @@ export default function Home() {
             </div>
         </div>
       </section>
+
+      <Footer/>
     </main>
   );
 }

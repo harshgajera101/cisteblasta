@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Navbar from "@/components/shared/Navbar";
 import ProductCard from "@/components/ui/ProductCard";
+import Footer from "@/components/shared/Footer"; // Don't forget to import Footer!
 import { products } from "@/lib/placeholder-data";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -16,28 +17,30 @@ export default function MenuPage() {
     : products.filter(p => p.category === activeCategory);
 
   return (
-    <main className="min-h-screen bg-[#F6E5D6]">
+    <main className="min-h-screen bg-background text-foreground flex flex-col">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-16 flex-grow">
         {/* Page Header */}
-        <div className="text-center mb-12">
-          <h1 className="font-playfair text-4xl md:text-5xl font-bold text-[#70534b] mb-4">Our Menu</h1>
-          <p className="text-[#8D6E63] max-w-xl mx-auto">
+        <div className="text-center mb-16 space-y-4">
+          <h1 className="font-playfair text-4xl md:text-6xl font-bold text-foreground">
+            Our <span className="text-primary italic">Menu</span>
+          </h1>
+          <p className="text-muted-foreground text-lg max-w-xl mx-auto leading-relaxed">
             Explore our wide range of handcrafted delights. Whether you crave the crunch of Kunafa or the softness of Truffle, we have it all.
           </p>
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex flex-wrap justify-center gap-4 mb-12">
+        <div className="flex flex-wrap justify-center gap-3 mb-12">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
+              className={`px-8 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 border ${
                 activeCategory === cat
-                  ? "bg-[#70534b] text-[#F6E5D6] shadow-lg scale-105"
-                  : "bg-white text-[#70534b] hover:bg-[#E8D5C8]"
+                  ? "bg-primary text-primary-foreground border-primary shadow-lg scale-105"
+                  : "bg-white text-foreground border-muted hover:border-primary hover:text-primary"
               }`}
             >
               {cat}
@@ -48,9 +51,9 @@ export default function MenuPage() {
         {/* Product Grid with Animation */}
         <motion.div 
           layout
-          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8"
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-10"
         >
-          <AnimatePresence>
+          <AnimatePresence mode="popLayout">
             {filteredProducts.map((product) => (
               <motion.div
                 key={product.id}
@@ -64,7 +67,7 @@ export default function MenuPage() {
                   title={product.name} 
                   price={`₹${product.price}/-`} 
                   category={product.category}
-                  className="h-full"
+                  className="h-full bg-card hover:shadow-xl transition-all duration-300"
                 />
               </motion.div>
             ))}
@@ -73,11 +76,13 @@ export default function MenuPage() {
         
         {/* Empty State */}
         {filteredProducts.length === 0 && (
-          <div className="text-center py-20 text-[#8D6E63]">
-            <p>No products found in this category.</p>
+          <div className="text-center py-20">
+            <p className="text-xl text-muted-foreground">No delicious items found in this category yet.</p>
           </div>
         )}
       </div>
+
+      <Footer />
     </main>
   );
 }
