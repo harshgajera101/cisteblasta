@@ -1,3 +1,70 @@
+// import { NextResponse } from "next/server";
+// import connectDB from "@/lib/db";
+// import OrderIntent from "@/lib/models/OrderIntent";
+// import nodemailer from "nodemailer";
+
+// export async function POST(req: Request) {
+//   try {
+//     const body = await req.json();
+//     const { customerDetails, items, bill } = body;
+
+//     await connectDB();
+
+//     // 1. Save to Database (The Lead)
+//     const newOrder = await OrderIntent.create({
+//       customerName: "Guest User", // We will get real names in Phase 5 (Auth)
+//       phone: "Not Provided",      // For now, phone is handled on WhatsApp
+//       address: customerDetails.address,
+//       items: items.map((item: any) => ({
+//         name: item.name,
+//         variant: item.variant,
+//         quantity: item.quantity,
+//         price: item.price,
+//       })),
+//       totalAmount: bill.grandTotal,
+//       deliveryDistance: bill.distance,
+//       deliveryCharge: bill.deliveryCharge,
+//     });
+
+//     // 2. Send Email Notification to Sister (Admin)
+//     // NOTE: You need to set these ENV variables later. For now, it will log to console if missing.
+//     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+//       const transporter = nodemailer.createTransport({
+//         service: "gmail",
+//         auth: {
+//           user: process.env.EMAIL_USER,
+//           pass: process.env.EMAIL_PASS,
+//         },
+//       });
+
+//       const mailOptions = {
+//         from: process.env.EMAIL_USER,
+//         to: "your-sister-email@gmail.com", // CHANGE THIS later or use ENV
+//         subject: `🎂 New Order Intent: ₹${bill.grandTotal}`,
+//         text: `New order from ${customerDetails.address}.\n\nItems: ${items.length}\nTotal: ₹${bill.grandTotal}\n\nCheck Admin Panel.`,
+//       };
+
+//       await transporter.sendMail(mailOptions);
+//     }
+
+//     return NextResponse.json({ 
+//       success: true, 
+//       orderId: newOrder._id 
+//     });
+
+//   } catch (error) {
+//     console.error("Checkout Error:", error);
+//     return NextResponse.json({ success: false, error: "Failed to process order" }, { status: 500 });
+//   }
+// }
+
+
+
+
+
+
+
+
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import OrderIntent from "@/lib/models/OrderIntent";
@@ -8,12 +75,13 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { customerDetails, items, bill } = body;
 
+    // 1. Connect to Database
     await connectDB();
 
-    // 1. Save to Database (The Lead)
+    // 2. Save Order to Database (The Lead)
     const newOrder = await OrderIntent.create({
-      customerName: "Guest User", // We will get real names in Phase 5 (Auth)
-      phone: "Not Provided",      // For now, phone is handled on WhatsApp
+      customerName: "Guest User", // Will update this in Phase 5 (Auth)
+      phone: "Check WhatsApp",    // Phone is primarily handled via WhatsApp for now
       address: customerDetails.address,
       items: items.map((item: any) => ({
         name: item.name,
@@ -24,11 +92,12 @@ export async function POST(req: Request) {
       totalAmount: bill.grandTotal,
       deliveryDistance: bill.distance,
       deliveryCharge: bill.deliveryCharge,
+      status: "PENDING", // Default status
     });
 
-    // 2. Send Email Notification to Sister (Admin)
-    // NOTE: You need to set these ENV variables later. For now, it will log to console if missing.
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    // 3. Send Email Notification to Sister (Admin)
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.ADMIN_EMAIL) {
+      
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
@@ -37,14 +106,65 @@ export async function POST(req: Request) {
         },
       });
 
+      // Create a clean HTML list of items for the email
+      const itemsHtml = items.map((item: any) => `
+        <tr style="border-bottom: 1px solid #eee;">
+          <td style="padding: 10px;">${item.name} ${item.variant ? `(${item.variant})` : ''}</td>
+          <td style="padding: 10px; text-align: center;">${item.quantity}</td>
+          <td style="padding: 10px; text-align: right;">₹${item.price * item.quantity}</td>
+        </tr>
+      `).join('');
+
       const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: "your-sister-email@gmail.com", // CHANGE THIS later or use ENV
-        subject: `🎂 New Order Intent: ₹${bill.grandTotal}`,
-        text: `New order from ${customerDetails.address}.\n\nItems: ${items.length}\nTotal: ₹${bill.grandTotal}\n\nCheck Admin Panel.`,
+        from: `"Ciste Blasta Bot" <${process.env.EMAIL_USER}>`,
+        to: process.env.ADMIN_EMAIL, // Defined in .env.local
+        subject: `🍰 New Order Alert! (₹${bill.grandTotal})`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h2 style="color: #D98292; text-align: center;">New Order Received! 🎉</h2>
+            
+            <p style="font-size: 16px; color: #555;">
+              <strong>Delivery Address:</strong><br>
+              ${customerDetails.address}
+            </p>
+            
+            <p style="font-size: 16px; color: #555;">
+              <strong>Delivery Distance:</strong> ${bill.distance ? bill.distance.toFixed(1) + ' km' : 'N/A'}
+            </p>
+
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+              <thead style="background-color: #FFF8F3;">
+                <tr>
+                  <th style="padding: 10px; text-align: left;">Item</th>
+                  <th style="padding: 10px; text-align: center;">Qty</th>
+                  <th style="padding: 10px; text-align: right;">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+
+            <div style="margin-top: 20px; text-align: right;">
+              <p>Item Total: ₹${bill.itemTotal}</p>
+              <p>Delivery: ₹${bill.deliveryCharge}</p>
+              <h3 style="color: #4E342E;">Grand Total: ₹${bill.grandTotal}</h3>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            
+            <p style="text-align: center; color: #888; font-size: 12px;">
+              Order ID: ${newOrder._id}<br>
+              Check your WhatsApp for the customer's confirmation message.
+            </p>
+          </div>
+        `,
       };
 
       await transporter.sendMail(mailOptions);
+      console.log("📧 Email sent successfully to Admin");
+    } else {
+      console.warn("⚠️ Email credentials missing in .env.local. Email not sent.");
     }
 
     return NextResponse.json({ 
@@ -54,6 +174,7 @@ export async function POST(req: Request) {
 
   } catch (error) {
     console.error("Checkout Error:", error);
+    // Even if email fails, we don't want to stop the user flow, so we return 500 only if DB fails really badly
     return NextResponse.json({ success: false, error: "Failed to process order" }, { status: 500 });
   }
 }
