@@ -2,21 +2,27 @@ import mongoose, { Schema, model, models } from "mongoose";
 
 const ProductSchema = new Schema({
   name: { type: String, required: true },
-  description: { type: String, required: true },
+  description: { type: String }, // Made optional as not all PDF items have descriptions
   category: { 
     type: String, 
     enum: ["CAKE", "CHOCOLATE", "JAR", "GIFT_BOX"], 
     required: true 
   },
-  images: [{ type: String }], // Cloudinary URLs
+  images: [{ type: String }], // Array of image URLs
+  
+  // Tags for filtering (e.g., "Birthday", "Anniversary", "Eggless", "Best Seller")
+  tags: [{ type: String }], 
+  
   isBestSeller: { type: Boolean, default: false },
   isSeasonal: { type: Boolean, default: false },
   
   // Pricing Strategy
-  basePrice: { type: Number }, // For simple items like jars
+  // For items with a single price (like Jars), use basePrice.
+  // For items with sizes (Cakes, Chocolates), use variants.
+  basePrice: { type: Number }, 
   variants: [
     {
-      name: { type: String }, // e.g., "0.5kg", "1kg", "10pcs"
+      name: { type: String }, // e.g., "0.5kg", "1kg", "Bar", "Mini", "10pcs"
       price: { type: Number },
     }
   ],
