@@ -1,50 +1,171 @@
-import { Heart, ShoppingBag } from "lucide-react";
+// import { Heart, ShoppingBag } from "lucide-react";
+// import { cn } from "@/lib/utils";
+
+// interface ProductCardProps {
+//   title: string;
+//   price: string;
+//   category: string;
+//   image?: string;
+//   className?: string;
+// }
+
+// export default function ProductCard({ title, price, category, className }: ProductCardProps) {
+//   return (
+//     <div className={cn(
+//       "group relative rounded-2xl bg-white border border-muted shadow-sm transition-all duration-500",
+//       "hover:shadow-lg hover:-translate-y-1 hover:border-primary/30",
+//       className
+//     )}>
+      
+//       {/* Image Area - Soft Beige Placeholder */}
+//       <div className="aspect-[4/5] w-full overflow-hidden rounded-t-2xl bg-[#FAF5F0] relative">
+//         <div className="w-full h-full flex items-center justify-center text-muted-foreground/40 font-playfair italic">
+//           [Delicious Image]
+//         </div>
+        
+//         {/* Category Badge - Minimalist */}
+//         <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary rounded-full shadow-sm">
+//           {category}
+//         </span>
+
+//         {/* Favorite Button */}
+//         <button className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-primary hover:text-white text-foreground/60 transition-all shadow-sm opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0">
+//             <Heart className="h-4 w-4" />
+//         </button>
+//       </div>
+
+//       {/* Details */}
+//       <div className="p-5">
+//         <div className="mb-3">
+//           <h3 className="font-playfair text-lg font-bold text-foreground truncate">{title}</h3>
+//           <p className="text-sm font-medium text-primary mt-1">{price}</p>
+//         </div>
+        
+//         <button className="w-full flex items-center justify-center gap-2 rounded-xl bg-muted/30 py-3 text-xs font-bold text-foreground uppercase tracking-wider transition-all hover:bg-primary hover:text-white">
+//           <ShoppingBag className="h-3 w-3" />
+//           Add to Cart
+//         </button>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+"use client";
+
+import { useState } from "react";
+import { ShoppingCart, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+
+interface Variant {
+  name: string;
+  price: number;
+}
+
+interface Product {
+  _id: string;
+  name: string;
+  basePrice: number;
+  category: string;
+  variants?: Variant[];
+  images?: string[];
+}
 
 interface ProductCardProps {
-  title: string;
-  price: string;
-  category: string;
-  image?: string;
+  product: Product;
   className?: string;
 }
 
-export default function ProductCard({ title, price, category, className }: ProductCardProps) {
-  return (
-    <div className={cn(
-      "group relative rounded-2xl bg-white border border-muted shadow-sm transition-all duration-500",
-      "hover:shadow-lg hover:-translate-y-1 hover:border-primary/30",
-      className
-    )}>
-      
-      {/* Image Area - Soft Beige Placeholder */}
-      <div className="aspect-[4/5] w-full overflow-hidden rounded-t-2xl bg-[#FAF5F0] relative">
-        <div className="w-full h-full flex items-center justify-center text-muted-foreground/40 font-playfair italic">
-          [Delicious Image]
-        </div>
-        
-        {/* Category Badge - Minimalist */}
-        <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary rounded-full shadow-sm">
-          {category}
-        </span>
+export default function ProductCard({ product, className }: ProductCardProps) {
+  // State to track selected variant (default to 0 i.e., first option like "0.5kg")
+  const [selectedVariantIdx, setSelectedVariantIdx] = useState(0);
 
-        {/* Favorite Button */}
-        <button className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-primary hover:text-white text-foreground/60 transition-all shadow-sm opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0">
-            <Heart className="h-4 w-4" />
-        </button>
+  // Helper to determine active price and unit
+  const hasVariants = product.variants && product.variants.length > 0;
+  
+  const activePrice = hasVariants 
+    ? product.variants![selectedVariantIdx].price 
+    : product.basePrice;
+
+  return (
+    <div className={cn("group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm border border-[#F2E3DB] transition-all duration-500 hover:shadow-xl hover:-translate-y-1", className)}>
+      
+      {/* 1. Image Section */}
+      <div className="relative aspect-square w-full overflow-hidden bg-[#FFF8F3]">
+         {/* Placeholder for real image */}
+         <div className="absolute inset-0 flex items-center justify-center text-[#D98292]/30 font-playfair text-4xl font-bold opacity-20">
+            {product.name.charAt(0)}
+         </div>
+         
+         {/* Badges */}
+         <div className="absolute top-3 left-3 flex gap-2">
+            <span className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#4E342E] shadow-sm backdrop-blur-sm">
+              {product.category === "GIFT_BOX" ? "Box" : product.category}
+            </span>
+         </div>
+
+         {/* Like Button */}
+         <button className="absolute top-3 right-3 rounded-full bg-white/90 p-2 text-[#D98292] shadow-sm backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-[#D98292] hover:text-white active:scale-95">
+           <Heart size={16} />
+         </button>
       </div>
 
-      {/* Details */}
-      <div className="p-5">
-        <div className="mb-3">
-          <h3 className="font-playfair text-lg font-bold text-foreground truncate">{title}</h3>
-          <p className="text-sm font-medium text-primary mt-1">{price}</p>
-        </div>
+      {/* 2. Content Section */}
+      <div className="flex flex-1 flex-col p-5">
+        <h3 className="mb-1 font-playfair text-lg font-bold text-[#4E342E] group-hover:text-[#D98292] transition-colors duration-300 line-clamp-1">
+          {product.name}
+        </h3>
         
-        <button className="w-full flex items-center justify-center gap-2 rounded-xl bg-muted/30 py-3 text-xs font-bold text-foreground uppercase tracking-wider transition-all hover:bg-primary hover:text-white">
-          <ShoppingBag className="h-3 w-3" />
-          Add to Cart
-        </button>
+        {/* Dynamic Price & Variant Selector Row */}
+        <div className="mt-4 flex items-center justify-between gap-3">
+          
+          {/* Price Display */}
+          <div className="flex flex-col">
+            <span className="text-xs text-[#8D6E63] font-medium">Price</span>
+            <span className="font-bold text-xl text-[#4E342E]">
+              ₹{activePrice}
+            </span>
+          </div>
+
+          {/* Size/Variant Selector */}
+          {hasVariants ? (
+            <div className="flex flex-col items-end">
+              <span className="text-xs text-[#8D6E63] font-medium mb-1">Select Size</span>
+              <select 
+                value={selectedVariantIdx}
+                onChange={(e) => setSelectedVariantIdx(Number(e.target.value))}
+                className="h-9 w-28 rounded-lg border border-[#F2E3DB] bg-[#FFF8F3] px-2 text-xs font-bold text-[#4E342E] focus:border-[#D98292] focus:outline-none cursor-pointer hover:border-[#D98292] transition-colors"
+              >
+                {product.variants!.map((variant, idx) => (
+                  <option key={idx} value={idx}>
+                    {variant.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            // If no variants (like Jars), show empty or static unit
+            <div className="flex flex-col items-end">
+               <span className="text-xs text-[#8D6E63] font-medium">Unit</span>
+               <span className="text-sm font-bold text-[#4E342E] h-9 flex items-center">
+                 Standard
+               </span>
+            </div>
+          )}
+        </div>
+
+        {/* Add to Cart Button (Updated Style & Icon) */}
+        <motion.button 
+          whileTap={{ scale: 0.95 }}
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#72514D] py-3 text-sm font-bold text-white shadow-md transition-all duration-300 ease-in-out hover:bg-[#c46b7d] hover:shadow-lg"
+        > 
+          <ShoppingCart size={18} /> Add to Cart
+        </motion.button>
       </div>
     </div>
   );

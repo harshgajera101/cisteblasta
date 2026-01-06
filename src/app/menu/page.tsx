@@ -80,14 +80,13 @@
 // }
 
 
-
 "use client";
 
 import { useState, useEffect } from "react";
 import ProductCard from "@/components/ui/ProductCard";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Define the shape of our Product data
+// Update the Interface to match the new structure
 interface ProductType {
   _id: string;
   name: string;
@@ -95,6 +94,7 @@ interface ProductType {
   category: string;
   variants?: { name: string; price: number }[];
   description?: string;
+  isBestSeller?: boolean;
 }
 
 const categories = ["All", "CAKE", "CHOCOLATE", "JAR", "GIFT_BOX"];
@@ -131,7 +131,7 @@ export default function MenuPage() {
           Our <span className="text-[#D98292] italic">Menu</span>
         </h1>
         <p className="text-[#8D6E63] text-lg max-w-xl mx-auto leading-relaxed">
-          Explore our wide range of handcrafted delights. Whether you crave the crunch of Kunafa or the softness of Truffle.
+          Explore our wide range of handcrafted delights. From Custom Cakes to Kunafa Bars.
         </p>
       </div>
 
@@ -161,7 +161,7 @@ export default function MenuPage() {
         /* Product Grid */
         <motion.div 
           layout
-          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-10"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8"
         >
           <AnimatePresence mode="popLayout">
             {filteredProducts.map((product) => (
@@ -173,24 +173,14 @@ export default function MenuPage() {
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.3 }}
               >
-                <ProductCard 
-                  title={product.name} 
-                  // Logic: Show range if variants exist, else show base price
-                  price={
-                    product.variants && product.variants.length > 1
-                      ? `₹${product.variants[0].price} - ₹${product.variants[product.variants.length - 1].price}`
-                      : `₹${product.basePrice}/-`
-                  }
-                  category={product.category === "GIFT_BOX" ? "Dessert Box" : product.category}
-                  className="h-full bg-white hover:shadow-xl transition-all duration-300"
-                />
+                {/* JUST PASS THE PRODUCT OBJECT NOW */}
+                <ProductCard product={product} />
               </motion.div>
             ))}
           </AnimatePresence>
         </motion.div>
       )}
       
-      {/* Empty State */}
       {!loading && filteredProducts.length === 0 && (
         <div className="text-center py-20">
           <p className="text-xl text-[#8D6E63]">No delicious items found in this category yet.</p>
