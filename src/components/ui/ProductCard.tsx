@@ -12,7 +12,7 @@ interface ProductCardProps {
 export default function ProductCard({ title, price, category, className }: ProductCardProps) {
   return (
     <div className={cn(
-      "group relative rounded-2xl bg-white border border-muted shadow-sm transition-all duration-500", // bg-white is key here
+      "group relative rounded-2xl bg-white border border-muted shadow-sm transition-all duration-500",
       "hover:shadow-lg hover:-translate-y-1 hover:border-primary/30",
       className
     )}>

@@ -1,32 +1,33 @@
 @import "tailwindcss";
 
 @theme {
-  /* --- The "Cocoa & Almond" Palette --- */
+  /* --- The Refined Palette --- */
   
   /* 1. Backgrounds & Text */
-  --color-background: #F6E5D6;        /* Almond Cream (Main Page Background) */
-  --color-foreground: #70534b;        /* Milky Cocoa (Main Text) */
+  --color-background: #FFF8F3;        /* Warm Vanilla/Blush White */
+  --color-foreground: #4E342E;        /* Dark Chocolate (Main Text) */
   
   /* 2. Brand Colors */
-  --color-primary: #70534b;           /* Cocoa (Buttons & Highlights) */
-  --color-primary-foreground: #F6E5D6; /* Almond Text on Buttons */
+  --color-primary: #D98292;           /* Bakery Rose (Buttons/Highlights) */
+  --color-primary-foreground: #FFFFFF;
   
-  --color-secondary: #8D6E63;         /* A slightly lighter brown for accents */
+  --color-secondary: #8D6E63;         /* Standard Brown */
   --color-secondary-foreground: #FFFFFF;
+
+  /* 3. Header & Footer Specific (The color you requested) */
+  --color-header: #72514D;            /* Cocoa Mauve */
+  --color-header-foreground: #FFFFFF; /* White text for contrast */
   
-  /* 3. Structural Colors */
-  --color-header: #70534b;            /* Dark Cocoa for Nav/Footer */
-  --color-header-foreground: #F6E5D6; /* Almond Text for Nav/Footer */
-  
-  --color-muted: #E8D5C8;             /* Darker Beige (Borders) */
+  /* 4. Structural Colors */
+  --color-muted: #F2E3DB;             /* Latte Foam */
   --color-muted-foreground: #8D6E63;
   
-  --color-card: #FFFFFF;              /* Pure White for crisp contrast */
-  --color-card-foreground: #70534b;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #4E342E;
   
-  --color-border: #E8D5C8;
+  --color-border: #F2E3DB;
   --color-input: #FFFFFF;
-  --color-ring: #70534b;
+  --color-ring: #D98292;
   
   --radius-lg: 0.75rem;
   --radius-md: calc(0.75rem - 2px);
