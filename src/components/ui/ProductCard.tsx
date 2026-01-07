@@ -1,9 +1,10 @@
 // "use client";
 
 // import { useState } from "react";
-// import { ShoppingCart, Heart } from "lucide-react";
+// import { ShoppingCart, Heart, Check } from "lucide-react"; // Import Check icon
 // import { cn } from "@/lib/utils";
 // import { motion } from "framer-motion";
+// import { useCart } from "@/context/CartContext"; // Import hook
 
 // interface Variant {
 //   name: string;
@@ -25,34 +26,39 @@
 // }
 
 // export default function ProductCard({ product, className }: ProductCardProps) {
-//   // State to track selected variant (default to 0 i.e., first option like "0.5kg")
+//   const { addToCart } = useCart(); // Use the hook
 //   const [selectedVariantIdx, setSelectedVariantIdx] = useState(0);
+//   const [isAdded, setIsAdded] = useState(false); // State for feedback animation
 
-//   // Helper to determine active price and unit
 //   const hasVariants = product.variants && product.variants.length > 0;
   
 //   const activePrice = hasVariants 
 //     ? product.variants![selectedVariantIdx].price 
 //     : product.basePrice;
 
+//   const handleAddToCart = () => {
+//     addToCart(product, selectedVariantIdx);
+    
+//     // Trigger "Added" animation
+//     setIsAdded(true);
+//     setTimeout(() => setIsAdded(false), 800);
+//   };
+
 //   return (
 //     <div className={cn("group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm border border-[#F2E3DB] transition-all duration-500 hover:shadow-xl hover:-translate-y-1", className)}>
       
 //       {/* 1. Image Section */}
 //       <div className="relative aspect-square w-full overflow-hidden bg-[#FFF8F3]">
-//          {/* Placeholder for real image */}
 //          <div className="absolute inset-0 flex items-center justify-center text-[#D98292]/30 font-playfair text-4xl font-bold opacity-20">
 //             {product.name.charAt(0)}
 //          </div>
          
-//          {/* Badges */}
 //          <div className="absolute top-3 left-3 flex gap-2">
 //             <span className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#4E342E] shadow-sm backdrop-blur-sm">
 //               {product.category === "GIFT_BOX" ? "Box" : product.category}
 //             </span>
 //          </div>
 
-//          {/* Like Button */}
 //          <button className="absolute top-3 right-3 rounded-full bg-white/90 p-2 text-[#D98292] shadow-sm backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-[#D98292] hover:text-white active:scale-95">
 //            <Heart size={16} />
 //          </button>
@@ -64,10 +70,7 @@
 //           {product.name}
 //         </h3>
         
-//         {/* Dynamic Price & Variant Selector Row */}
 //         <div className="mt-4 flex items-center justify-between gap-3">
-          
-//           {/* Price Display */}
 //           <div className="flex flex-col">
 //             <span className="text-xs text-[#8D6E63] font-medium">Price</span>
 //             <span className="font-bold text-xl text-[#4E342E]">
@@ -75,7 +78,6 @@
 //             </span>
 //           </div>
 
-//           {/* Size/Variant Selector */}
 //           {hasVariants ? (
 //             <div className="flex flex-col items-end">
 //               <span className="text-xs text-[#8D6E63] font-medium mb-1">Select Size</span>
@@ -92,7 +94,6 @@
 //               </select>
 //             </div>
 //           ) : (
-//             // If no variants (like Jars), show empty or static unit
 //             <div className="flex flex-col items-end">
 //                <span className="text-xs text-[#8D6E63] font-medium">Unit</span>
 //                <span className="text-sm font-bold text-[#4E342E] h-9 flex items-center">
@@ -102,12 +103,21 @@
 //           )}
 //         </div>
 
-//         {/* Add to Cart Button (Updated Style & Icon) */}
+//         {/* Add to Cart Button Logic */}
 //         <motion.button 
 //           whileTap={{ scale: 0.95 }}
-//           className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#72514D] py-3 text-sm font-bold text-white shadow-md transition-all duration-300 ease-in-out hover:bg-[#c46b7d] hover:shadow-lg"
-//         > 
-//           <ShoppingCart size={18} /> Add to Cart
+//           onClick={handleAddToCart}
+//           disabled={isAdded}
+//           className={cn(
+//             "mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white shadow-md transition-all duration-300 ease-in-out",
+//             isAdded ? "bg-[#4E342E]" : "bg-[#D98292] hover:bg-[#c46b7d] hover:shadow-lg"
+//           )}
+//         >
+//           {isAdded ? (
+//             <> <Check size={18} /> Added </>
+//           ) : (
+//             <> <ShoppingCart size={18} /> Add to Cart </>
+//           )}
 //         </motion.button>
 //       </div>
 //     </div>
@@ -119,13 +129,18 @@
 
 
 
+
+
+
+
+
 "use client";
 
 import { useState } from "react";
-import { ShoppingCart, Heart, Check } from "lucide-react"; // Import Check icon
+import { ShoppingCart, Heart, Check } from "lucide-react"; 
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { useCart } from "@/context/CartContext"; // Import hook
+import { useCart } from "@/context/CartContext"; 
 
 interface Variant {
   name: string;
@@ -147,15 +162,18 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, className }: ProductCardProps) {
-  const { addToCart } = useCart(); // Use the hook
+  const { addToCart } = useCart(); 
   const [selectedVariantIdx, setSelectedVariantIdx] = useState(0);
-  const [isAdded, setIsAdded] = useState(false); // State for feedback animation
+  const [isAdded, setIsAdded] = useState(false); 
 
   const hasVariants = product.variants && product.variants.length > 0;
   
   const activePrice = hasVariants 
     ? product.variants![selectedVariantIdx].price 
     : product.basePrice;
+
+  // Helper to get the main image
+  const displayImage = product.images && product.images.length > 0 ? product.images[0] : null;
 
   const handleAddToCart = () => {
     addToCart(product, selectedVariantIdx);
@@ -168,11 +186,21 @@ export default function ProductCard({ product, className }: ProductCardProps) {
   return (
     <div className={cn("group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm border border-[#F2E3DB] transition-all duration-500 hover:shadow-xl hover:-translate-y-1", className)}>
       
-      {/* 1. Image Section */}
+      {/* 1. Image Section (UPDATED) */}
       <div className="relative aspect-square w-full overflow-hidden bg-[#FFF8F3]">
-         <div className="absolute inset-0 flex items-center justify-center text-[#D98292]/30 font-playfair text-4xl font-bold opacity-20">
-            {product.name.charAt(0)}
-         </div>
+         {displayImage ? (
+           // Show Real Image if available
+           <img 
+             src={displayImage} 
+             alt={product.name} 
+             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+           />
+         ) : (
+           // Show Placeholder if no image
+           <div className="absolute inset-0 flex items-center justify-center text-[#D98292]/30 font-playfair text-4xl font-bold opacity-20">
+              {product.name.charAt(0)}
+           </div>
+         )}
          
          <div className="absolute top-3 left-3 flex gap-2">
             <span className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#4E342E] shadow-sm backdrop-blur-sm">
@@ -201,7 +229,7 @@ export default function ProductCard({ product, className }: ProductCardProps) {
 
           {hasVariants ? (
             <div className="flex flex-col items-end">
-              <span className="text-xs text-[#8D6E63] font-medium mb-1">Select Size</span>
+              <span className="text-xs text-[#8D6E63] font-medium mb-1">Size / Weight</span>
               <select 
                 value={selectedVariantIdx}
                 onChange={(e) => setSelectedVariantIdx(Number(e.target.value))}

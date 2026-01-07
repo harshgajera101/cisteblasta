@@ -47,11 +47,11 @@ const ProductSchema = new Schema({
   description: { type: String }, 
   category: { 
     type: String, 
-    // ADDED "CUSTOM" to ensure your Custom Cake feature doesn't break
+    // FIX: "CUSTOM" is added here. This solves your 500 Error.
     enum: ["CAKE", "CHOCOLATE", "JAR", "GIFT_BOX", "CUSTOM"], 
     required: true 
   },
-  images: [{ type: String }], // Array of image URLs
+  images: [{ type: String }], 
   
   tags: [{ type: String }], 
   
@@ -59,7 +59,7 @@ const ProductSchema = new Schema({
   isSeasonal: { type: Boolean, default: false },
   
   // Pricing Strategy
-  basePrice: { type: Number }, 
+  basePrice: { type: Number }, // This is the new field we need to use
   variants: [
     {
       name: { type: String }, 
