@@ -57,7 +57,6 @@
 
 
 
-
 "use client";
 import { useEffect } from "react";
 import { CheckCircle2, AlertCircle, Trash2, X } from "lucide-react";
@@ -96,18 +95,18 @@ export function Toast({ message, type, isVisible, onClose }: ToastProps) {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          // ANIMATION: We handle the centering shift (x: -50%) here
-          initial={{ opacity: 0, y: -50, x: "-50%" }}
-          animate={{ opacity: 1, y: 0, x: "-50%" }}
-          exit={{ opacity: 0, y: -20, x: "-50%" }}
+          // ANIMATION FIX: Only animate Opacity and Y (Vertical). 
+          // We let CSS handle the X centering to prevent mobile glitches.
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.3 }}
           
-          // STYLING FIXES:
-          // 1. Removed '-translate-x-1/2' from className (prevents conflict)
-          // 2. w-[90vw]: On mobile, take up 90% of screen width (prevents cutting off)
-          // 3. md:w-auto: On desktop, size automatically to content
-          // 4. z-[100]: Ensures it sits above modals and navbars
-          className={`fixed top-5 left-1/2 z-[100] flex w-[90vw] md:w-auto md:min-w-[300px] max-w-md items-center gap-3 rounded-xl border px-4 py-3 shadow-xl ${colors[type]}`}
+          // STYLING FIX: 
+          // 1. 'left-1/2 -translate-x-1/2': Standard CSS absolute centering.
+          // 2. 'w-[90vw]': Forces 90% width on mobile.
+          // 3. 'max-w-md': Prevents it from getting too wide on desktop.
+          className={`fixed top-5 left-1/2 z-[100] flex w-[90vw] md:w-auto md:min-w-[300px] max-w-md -translate-x-1/2 items-center gap-3 rounded-xl border px-4 py-3 shadow-xl ${colors[type]}`}
         >
           {icons[type]}
           <span className="font-bold text-sm flex-1 break-words">{message}</span>

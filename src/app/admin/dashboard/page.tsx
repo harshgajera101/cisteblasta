@@ -590,7 +590,7 @@ export default function AdminDashboard() {
     finally { setIsUploading(false); }
   };
 
-  // --- DELETE HANDLER (NOW WITH CUSTOM MODAL) ---
+  // --- DELETE HANDLER (CUSTOM MODAL) ---
   const confirmDelete = async () => {
     if (!deleteConfirm.id) return;
     try {
@@ -612,7 +612,8 @@ export default function AdminDashboard() {
       basePrice: product.basePrice ? product.basePrice.toString() : "",
       variants: product.variants ? product.variants.map(v => ({ name: v.name, price: v.price.toString() })) : []
     });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Fix: Ensure we only scroll on client
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // --- FILTERS ---
@@ -638,7 +639,7 @@ export default function AdminDashboard() {
 
       {/* --- CUSTOM DELETE MODAL --- */}
       {deleteConfirm.show && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex flex-col items-center text-center">
               <div className="mb-4 rounded-full bg-red-100 p-3">
@@ -700,7 +701,7 @@ export default function AdminDashboard() {
       {activeTab === "PRODUCTS" ? (
         <div className="grid md:grid-cols-3 gap-8">
           
-          {/* 1. Editor Form - FIX: Removed 'sticky' for mobile, added 'md:sticky' for desktop */}
+          {/* 1. Editor Form */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] md:col-span-1 h-fit md:sticky md:top-4">
             <h3 className="font-bold text-lg mb-4 text-[#4E342E]">
               {editingId ? "Edit Item" : "Add New Item"}

@@ -50,6 +50,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/shared/Navbar";
 import Footer from "@/components/shared/Footer";
 import { CartProvider } from "@/context/CartContext"; // <--- Import this
+import AuthProvider from "@/components/providers/AuthProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -75,6 +76,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#FFF8F3] text-[#4E342E]`}>
+      <AuthProvider>
         <CartProvider>  {/* <--- Wrap everything inside this */}
           <Navbar />
           <main className="min-h-screen flex flex-col">
@@ -82,6 +84,7 @@ export default function RootLayout({
           </main>
           <Footer />
         </CartProvider>
+      </AuthProvider>
       </body>
     </html>
   );

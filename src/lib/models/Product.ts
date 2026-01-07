@@ -39,7 +39,6 @@
 
 
 
-
 import mongoose, { Schema, model, models } from "mongoose";
 
 const ProductSchema = new Schema({
@@ -47,7 +46,7 @@ const ProductSchema = new Schema({
   description: { type: String }, 
   category: { 
     type: String, 
-    // FIX: "CUSTOM" is added here. This solves your 500 Error.
+    // ENUM FIX: Includes "CUSTOM" to prevent crashes
     enum: ["CAKE", "CHOCOLATE", "JAR", "GIFT_BOX", "CUSTOM"], 
     required: true 
   },
@@ -58,8 +57,8 @@ const ProductSchema = new Schema({
   isBestSeller: { type: Boolean, default: false },
   isSeasonal: { type: Boolean, default: false },
   
-  // Pricing Strategy
-  basePrice: { type: Number }, // This is the new field we need to use
+  // PRICING FIX: Matches your frontend logic
+  basePrice: { type: Number, default: 0 }, 
   variants: [
     {
       name: { type: String }, 
