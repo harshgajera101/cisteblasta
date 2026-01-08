@@ -5,7 +5,7 @@
 // import { useRouter } from "next/navigation";
 // import { motion, AnimatePresence } from "framer-motion";
 // import { useSession } from "next-auth/react"; 
-// import { Toast } from "@/components/ui/Toast"; // Import Toast
+// import { Toast } from "@/components/ui/Toast"; 
 // import {
 //   Trash2, Plus, Minus, MapPin, Navigation, ArrowRight,
 //   Phone, Mail, Edit2, Check, LogIn, AlertCircle
@@ -48,15 +48,6 @@
 //     }
 //   }, [session]);
 
-//   // 2. NEW: Check for "Order Success" flag when returning from WhatsApp
-//   useEffect(() => {
-//     if (sessionStorage.getItem("order_success") === "true") {
-//       setToast({ show: true, message: "Order placed successfully!", type: "success" });
-//       sessionStorage.removeItem("order_success"); // Clear flag so it doesn't show again
-//       clearCart(); // Ensure cart is visually empty
-//     }
-//   }, []);
-
 //   const deliveryCharge = deliveryDistance
 //     ? Math.max(Math.round(deliveryDistance * DELIVERY_RATE_PER_KM), MIN_DELIVERY_CHARGE)
 //     : 0;
@@ -90,15 +81,12 @@
 //     let isValid = true;
 //     const errors = { phone: "", email: "" };
 
-//     // Phone: Exactly 10 digits
 //     const phoneRegex = /^\d{10}$/;
 //     if (!contactInfo.phone || !phoneRegex.test(contactInfo.phone)) {
 //       errors.phone = "Phone number must be exactly 10 digits";
 //       isValid = false;
 //     }
 
-//     // Email: MUST be @gmail.com
-//     // Regex explanation: Ends strictly with @gmail.com
 //     const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
 //     if (!contactInfo.email || !gmailRegex.test(contactInfo.email)) {
 //       errors.email = "Please enter a valid @gmail.com address";
@@ -124,6 +112,10 @@
     
 //     setIsOrdering(true);
 
+//     // Prepare Customer Name (Fixing the "Guest User" issue)
+//     // We prioritize the session name. If missing, we alert or fallback.
+//     const customerName = session.user?.name || "Valued Customer";
+
 //     try {
 //       const res = await fetch("/api/order/checkout", {
 //         method: "POST",
@@ -133,8 +125,7 @@
 //             address, 
 //             phone: contactInfo.phone, 
 //             email: contactInfo.email,
-//             // SEND REAL NAME (fallback to 'Customer' only if empty)
-//             name: session.user?.name || "Customer" 
+//             name: customerName // Sending real name
 //           },
 //           items,
 //           bill: {
@@ -149,12 +140,11 @@
 //       const data = await res.json();
 
 //       if (data.success) {
-//         // Set success flag in SessionStorage
-//         sessionStorage.setItem("order_success", "true");
+//         // --- SUCCESS FLOW (New Tab Logic) ---
 
 //         const phoneNumber = "919653126427"; 
 //         let message = `*Hi Ciste Blasta! I want to place an order.*\n\n`;
-//         message += `👤 *Customer:* ${session.user?.name || "Customer"}\n`;
+//         message += `👤 *Customer:* ${customerName}\n`;
 //         message += `📞 *Phone:* ${contactInfo.phone}\n`;
 //         message += `📍 *Delivery Location:* ${address}\n`;
 //         message += `----------------------------\n`;
@@ -168,23 +158,32 @@
 //         message += `💰 *Total Amount: ₹${grandTotal}*\n\n`;
 //         message += `Order ID: ${data.orderId.slice(-6)}`; 
 
-//         // Redirect
 //         const waLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-//         window.location.href = waLink;
+        
+//         // 1. Open WhatsApp in NEW TAB
+//         window.open(waLink, '_blank');
+
+//         // 2. Clear Cart Immediately
+//         clearCart();
+
+//         // 3. Show Success Message (This will appear on the empty cart screen)
+//         setToast({ show: true, message: "Order placed successfully!", type: "success" });
 //       }
 //     } catch (error) {
 //       console.error("Order failed", error);
-//       alert("Something went wrong.");
+//       setToast({ show: true, message: "Order failed. Please try again.", type: "error" });
 //     } finally {
 //       setIsOrdering(false);
 //     }
 //   };
 
-//   // --- EMPTY STATE ---
+//   // --- EMPTY STATE (Now includes Toast) ---
 //   if (items.length === 0) {
 //     return (
-//       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+//       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center relative">
+//         {/* ADDED TOAST HERE so it shows up after clearCart() */}
 //         <Toast message={toast.message} type={toast.type} isVisible={toast.show} onClose={() => setToast({ ...toast, show: false })} />
+        
 //         <div className="w-24 h-24 bg-[#FFF8F3] rounded-full flex items-center justify-center mb-6">
 //           <MapPin size={40} className="text-[#D98292] opacity-50" />
 //         </div>
@@ -196,7 +195,9 @@
 //   }
 
 //   return (
-//     <div className="container mx-auto px-4 py-10 md:py-16 max-w-4xl">
+//     <div className="container mx-auto px-4 py-10 md:py-16 max-w-4xl relative">
+//       <Toast message={toast.message} type={toast.type} isVisible={toast.show} onClose={() => setToast({ ...toast, show: false })} />
+      
 //       <h1 className="font-playfair text-3xl md:text-4xl font-bold text-[#4E342E] mb-8 flex items-center gap-3">
 //         Your Cart <span className="text-lg text-[#8D6E63] font-sans font-normal">({items.length} items)</span>
 //       </h1>
@@ -336,6 +337,13 @@
 
 
 
+
+
+
+
+
+
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -343,7 +351,6 @@ import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react"; 
-import { Toast } from "@/components/ui/Toast"; 
 import {
   Trash2, Plus, Minus, MapPin, Navigation, ArrowRight,
   Phone, Mail, Edit2, Check, LogIn, AlertCircle
@@ -361,22 +368,20 @@ export default function CartPage() {
   const { data: session } = useSession(); 
   const router = useRouter();
 
-  // Delivery & UI State
+  // States
   const [deliveryDistance, setDeliveryDistance] = useState<number | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [address, setAddress] = useState("");
   const [locError, setLocError] = useState("");
   const [isOrdering, setIsOrdering] = useState(false);
-  
-  // Toast State
-  const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success"|"error" });
-
-  // Contact Info State
   const [contactInfo, setContactInfo] = useState({ phone: "", email: "" });
   const [contactErrors, setContactErrors] = useState({ phone: "", email: "" }); 
   const [isEditingContact, setIsEditingContact] = useState(false);
+  
+  // NEW: Modal State for Order Success
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // 1. Auto-fill Contact
+  // Auto-fill Contact
   useEffect(() => {
     if (session?.user) {
       setContactInfo({
@@ -414,23 +419,19 @@ export default function CartPage() {
     );
   };
 
-  // --- VALIDATION LOGIC ---
   const validateContact = () => {
     let isValid = true;
     const errors = { phone: "", email: "" };
-
     const phoneRegex = /^\d{10}$/;
     if (!contactInfo.phone || !phoneRegex.test(contactInfo.phone)) {
       errors.phone = "Phone number must be exactly 10 digits";
       isValid = false;
     }
-
     const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
     if (!contactInfo.email || !gmailRegex.test(contactInfo.email)) {
       errors.email = "Please enter a valid @gmail.com address";
       isValid = false;
     }
-
     setContactErrors(errors);
     return isValid;
   };
@@ -440,18 +441,15 @@ export default function CartPage() {
       router.push("/login?callbackUrl=/cart");
       return;
     }
-
     if (!validateContact()) {
       setIsEditingContact(true); 
       return;
     }
-
     if (!deliveryDistance || !address) return;
     
     setIsOrdering(true);
 
-    // Prepare Customer Name (Fixing the "Guest User" issue)
-    // We prioritize the session name. If missing, we alert or fallback.
+    // FIX: Ensure Name is passed correctly
     const customerName = session.user?.name || "Valued Customer";
 
     try {
@@ -463,7 +461,7 @@ export default function CartPage() {
             address, 
             phone: contactInfo.phone, 
             email: contactInfo.email,
-            name: customerName // Sending real name
+            name: customerName 
           },
           items,
           bill: {
@@ -478,50 +476,40 @@ export default function CartPage() {
       const data = await res.json();
 
       if (data.success) {
-        // --- SUCCESS FLOW (New Tab Logic) ---
-
+        // --- WHATSAPP LOGIC ---
         const phoneNumber = "919653126427"; 
         let message = `*Hi Ciste Blasta! I want to place an order.*\n\n`;
         message += `👤 *Customer:* ${customerName}\n`;
         message += `📞 *Phone:* ${contactInfo.phone}\n`;
         message += `📍 *Delivery Location:* ${address}\n`;
         message += `----------------------------\n`;
-
         items.forEach((item) => {
           message += `▫️ ${item.quantity} x ${item.name} (${item.variant || "Std"}) - ₹${item.price * item.quantity}\n`;
         });
-
         message += `----------------------------\n`;
         message += `🚚 Delivery (${deliveryDistance.toFixed(1)} km): ₹${deliveryCharge}\n`;
         message += `💰 *Total Amount: ₹${grandTotal}*\n\n`;
         message += `Order ID: ${data.orderId.slice(-6)}`; 
 
-        const waLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-        
         // 1. Open WhatsApp in NEW TAB
-        window.open(waLink, '_blank');
+        window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
 
-        // 2. Clear Cart Immediately
+        // 2. Clear Cart & Show Success Modal
         clearCart();
-
-        // 3. Show Success Message (This will appear on the empty cart screen)
-        setToast({ show: true, message: "Order placed successfully!", type: "success" });
+        setShowSuccessModal(true);
       }
     } catch (error) {
       console.error("Order failed", error);
-      setToast({ show: true, message: "Order failed. Please try again.", type: "error" });
+      alert("Something went wrong.");
     } finally {
       setIsOrdering(false);
     }
   };
 
-  // --- EMPTY STATE (Now includes Toast) ---
-  if (items.length === 0) {
+  // --- EMPTY STATE (With Success Modal Check) ---
+  if (items.length === 0 && !showSuccessModal) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center relative">
-        {/* ADDED TOAST HERE so it shows up after clearCart() */}
-        <Toast message={toast.message} type={toast.type} isVisible={toast.show} onClose={() => setToast({ ...toast, show: false })} />
-        
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
         <div className="w-24 h-24 bg-[#FFF8F3] rounded-full flex items-center justify-center mb-6">
           <MapPin size={40} className="text-[#D98292] opacity-50" />
         </div>
@@ -534,14 +522,41 @@ export default function CartPage() {
 
   return (
     <div className="container mx-auto px-4 py-10 md:py-16 max-w-4xl relative">
-      <Toast message={toast.message} type={toast.type} isVisible={toast.show} onClose={() => setToast({ ...toast, show: false })} />
       
+      {/* --- SUCCESS MODAL (Persistent) --- */}
+      <AnimatePresence>
+        {showSuccessModal && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+              className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 text-center"
+            >
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Check className="w-10 h-10 text-green-600" />
+              </div>
+              <h2 className="text-3xl font-playfair font-bold text-[#4E342E] mb-2">Order Placed!</h2>
+              <p className="text-[#8D6E63] mb-8">
+                Your order details have been sent to WhatsApp. Please complete the conversation there to finalize payment.
+              </p>
+              <Link href="/menu">
+                <button className="w-full py-4 bg-[#4E342E] text-white font-bold rounded-xl shadow-lg hover:bg-[#3d2924] transition-all">
+                  Continue Shopping
+                </button>
+              </Link>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <h1 className="font-playfair text-3xl md:text-4xl font-bold text-[#4E342E] mb-8 flex items-center gap-3">
         Your Cart <span className="text-lg text-[#8D6E63] font-sans font-normal">({items.length} items)</span>
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
-        {/* --- LEFT: Cart Items List --- */}
+        {/* Cart Items List */}
         <div className="lg:col-span-2 space-y-6">
           <AnimatePresence>
             {items.map((item) => (
@@ -582,13 +597,12 @@ export default function CartPage() {
           </AnimatePresence>
         </div>
 
-        {/* --- RIGHT: Checkout --- */}
+        {/* Checkout Section */}
         <div className="space-y-6">
           {session ? (
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] space-y-4">
               <h3 className="font-playfair font-bold text-xl text-[#4E342E]">Delivery Details</h3>
               
-              {/* Contact Info */}
               <div className="space-y-3 pb-4 border-b border-[#F2E3DB]">
                 <div className="flex justify-between items-center">
                   <label className="text-xs font-bold uppercase tracking-wider text-[#8D6E63]">Contact Info</label>
@@ -597,7 +611,6 @@ export default function CartPage() {
                   </button>
                 </div>
                 
-                {/* Phone */}
                 <div className="space-y-1">
                   <div className="relative">
                     <Phone className="absolute left-3 top-3 text-[#D98292]" size={16} />
@@ -606,7 +619,6 @@ export default function CartPage() {
                   {contactErrors.phone && <p className="text-xs text-red-500 ml-1 flex items-center gap-1"><AlertCircle size={10}/> {contactErrors.phone}</p>}
                 </div>
 
-                {/* Email */}
                 <div className="space-y-1">
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 text-[#D98292]" size={16} />
@@ -616,7 +628,6 @@ export default function CartPage() {
                 </div>
               </div>
 
-              {/* Location & Address */}
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[#8D6E63]">Location</label>
                 {!deliveryDistance ? (
@@ -644,7 +655,6 @@ export default function CartPage() {
             </div>
           )}
 
-          {/* Bill Summary */}
           <div className="bg-[#FFF8F3] p-6 rounded-2xl border border-[#F2E3DB] space-y-4">
             <h3 className="font-playfair font-bold text-xl text-[#4E342E]">Order Summary</h3>
             <div className="space-y-2 text-sm text-[#4E342E]/80">
