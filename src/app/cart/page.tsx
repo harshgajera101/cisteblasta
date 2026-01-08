@@ -5,7 +5,6 @@
 // import { useRouter } from "next/navigation";
 // import { motion, AnimatePresence } from "framer-motion";
 // import { useSession } from "next-auth/react"; 
-// import { Toast } from "@/components/ui/Toast"; 
 // import {
 //   Trash2, Plus, Minus, MapPin, Navigation, ArrowRight,
 //   Phone, Mail, Edit2, Check, LogIn, AlertCircle
@@ -23,22 +22,20 @@
 //   const { data: session } = useSession(); 
 //   const router = useRouter();
 
-//   // Delivery & UI State
+//   // States
 //   const [deliveryDistance, setDeliveryDistance] = useState<number | null>(null);
 //   const [isLocating, setIsLocating] = useState(false);
 //   const [address, setAddress] = useState("");
 //   const [locError, setLocError] = useState("");
 //   const [isOrdering, setIsOrdering] = useState(false);
-  
-//   // Toast State
-//   const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success"|"error" });
-
-//   // Contact Info State
 //   const [contactInfo, setContactInfo] = useState({ phone: "", email: "" });
 //   const [contactErrors, setContactErrors] = useState({ phone: "", email: "" }); 
 //   const [isEditingContact, setIsEditingContact] = useState(false);
+  
+//   // NEW: Modal State for Order Success
+//   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-//   // 1. Auto-fill Contact
+//   // Auto-fill Contact
 //   useEffect(() => {
 //     if (session?.user) {
 //       setContactInfo({
@@ -76,23 +73,19 @@
 //     );
 //   };
 
-//   // --- VALIDATION LOGIC ---
 //   const validateContact = () => {
 //     let isValid = true;
 //     const errors = { phone: "", email: "" };
-
 //     const phoneRegex = /^\d{10}$/;
 //     if (!contactInfo.phone || !phoneRegex.test(contactInfo.phone)) {
 //       errors.phone = "Phone number must be exactly 10 digits";
 //       isValid = false;
 //     }
-
 //     const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
 //     if (!contactInfo.email || !gmailRegex.test(contactInfo.email)) {
 //       errors.email = "Please enter a valid @gmail.com address";
 //       isValid = false;
 //     }
-
 //     setContactErrors(errors);
 //     return isValid;
 //   };
@@ -102,18 +95,15 @@
 //       router.push("/login?callbackUrl=/cart");
 //       return;
 //     }
-
 //     if (!validateContact()) {
 //       setIsEditingContact(true); 
 //       return;
 //     }
-
 //     if (!deliveryDistance || !address) return;
     
 //     setIsOrdering(true);
 
-//     // Prepare Customer Name (Fixing the "Guest User" issue)
-//     // We prioritize the session name. If missing, we alert or fallback.
+//     // FIX: Ensure Name is passed correctly
 //     const customerName = session.user?.name || "Valued Customer";
 
 //     try {
@@ -125,7 +115,7 @@
 //             address, 
 //             phone: contactInfo.phone, 
 //             email: contactInfo.email,
-//             name: customerName // Sending real name
+//             name: customerName 
 //           },
 //           items,
 //           bill: {
@@ -140,50 +130,40 @@
 //       const data = await res.json();
 
 //       if (data.success) {
-//         // --- SUCCESS FLOW (New Tab Logic) ---
-
+//         // --- WHATSAPP LOGIC ---
 //         const phoneNumber = "919653126427"; 
 //         let message = `*Hi Ciste Blasta! I want to place an order.*\n\n`;
 //         message += `👤 *Customer:* ${customerName}\n`;
 //         message += `📞 *Phone:* ${contactInfo.phone}\n`;
 //         message += `📍 *Delivery Location:* ${address}\n`;
 //         message += `----------------------------\n`;
-
 //         items.forEach((item) => {
 //           message += `▫️ ${item.quantity} x ${item.name} (${item.variant || "Std"}) - ₹${item.price * item.quantity}\n`;
 //         });
-
 //         message += `----------------------------\n`;
 //         message += `🚚 Delivery (${deliveryDistance.toFixed(1)} km): ₹${deliveryCharge}\n`;
 //         message += `💰 *Total Amount: ₹${grandTotal}*\n\n`;
 //         message += `Order ID: ${data.orderId.slice(-6)}`; 
 
-//         const waLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-        
 //         // 1. Open WhatsApp in NEW TAB
-//         window.open(waLink, '_blank');
+//         window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
 
-//         // 2. Clear Cart Immediately
+//         // 2. Clear Cart & Show Success Modal
 //         clearCart();
-
-//         // 3. Show Success Message (This will appear on the empty cart screen)
-//         setToast({ show: true, message: "Order placed successfully!", type: "success" });
+//         setShowSuccessModal(true);
 //       }
 //     } catch (error) {
 //       console.error("Order failed", error);
-//       setToast({ show: true, message: "Order failed. Please try again.", type: "error" });
+//       alert("Something went wrong.");
 //     } finally {
 //       setIsOrdering(false);
 //     }
 //   };
 
-//   // --- EMPTY STATE (Now includes Toast) ---
-//   if (items.length === 0) {
+//   // --- EMPTY STATE (With Success Modal Check) ---
+//   if (items.length === 0 && !showSuccessModal) {
 //     return (
-//       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center relative">
-//         {/* ADDED TOAST HERE so it shows up after clearCart() */}
-//         <Toast message={toast.message} type={toast.type} isVisible={toast.show} onClose={() => setToast({ ...toast, show: false })} />
-        
+//       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
 //         <div className="w-24 h-24 bg-[#FFF8F3] rounded-full flex items-center justify-center mb-6">
 //           <MapPin size={40} className="text-[#D98292] opacity-50" />
 //         </div>
@@ -196,14 +176,41 @@
 
 //   return (
 //     <div className="container mx-auto px-4 py-10 md:py-16 max-w-4xl relative">
-//       <Toast message={toast.message} type={toast.type} isVisible={toast.show} onClose={() => setToast({ ...toast, show: false })} />
       
+//       {/* --- SUCCESS MODAL (Persistent) --- */}
+//       <AnimatePresence>
+//         {showSuccessModal && (
+//           <motion.div 
+//             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+//             className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+//           >
+//             <motion.div 
+//               initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+//               className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 text-center"
+//             >
+//               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+//                 <Check className="w-10 h-10 text-green-600" />
+//               </div>
+//               <h2 className="text-3xl font-playfair font-bold text-[#4E342E] mb-2">Order Placed!</h2>
+//               <p className="text-[#8D6E63] mb-8">
+//                 Your order details have been sent to WhatsApp. Please complete the conversation there to finalize payment.
+//               </p>
+//               <Link href="/menu">
+//                 <button className="w-full py-4 bg-[#4E342E] text-white font-bold rounded-xl shadow-lg hover:bg-[#3d2924] transition-all">
+//                   Continue Shopping
+//                 </button>
+//               </Link>
+//             </motion.div>
+//           </motion.div>
+//         )}
+//       </AnimatePresence>
+
 //       <h1 className="font-playfair text-3xl md:text-4xl font-bold text-[#4E342E] mb-8 flex items-center gap-3">
 //         Your Cart <span className="text-lg text-[#8D6E63] font-sans font-normal">({items.length} items)</span>
 //       </h1>
 
 //       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
-//         {/* --- LEFT: Cart Items List --- */}
+//         {/* Cart Items List */}
 //         <div className="lg:col-span-2 space-y-6">
 //           <AnimatePresence>
 //             {items.map((item) => (
@@ -244,13 +251,12 @@
 //           </AnimatePresence>
 //         </div>
 
-//         {/* --- RIGHT: Checkout --- */}
+//         {/* Checkout Section */}
 //         <div className="space-y-6">
 //           {session ? (
 //             <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] space-y-4">
 //               <h3 className="font-playfair font-bold text-xl text-[#4E342E]">Delivery Details</h3>
               
-//               {/* Contact Info */}
 //               <div className="space-y-3 pb-4 border-b border-[#F2E3DB]">
 //                 <div className="flex justify-between items-center">
 //                   <label className="text-xs font-bold uppercase tracking-wider text-[#8D6E63]">Contact Info</label>
@@ -259,7 +265,6 @@
 //                   </button>
 //                 </div>
                 
-//                 {/* Phone */}
 //                 <div className="space-y-1">
 //                   <div className="relative">
 //                     <Phone className="absolute left-3 top-3 text-[#D98292]" size={16} />
@@ -268,7 +273,6 @@
 //                   {contactErrors.phone && <p className="text-xs text-red-500 ml-1 flex items-center gap-1"><AlertCircle size={10}/> {contactErrors.phone}</p>}
 //                 </div>
 
-//                 {/* Email */}
 //                 <div className="space-y-1">
 //                   <div className="relative">
 //                     <Mail className="absolute left-3 top-3 text-[#D98292]" size={16} />
@@ -278,7 +282,6 @@
 //                 </div>
 //               </div>
 
-//               {/* Location & Address */}
 //               <div className="space-y-2">
 //                 <label className="text-xs font-bold uppercase tracking-wider text-[#8D6E63]">Location</label>
 //                 {!deliveryDistance ? (
@@ -306,7 +309,6 @@
 //             </div>
 //           )}
 
-//           {/* Bill Summary */}
 //           <div className="bg-[#FFF8F3] p-6 rounded-2xl border border-[#F2E3DB] space-y-4">
 //             <h3 className="font-playfair font-bold text-xl text-[#4E342E]">Order Summary</h3>
 //             <div className="space-y-2 text-sm text-[#4E342E]/80">
@@ -330,14 +332,6 @@
 //     </div>
 //   );
 // }
-
-
-
-
-
-
-
-
 
 
 
@@ -381,15 +375,26 @@ export default function CartPage() {
   // NEW: Modal State for Order Success
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // Auto-fill Contact
+  // Auto-fill Contact & Address
   useEffect(() => {
     if (session?.user) {
       setContactInfo({
         phone: (session.user as any).phone || "",
         email: session.user.email || ""
       });
+      fetchSavedAddress();
     }
   }, [session]);
+
+  const fetchSavedAddress = async () => {
+    try {
+      const res = await fetch("/api/user/profile");
+      const data = await res.json();
+      if (data.success && data.user.address) {
+        setAddress(data.user.address);
+      }
+    } catch (e) { console.error("Address fetch failed"); }
+  };
 
   const deliveryCharge = deliveryDistance
     ? Math.max(Math.round(deliveryDistance * DELIVERY_RATE_PER_KM), MIN_DELIVERY_CHARGE)
@@ -449,7 +454,6 @@ export default function CartPage() {
     
     setIsOrdering(true);
 
-    // FIX: Ensure Name is passed correctly
     const customerName = session.user?.name || "Valued Customer";
 
     try {
@@ -476,7 +480,6 @@ export default function CartPage() {
       const data = await res.json();
 
       if (data.success) {
-        // --- WHATSAPP LOGIC ---
         const phoneNumber = "919653126427"; 
         let message = `*Hi Ciste Blasta! I want to place an order.*\n\n`;
         message += `👤 *Customer:* ${customerName}\n`;
@@ -491,10 +494,8 @@ export default function CartPage() {
         message += `💰 *Total Amount: ₹${grandTotal}*\n\n`;
         message += `Order ID: ${data.orderId.slice(-6)}`; 
 
-        // 1. Open WhatsApp in NEW TAB
         window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
 
-        // 2. Clear Cart & Show Success Modal
         clearCart();
         setShowSuccessModal(true);
       }
@@ -506,7 +507,6 @@ export default function CartPage() {
     }
   };
 
-  // --- EMPTY STATE (With Success Modal Check) ---
   if (items.length === 0 && !showSuccessModal) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
@@ -522,8 +522,6 @@ export default function CartPage() {
 
   return (
     <div className="container mx-auto px-4 py-10 md:py-16 max-w-4xl relative">
-      
-      {/* --- SUCCESS MODAL (Persistent) --- */}
       <AnimatePresence>
         {showSuccessModal && (
           <motion.div 
@@ -556,7 +554,6 @@ export default function CartPage() {
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
-        {/* Cart Items List */}
         <div className="lg:col-span-2 space-y-6">
           <AnimatePresence>
             {items.map((item) => (
@@ -597,82 +594,22 @@ export default function CartPage() {
           </AnimatePresence>
         </div>
 
-        {/* Checkout Section */}
         <div className="space-y-6">
           {session ? (
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] space-y-4">
               <h3 className="font-playfair font-bold text-xl text-[#4E342E]">Delivery Details</h3>
-              
               <div className="space-y-3 pb-4 border-b border-[#F2E3DB]">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#8D6E63]">Contact Info</label>
-                  <button onClick={() => setIsEditingContact(!isEditingContact)} className="text-xs font-bold text-[#D98292] flex items-center gap-1 hover:underline">
-                    {isEditingContact ? <><Check size={12}/> Done</> : <><Edit2 size={12}/> Change</>}
-                  </button>
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 text-[#D98292]" size={16} />
-                    <input type="tel" placeholder="Phone Number" value={contactInfo.phone} onChange={(e) => { setContactInfo({...contactInfo, phone: e.target.value}); setContactErrors({...contactErrors, phone: ""}); }} disabled={!isEditingContact} className={`w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm focus:outline-none transition-colors ${contactErrors.phone ? "border-red-500 bg-red-50" : isEditingContact ? "bg-white border-[#D98292] text-[#4E342E]" : "bg-[#FFF8F3] border-[#F2E3DB] text-[#8D6E63] cursor-not-allowed"}`} />
-                  </div>
-                  {contactErrors.phone && <p className="text-xs text-red-500 ml-1 flex items-center gap-1"><AlertCircle size={10}/> {contactErrors.phone}</p>}
-                </div>
-
-                <div className="space-y-1">
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 text-[#D98292]" size={16} />
-                    <input type="email" placeholder="Email Address" value={contactInfo.email} onChange={(e) => { setContactInfo({...contactInfo, email: e.target.value}); setContactErrors({...contactErrors, email: ""}); }} disabled={!isEditingContact} className={`w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm focus:outline-none transition-colors ${contactErrors.email ? "border-red-500 bg-red-50" : isEditingContact ? "bg-white border-[#D98292] text-[#4E342E]" : "bg-[#FFF8F3] border-[#F2E3DB] text-[#8D6E63] cursor-not-allowed"}`} />
-                  </div>
-                  {contactErrors.email && <p className="text-xs text-red-500 ml-1 flex items-center gap-1"><AlertCircle size={10}/> {contactErrors.email}</p>}
-                </div>
+                <div className="flex justify-between items-center"><label className="text-xs font-bold uppercase tracking-wider text-[#8D6E63]">Contact Info</label><button onClick={() => setIsEditingContact(!isEditingContact)} className="text-xs font-bold text-[#D98292] flex items-center gap-1 hover:underline">{isEditingContact ? <><Check size={12}/> Done</> : <><Edit2 size={12}/> Change</>}</button></div>
+                <div className="space-y-1"><div className="relative"><Phone className="absolute left-3 top-3 text-[#D98292]" size={16} /><input type="tel" placeholder="Phone Number" value={contactInfo.phone} onChange={(e) => { setContactInfo({...contactInfo, phone: e.target.value}); setContactErrors({...contactErrors, phone: ""}); }} disabled={!isEditingContact} className={`w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm focus:outline-none transition-colors ${contactErrors.phone ? "border-red-500 bg-red-50" : isEditingContact ? "bg-white border-[#D98292] text-[#4E342E]" : "bg-[#FFF8F3] border-[#F2E3DB] text-[#8D6E63] cursor-not-allowed"}`} /></div>{contactErrors.phone && <p className="text-xs text-red-500 ml-1 flex items-center gap-1"><AlertCircle size={10}/> {contactErrors.phone}</p>}</div>
+                <div className="space-y-1"><div className="relative"><Mail className="absolute left-3 top-3 text-[#D98292]" size={16} /><input type="email" placeholder="Email Address" value={contactInfo.email} onChange={(e) => { setContactInfo({...contactInfo, email: e.target.value}); setContactErrors({...contactErrors, email: ""}); }} disabled={!isEditingContact} className={`w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm focus:outline-none transition-colors ${contactErrors.email ? "border-red-500 bg-red-50" : isEditingContact ? "bg-white border-[#D98292] text-[#4E342E]" : "bg-[#FFF8F3] border-[#F2E3DB] text-[#8D6E63] cursor-not-allowed"}`} /></div>{contactErrors.email && <p className="text-xs text-red-500 ml-1 flex items-center gap-1"><AlertCircle size={10}/> {contactErrors.email}</p>}</div>
               </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-[#8D6E63]">Location</label>
-                {!deliveryDistance ? (
-                  <button onClick={handleGetLocation} disabled={isLocating} className="w-full py-3 border-2 border-dashed border-[#D98292] text-[#D98292] font-bold rounded-xl hover:bg-[#D98292]/5 transition-colors flex items-center justify-center gap-2">{isLocating ? <span className="animate-pulse">Locating...</span> : <> <Navigation size={18} /> Detect My Location </>}</button>
-                ) : (
-                  <div className="flex items-center justify-between bg-[#effaf0] border border-green-200 p-3 rounded-xl">
-                    <span className="text-green-700 text-sm font-bold flex items-center gap-2"><MapPin size={16} /> {deliveryDistance.toFixed(1)} km away</span>
-                    <button onClick={() => setDeliveryDistance(null)} className="text-xs text-green-700 underline">Change</button>
-                  </div>
-                )}
-                {locError && <p className="text-xs text-red-500">{locError}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-[#8D6E63]">Full Address</label>
-                <textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Flat No, Building Name, Landmark..." rows={2} className="w-full rounded-lg border border-[#F2E3DB] bg-[#FFF8F3]/50 p-3 text-[#4E342E] text-sm focus:outline-none focus:ring-2 focus:ring-[#D98292]/50"></textarea>
-              </div>
+              <div className="space-y-2"><label className="text-xs font-bold uppercase tracking-wider text-[#8D6E63]">Location</label>{!deliveryDistance ? (<button onClick={handleGetLocation} disabled={isLocating} className="w-full py-3 border-2 border-dashed border-[#D98292] text-[#D98292] font-bold rounded-xl hover:bg-[#D98292]/5 transition-colors flex items-center justify-center gap-2">{isLocating ? <span className="animate-pulse">Locating...</span> : <> <Navigation size={18} /> Detect My Location </>}</button>) : (<div className="flex items-center justify-between bg-[#effaf0] border border-green-200 p-3 rounded-xl"><span className="text-green-700 text-sm font-bold flex items-center gap-2"><MapPin size={16} /> {deliveryDistance.toFixed(1)} km away</span><button onClick={() => setDeliveryDistance(null)} className="text-xs text-green-700 underline">Change</button></div>)}{locError && <p className="text-xs text-red-500">{locError}</p>}</div>
+              <div className="space-y-2"><label className="text-xs font-bold uppercase tracking-wider text-[#8D6E63]">Full Address</label><textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Flat No, Building Name, Landmark..." rows={2} className="w-full rounded-lg border border-[#F2E3DB] bg-[#FFF8F3]/50 p-3 text-[#4E342E] text-sm focus:outline-none focus:ring-2 focus:ring-[#D98292]/50"></textarea></div>
             </div>
           ) : (
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#F2E3DB] text-center">
-               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#FFF8F3] text-[#D98292] mb-4"><LogIn size={24} /></div>
-               <h3 className="font-playfair font-bold text-xl text-[#4E342E] mb-2">Login to Checkout</h3>
-               <p className="text-sm text-[#8D6E63] mb-6">Please sign in to place your order. This helps us track your delivery.</p>
-               <Link href="/login?callbackUrl=/cart" className="block w-full py-3 bg-[#4E342E] text-white font-bold rounded-xl shadow hover:bg-[#3d2924] transition-all">Login / Signup</Link>
-            </div>
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#F2E3DB] text-center"><div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#FFF8F3] text-[#D98292] mb-4"><LogIn size={24} /></div><h3 className="font-playfair font-bold text-xl text-[#4E342E] mb-2">Login to Checkout</h3><p className="text-sm text-[#8D6E63] mb-6">Please sign in to place your order. This helps us track your delivery.</p><Link href="/login?callbackUrl=/cart" className="block w-full py-3 bg-[#4E342E] text-white font-bold rounded-xl shadow hover:bg-[#3d2924] transition-all">Login / Signup</Link></div>
           )}
-
-          <div className="bg-[#FFF8F3] p-6 rounded-2xl border border-[#F2E3DB] space-y-4">
-            <h3 className="font-playfair font-bold text-xl text-[#4E342E]">Order Summary</h3>
-            <div className="space-y-2 text-sm text-[#4E342E]/80">
-              <div className="flex justify-between"><span>Item Total</span><span className="font-bold">₹{cartTotal}</span></div>
-              <div className="flex justify-between"><span>Delivery Charges</span><span className={deliveryDistance ? "font-bold" : "text-[#8D6E63] italic"}>{deliveryDistance ? `₹${deliveryCharge}` : "Calculated at checkout"}</span></div>
-            </div>
-            <div className="h-px bg-[#F2E3DB] w-full" />
-            <div className="flex justify-between text-lg font-bold text-[#4E342E]"><span>Grand Total</span><span>₹{grandTotal}</span></div>
-            
-            {session ? (
-              <button onClick={handleOrder} disabled={!deliveryDistance || !address || !contactInfo.phone || !contactInfo.email || isOrdering} className="w-full py-4 mt-2 bg-[#D98292] text-white font-bold rounded-xl shadow-lg hover:bg-[#c46b7d] hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                {isOrdering ? <span className="animate-pulse">Processing...</span> : <> Order Now <ArrowRight size={18} /> </>}
-              </button>
-            ) : (
-               <Link href="/login?callbackUrl=/cart" className="block w-full py-4 mt-2 bg-[#D98292] text-white font-bold rounded-xl shadow-lg hover:bg-[#c46b7d] text-center">Login to Order</Link>
-            )}
-            {session && (!deliveryDistance || !address) && <p className="text-xs text-center text-[#8D6E63]">Please complete all details to proceed.</p>}
-          </div>
+          <div className="bg-[#FFF8F3] p-6 rounded-2xl border border-[#F2E3DB] space-y-4"><h3 className="font-playfair font-bold text-xl text-[#4E342E]">Order Summary</h3><div className="space-y-2 text-sm text-[#4E342E]/80"><div className="flex justify-between"><span>Item Total</span><span className="font-bold">₹{cartTotal}</span></div><div className="flex justify-between"><span>Delivery Charges</span><span className={deliveryDistance ? "font-bold" : "text-[#8D6E63] italic"}>{deliveryDistance ? `₹${deliveryCharge}` : "Calculated at checkout"}</span></div></div><div className="h-px bg-[#F2E3DB] w-full" /><div className="flex justify-between text-lg font-bold text-[#4E342E]"><span>Grand Total</span><span>₹{grandTotal}</span></div>{session ? (<button onClick={handleOrder} disabled={!deliveryDistance || !address || !contactInfo.phone || !contactInfo.email || isOrdering} className="w-full py-4 mt-2 bg-[#D98292] text-white font-bold rounded-xl shadow-lg hover:bg-[#c46b7d] hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">{isOrdering ? <span className="animate-pulse">Processing...</span> : <> Order Now <ArrowRight size={18} /> </>}</button>) : (<Link href="/login?callbackUrl=/cart" className="block w-full py-4 mt-2 bg-[#D98292] text-white font-bold rounded-xl shadow-lg hover:bg-[#c46b7d] text-center">Login to Order</Link>)}</div>
         </div>
       </div>
     </div>
