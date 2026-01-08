@@ -1,35 +1,55 @@
 // import mongoose, { Schema, model, models } from "mongoose";
 
-// const OrderIntentSchema = new Schema({
-//   userId: { type: String, required: true }, // Can be a guest ID or Firebase UID
-//   items: [
-//     {
-//       productId: { type: String, required: true },
-//       name: { type: String, required: true },
-//       quantity: { type: Number, required: true },
-//       price: { type: Number, required: true },
-//       variant: { type: String }, // e.g., "1kg", "Half kg"
+// const OrderIntentSchema = new Schema(
+//   {
+//     customerName: { type: String, required: true },
+//     phone: { type: String, required: true },
+    
+//     // ADDED: This is the critical link. 
+//     // It allows us to fetch "My Orders" by searching for this email.
+//     email: { type: String, required: true }, 
+    
+//     address: { type: String, required: true },
+    
+//     // We store a snapshot of items (name, quantity, price)
+//     items: [
+//       {
+//         name: { type: String, required: true },
+//         variant: { type: String }, // e.g., "0.5kg"
+//         quantity: { type: Number, required: true },
+//         price: { type: Number, required: true },
+//       },
+//     ],
+    
+//     totalAmount: { type: Number, required: true },
+//     deliveryDistance: { type: Number },
+//     deliveryCharge: { type: Number },
+    
+//     // UPDATED STATUS LIST (Crucial for Phase 5)
+//     status: { 
+//       type: String, 
+//       enum: [
+//         "PENDING",              // 1. New Order (Leads)
+//         "CONFIRMED",            // 2. Sister Accepted (Pending)
+//         "PREPARING",            // 3. Baking (Ongoing)
+//         "READY",                // 4. Packed (Ongoing)
+//         "OUT_FOR_DELIVERY",     // 5. On the way (Ongoing)
+//         "DELIVERED",            // 6. Done (History)
+//         "CANCELLED"             // 7. Rejected (History)
+//       ], 
+//       default: "PENDING" 
 //     },
-//   ],
-//   totalAmount: { type: Number, required: true },
-//   customerDetails: {
-//     phone: { type: String },
-//     name: { type: String },
-//     email: { type: String },
 //   },
-//   status: { 
-//     type: String, 
-//     enum: ["INTENT_CREATED", "ABANDONED"], 
-//     default: "INTENT_CREATED" 
-//   },
-//   createdAt: { type: Date, default: Date.now },
-//   // TTL Index: This document will self-destruct 24 hours (86400 seconds) after creation
-//   expireAt: { type: Date, default: Date.now, index: { expires: '24h' } } 
-// });
+//   { timestamps: true }
+// );
 
-// // Prevent model overwrite errors in Next.js hot-reloading
+// // Prevent overwriting the model if it already exists
 // const OrderIntent = models.OrderIntent || model("OrderIntent", OrderIntentSchema);
+
 // export default OrderIntent;
+
+
+
 
 
 
@@ -40,13 +60,16 @@ const OrderIntentSchema = new Schema(
   {
     customerName: { type: String, required: true },
     phone: { type: String, required: true },
+    
+    // CRITICAL: Links order to the user account
+    email: { type: String, required: true }, 
+    
     address: { type: String, required: true },
     
-    // We store a snapshot of items (name, quantity, price)
     items: [
       {
         name: { type: String, required: true },
-        variant: { type: String }, // e.g., "0.5kg"
+        variant: { type: String },
         quantity: { type: Number, required: true },
         price: { type: Number, required: true },
       },
@@ -56,17 +79,16 @@ const OrderIntentSchema = new Schema(
     deliveryDistance: { type: Number },
     deliveryCharge: { type: Number },
     
-    // UPDATED STATUS LIST (Crucial for Phase 5)
     status: { 
       type: String, 
       enum: [
-        "PENDING",              // 1. New Order (Leads)
-        "CONFIRMED",            // 2. Sister Accepted (Pending)
-        "PREPARING",            // 3. Baking (Ongoing)
-        "READY",                // 4. Packed (Ongoing)
-        "OUT_FOR_DELIVERY",     // 5. On the way (Ongoing)
-        "DELIVERED",            // 6. Done (History)
-        "CANCELLED"             // 7. Rejected (History)
+        "PENDING",              
+        "CONFIRMED",            
+        "PREPARING",            
+        "READY",                
+        "OUT_FOR_DELIVERY",     
+        "DELIVERED",            
+        "CANCELLED"             
       ], 
       default: "PENDING" 
     },
@@ -74,7 +96,5 @@ const OrderIntentSchema = new Schema(
   { timestamps: true }
 );
 
-// Prevent overwriting the model if it already exists
 const OrderIntent = models.OrderIntent || model("OrderIntent", OrderIntentSchema);
-
 export default OrderIntent;

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { User, Phone, Mail, LogOut, Package, Clock, MapPin, Edit2, Check, X } from "lucide-react";
+import { User, Phone, Mail, LogOut, Package, Clock, MapPin, Edit2, AlertCircle } from "lucide-react";
 import { Toast } from "@/components/ui/Toast";
 import Link from "next/link";
 
@@ -15,15 +15,17 @@ export default function ProfilePage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   
-  // Edit Mode States
+  // UI States
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ name: "", phone: "" });
   const [isSaving, setIsSaving] = useState(false);
   
+  // Logout Modal State
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  
   // Toast
   const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success"|"error" });
 
-  // 1. Protect Page & Load Data
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
     
@@ -36,7 +38,6 @@ export default function ProfilePage() {
     }
   }, [session, status, router]);
 
-  // 2. Fetch Orders
   const fetchOrders = async () => {
     try {
       const res = await fetch("/api/user/orders");
@@ -49,7 +50,6 @@ export default function ProfilePage() {
     }
   };
 
-  // 3. Handle Update
   const handleUpdateProfile = async () => {
     setIsSaving(true);
     try {
@@ -60,12 +60,8 @@ export default function ProfilePage() {
       });
       
       if (res.ok) {
-        // Update client-side session immediately
-        await update({ 
-          ...session, 
-          user: { ...session?.user, name: editForm.name, phone: editForm.phone } 
-        });
-        
+        // Trigger session update (Frontend)
+        await update(); 
         setIsEditing(false);
         setToast({ show: true, message: "Profile updated successfully!", type: "success" });
       } else {
@@ -84,6 +80,33 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-[#FFF8F3] px-4 py-12 md:px-8">
       <Toast message={toast.message} type={toast.type} isVisible={toast.show} onClose={() => setToast({ ...toast, show: false })} />
       
+      {/* LOGOUT CONFIRMATION MODAL */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center animate-in zoom-in-95">
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <LogOut className="w-8 h-8 text-red-500" />
+            </div>
+            <h3 className="text-xl font-bold text-[#4E342E] mb-2">Log Out?</h3>
+            <p className="text-[#8D6E63] text-sm mb-6">Are you sure you want to sign out of your account?</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-3 border border-[#F2E3DB] text-[#8D6E63] font-bold rounded-xl hover:bg-[#FFF8F3]"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                className="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-md"
+              >
+                Yes, Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         
         {/* --- LEFT: User Profile Card --- */}
@@ -151,7 +174,7 @@ export default function ProfilePage() {
           </div>
 
           <button 
-            onClick={() => signOut({ callbackUrl: "/login" })}
+            onClick={() => setShowLogoutConfirm(true)}
             className="w-full py-4 bg-white border border-red-100 text-red-500 font-bold rounded-2xl hover:bg-red-50 transition-colors flex items-center justify-center gap-2 shadow-sm"
           >
             <LogOut size={18} /> Logout
