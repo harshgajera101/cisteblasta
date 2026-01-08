@@ -3,9 +3,14 @@
 // import { useState, useEffect } from "react";
 // import { useSession, signOut } from "next-auth/react";
 // import { useRouter } from "next/navigation";
-// import { User, Phone, Mail, LogOut, Package, Clock, MapPin, Edit2, AlertCircle } from "lucide-react";
+// import { 
+//   User, Phone, Mail, LogOut, Package, Clock, MapPin, 
+//   Edit2, AlertCircle, Truck, ChevronLeft, ChevronRight 
+// } from "lucide-react";
 // import { Toast } from "@/components/ui/Toast";
 // import Link from "next/link";
+
+// const ITEMS_PER_PAGE = 5;
 
 // export default function ProfilePage() {
 //   const { data: session, status, update } = useSession();
@@ -14,6 +19,9 @@
 //   // Data States
 //   const [orders, setOrders] = useState<any[]>([]);
 //   const [loadingOrders, setLoadingOrders] = useState(true);
+  
+//   // Pagination State
+//   const [currentPage, setCurrentPage] = useState(1);
   
 //   // UI States
 //   const [isEditing, setIsEditing] = useState(false);
@@ -60,7 +68,6 @@
 //       });
       
 //       if (res.ok) {
-//         // Trigger session update (Frontend)
 //         await update(); 
 //         setIsEditing(false);
 //         setToast({ show: true, message: "Profile updated successfully!", type: "success" });
@@ -73,6 +80,10 @@
 //       setIsSaving(false);
 //     }
 //   };
+
+//   // Pagination Logic
+//   const totalPages = Math.ceil(orders.length / ITEMS_PER_PAGE);
+//   const paginatedOrders = orders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
 //   if (status === "loading") return <div className="min-h-screen flex items-center justify-center text-[#8D6E63] font-playfair">Loading...</div>;
 
@@ -205,53 +216,86 @@
 //               </Link>
 //             </div>
 //           ) : (
-//             <div className="space-y-4">
-//               {orders.map((order) => (
-//                 <div key={order._id} className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] hover:shadow-md transition-shadow">
-//                   {/* Header */}
-//                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 pb-4 border-b border-[#F2E3DB] border-dashed gap-4">
-//                     <div>
-//                       <div className="flex items-center gap-3">
-//                         <span className="font-bold text-[#4E342E] text-lg">#{order._id.slice(-6).toUpperCase()}</span>
-//                         <span className={`px-3 py-1 text-[10px] font-bold rounded-full border ${
-//                           order.status === 'DELIVERED' ? 'bg-green-50 text-green-600 border-green-100' :
-//                           order.status === 'CANCELLED' ? 'bg-red-50 text-red-500 border-red-100' :
-//                           'bg-orange-50 text-orange-600 border-orange-100'
-//                         }`}>
-//                           {order.status}
-//                         </span>
+//             <>
+//               <div className="space-y-4">
+//                 {paginatedOrders.map((order) => (
+//                   <div key={order._id} className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] hover:shadow-md transition-shadow">
+//                     {/* Header */}
+//                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 pb-4 border-b border-[#F2E3DB] border-dashed gap-4">
+//                       <div>
+//                         <div className="flex items-center gap-3">
+//                           <span className="font-bold text-[#4E342E] text-lg">#{order._id.slice(-6).toUpperCase()}</span>
+//                           <span className={`px-3 py-1 text-[10px] font-bold rounded-full border ${
+//                             order.status === 'DELIVERED' ? 'bg-green-50 text-green-600 border-green-100' :
+//                             order.status === 'CANCELLED' ? 'bg-red-50 text-red-500 border-red-100' :
+//                             'bg-orange-50 text-orange-600 border-orange-100'
+//                           }`}>
+//                             {order.status}
+//                           </span>
+//                         </div>
+//                         <div className="flex items-center gap-2 text-xs text-[#8D6E63] mt-1">
+//                           <Clock size={12} /> {new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+//                         </div>
 //                       </div>
-//                       <div className="flex items-center gap-2 text-xs text-[#8D6E63] mt-1">
-//                         <Clock size={12} /> {new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+//                       <div className="text-right">
+//                         <span className="block text-xs text-[#8D6E63]">Total Amount</span>
+//                         <span className="font-bold text-xl text-[#4E342E]">₹{order.totalAmount}</span>
 //                       </div>
 //                     </div>
-//                     <div className="text-right">
-//                       <span className="block text-xs text-[#8D6E63]">Total Amount</span>
-//                       <span className="font-bold text-xl text-[#4E342E]">₹{order.totalAmount}</span>
+
+//                     {/* Items List + Delivery Fee */}
+//                     <div className="space-y-2 mb-4">
+//                       {order.items.map((item: any, idx: number) => (
+//                         <div key={idx} className="flex justify-between text-sm text-[#4E342E]">
+//                           <span>
+//                             <span className="font-bold text-[#D98292]">{item.quantity}x</span> {item.name} 
+//                             {item.variant && <span className="text-[#8D6E63] text-xs"> ({item.variant})</span>}
+//                           </span>
+//                           <span className="font-medium">₹{item.price * item.quantity}</span>
+//                         </div>
+//                       ))}
+                      
+//                       {/* Delivery Fee - Aligned perfectly with items */}
+//                       <div className="flex justify-between text-sm text-[#4E342E]">
+//                         <span className="font-bold text-[#D98292] flex items-center gap-1">
+//                           <Truck size={14} /> Delivery Fee
+//                         </span>
+//                         <span className="font-medium">₹{order.deliveryCharge || 0}</span>
+//                       </div>
+//                     </div>
+
+//                     {/* Address Snippet */}
+//                     <div className="flex items-start gap-2 text-xs text-[#8D6E63] bg-[#FFF8F3] p-3 rounded-lg">
+//                       <MapPin size={14} className="mt-0.5 text-[#D98292] shrink-0" />
+//                       <p>{order.address}</p>
 //                     </div>
 //                   </div>
+//                 ))}
+//               </div>
 
-//                   {/* Items */}
-//                   <div className="space-y-2 mb-4">
-//                     {order.items.map((item: any, idx: number) => (
-//                       <div key={idx} className="flex justify-between text-sm text-[#4E342E]">
-//                         <span>
-//                           <span className="font-bold text-[#D98292]">{item.quantity}x</span> {item.name} 
-//                           {item.variant && <span className="text-[#8D6E63] text-xs"> ({item.variant})</span>}
-//                         </span>
-//                         <span className="font-medium">₹{item.price * item.quantity}</span>
-//                       </div>
-//                     ))}
-//                   </div>
-
-//                   {/* Address Snippet */}
-//                   <div className="flex items-start gap-2 text-xs text-[#8D6E63] bg-[#FFF8F3] p-3 rounded-lg">
-//                     <MapPin size={14} className="mt-0.5 text-[#D98292] shrink-0" />
-//                     <p>{order.address}</p>
-//                   </div>
+//               {/* PAGINATION CONTROLS */}
+//               {totalPages > 1 && (
+//                 <div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t border-[#F2E3DB] border-dashed">
+//                   <button 
+//                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+//                     disabled={currentPage === 1}
+//                     className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"
+//                   >
+//                     <ChevronLeft size={20} />
+//                   </button>
+//                   <span className="text-sm font-bold text-[#8D6E63]">
+//                     Page {currentPage} of {totalPages}
+//                   </span>
+//                   <button 
+//                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+//                     disabled={currentPage === totalPages}
+//                     className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"
+//                   >
+//                     <ChevronRight size={20} />
+//                   </button>
 //                 </div>
-//               ))}
-//             </div>
+//               )}
+//             </>
 //           )}
 //         </div>
 //       </div>
@@ -265,22 +309,36 @@
 
 
 
+
+
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { User, Phone, Mail, LogOut, Package, Clock, MapPin, Edit2, AlertCircle, Truck } from "lucide-react";
+import { 
+  User, Phone, Mail, LogOut, Package, Clock, MapPin, 
+  Edit2, AlertCircle, Truck, ChevronLeft, ChevronRight 
+} from "lucide-react";
 import { Toast } from "@/components/ui/Toast";
 import Link from "next/link";
+
+const ITEMS_PER_PAGE = 5;
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
   const router = useRouter();
   
+  // Ref for scrolling
+  const ordersTopRef = useRef<HTMLHeadingElement>(null);
+
   // Data States
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
   
   // UI States
   const [isEditing, setIsEditing] = useState(false);
@@ -338,6 +396,19 @@ export default function ProfilePage() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Pagination Logic
+  const totalPages = Math.ceil(orders.length / ITEMS_PER_PAGE);
+  const paginatedOrders = orders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  // Scroll Handler
+  const changePage = (newPage: number) => {
+    setCurrentPage(newPage);
+    // Smooth scroll to the top of the orders list
+    setTimeout(() => {
+      ordersTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
   };
 
   if (status === "loading") return <div className="min-h-screen flex items-center justify-center text-[#8D6E63] font-playfair">Loading...</div>;
@@ -449,7 +520,10 @@ export default function ProfilePage() {
 
         {/* --- RIGHT: Order History --- */}
         <div className="md:col-span-2 space-y-6">
-          <h2 className="text-2xl font-playfair font-bold text-[#4E342E] flex items-center gap-2">
+          <h2 
+            ref={ordersTopRef} // ATTACHED SCROLL REF HERE
+            className="text-2xl font-playfair font-bold text-[#4E342E] flex items-center gap-2 scroll-mt-24"
+          >
             <Package className="text-[#D98292]" /> Order History
           </h2>
 
@@ -471,61 +545,86 @@ export default function ProfilePage() {
               </Link>
             </div>
           ) : (
-            <div className="space-y-4">
-              {orders.map((order) => (
-                <div key={order._id} className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] hover:shadow-md transition-shadow">
-                  {/* Header */}
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 pb-4 border-b border-[#F2E3DB] border-dashed gap-4">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-bold text-[#4E342E] text-lg">#{order._id.slice(-6).toUpperCase()}</span>
-                        <span className={`px-3 py-1 text-[10px] font-bold rounded-full border ${
-                          order.status === 'DELIVERED' ? 'bg-green-50 text-green-600 border-green-100' :
-                          order.status === 'CANCELLED' ? 'bg-red-50 text-red-500 border-red-100' :
-                          'bg-orange-50 text-orange-600 border-orange-100'
-                        }`}>
-                          {order.status}
-                        </span>
+            <>
+              <div className="space-y-4">
+                {paginatedOrders.map((order) => (
+                  <div key={order._id} className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] hover:shadow-md transition-shadow">
+                    {/* Header */}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 pb-4 border-b border-[#F2E3DB] border-dashed gap-4">
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold text-[#4E342E] text-lg">#{order._id.slice(-6).toUpperCase()}</span>
+                          <span className={`px-3 py-1 text-[10px] font-bold rounded-full border ${
+                            order.status === 'DELIVERED' ? 'bg-green-50 text-green-600 border-green-100' :
+                            order.status === 'CANCELLED' ? 'bg-red-50 text-red-500 border-red-100' :
+                            'bg-orange-50 text-orange-600 border-orange-100'
+                          }`}>
+                            {order.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-[#8D6E63] mt-1">
+                          <Clock size={12} /> {new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-[#8D6E63] mt-1">
-                        <Clock size={12} /> {new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      <div className="text-right">
+                        <span className="block text-xs text-[#8D6E63]">Total Amount</span>
+                        <span className="font-bold text-xl text-[#4E342E]">₹{order.totalAmount}</span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <span className="block text-xs text-[#8D6E63]">Total Amount</span>
-                      <span className="font-bold text-xl text-[#4E342E]">₹{order.totalAmount}</span>
-                    </div>
-                  </div>
 
-                  {/* Items List + Delivery Fee */}
-                  <div className="space-y-2 mb-4">
-                    {order.items.map((item: any, idx: number) => (
-                      <div key={idx} className="flex justify-between text-sm text-[#4E342E]">
-                        <span>
-                          <span className="font-bold text-[#D98292]">{item.quantity}x</span> {item.name} 
-                          {item.variant && <span className="text-[#8D6E63] text-xs"> ({item.variant})</span>}
+                    {/* Items List + Delivery Fee */}
+                    <div className="space-y-2 mb-4">
+                      {order.items.map((item: any, idx: number) => (
+                        <div key={idx} className="flex justify-between text-sm text-[#4E342E]">
+                          <span>
+                            <span className="font-bold text-[#D98292]">{item.quantity}x</span> {item.name} 
+                            {item.variant && <span className="text-[#8D6E63] text-xs"> ({item.variant})</span>}
+                          </span>
+                          <span className="font-medium">₹{item.price * item.quantity}</span>
+                        </div>
+                      ))}
+                      
+                      {/* Delivery Fee - Aligned perfectly with items */}
+                      <div className="flex justify-between text-sm text-[#4E342E]">
+                        <span className="font-bold text-[#D98292] flex items-center gap-1">
+                          <Truck size={14} /> Delivery Fee
                         </span>
-                        <span className="font-medium">₹{item.price * item.quantity}</span>
+                        <span className="font-medium">₹{order.deliveryCharge || 0}</span>
                       </div>
-                    ))}
-                    
-                    {/* Delivery Fee - Aligned perfectly with items */}
-                    <div className="flex justify-between text-sm text-[#4E342E]">
-                      <span className="font-bold text-[#D98292] flex items-center gap-1">
-                        <Truck size={14} /> Delivery Fee
-                      </span>
-                      <span className="font-medium">₹{order.deliveryCharge || 0}</span>
+                    </div>
+
+                    {/* Address Snippet */}
+                    <div className="flex items-start gap-2 text-xs text-[#8D6E63] bg-[#FFF8F3] p-3 rounded-lg">
+                      <MapPin size={14} className="mt-0.5 text-[#D98292] shrink-0" />
+                      <p>{order.address}</p>
                     </div>
                   </div>
+                ))}
+              </div>
 
-                  {/* Address Snippet */}
-                  <div className="flex items-start gap-2 text-xs text-[#8D6E63] bg-[#FFF8F3] p-3 rounded-lg">
-                    <MapPin size={14} className="mt-0.5 text-[#D98292] shrink-0" />
-                    <p>{order.address}</p>
-                  </div>
+              {/* PAGINATION CONTROLS */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t border-[#F2E3DB] border-dashed">
+                  <button 
+                    onClick={() => changePage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  <span className="text-sm font-bold text-[#8D6E63]">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button 
+                    onClick={() => changePage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       </div>

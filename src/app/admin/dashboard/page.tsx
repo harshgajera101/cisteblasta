@@ -3,7 +3,8 @@
 // import { useState, useEffect } from "react";
 // import { 
 //   RefreshCw, ChefHat, Truck, Package, Clock, Plus, Trash2, Edit2, 
-//   Image as ImageIcon, RotateCcw, X, AlertTriangle, MapPin, Phone, Mail 
+//   Image as ImageIcon, RotateCcw, X, AlertTriangle, MapPin, Phone, Mail,
+//   ChevronLeft, ChevronRight, Filter, Calendar
 // } from "lucide-react";
 // import { Toast } from "@/components/ui/Toast";
 
@@ -21,6 +22,7 @@
 //   phone?: string;
 //   email?: string;
 //   totalAmount: number;
+//   deliveryCharge?: number;
 //   status: string;
 //   address: string;
 //   items: OrderItem[];
@@ -39,12 +41,23 @@
 //   variants?: Variant[];
 // };
 
+// const ITEMS_PER_PAGE = 7;
+
 // export default function AdminDashboard() {
 //   const [activeTab, setActiveTab] = useState("LEADS");
 //   const [orders, setOrders] = useState<Order[]>([]);
 //   const [products, setProducts] = useState<Product[]>([]);
 //   const [loading, setLoading] = useState(false);
+  
+//   // Filter States
 //   const [menuFilter, setMenuFilter] = useState("ALL");
+//   const [historyDateFilter, setHistoryDateFilter] = useState("ALL"); 
+//   const [historyStatusFilter, setHistoryStatusFilter] = useState("ALL");
+  
+//   // Pagination State
+//   const [currentPage, setCurrentPage] = useState(1);
+
+//   // Form States
 //   const [isUploading, setIsUploading] = useState(false);
 //   const [editingId, setEditingId] = useState<string | null>(null);
 //   const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success"|"error"|"warning" });
@@ -74,6 +87,11 @@
 
 //   useEffect(() => { fetchOrders(); fetchProducts(); }, []);
 
+//   // Reset pagination when tab or filters change
+//   useEffect(() => {
+//     setCurrentPage(1);
+//   }, [activeTab, historyDateFilter, historyStatusFilter]);
+
 //   const showToast = (message: string, type: "success"|"error"|"warning") => {
 //     setToast({ show: true, message, type });
 //   };
@@ -95,6 +113,7 @@
 //     });
 //   };
 
+//   // Product Handlers
 //   const addVariant = () => setFormData({ ...formData, variants: [...formData.variants, { name: "", price: "" }] });
 //   const removeVariant = (index: number) => { const v = [...formData.variants]; v.splice(index, 1); setFormData({...formData, variants: v}); };
 //   const updateVariant = (index: number, f: "name"|"price", v: string) => { const va = [...formData.variants]; va[index][f] = v; setFormData({...formData, variants: va}); };
@@ -104,7 +123,9 @@
 //     if (!formData.name) { showToast("Name required", "error"); return; }
 //     setIsUploading(true);
 //     const data = new FormData();
-//     data.append("name", formData.name); data.append("category", formData.category); data.append("description", formData.description);
+//     data.append("name", formData.name);
+//     data.append("category", formData.category);
+//     data.append("description", formData.description);
 //     if(formData.image) data.append("image", formData.image);
     
 //     if (formData.hasVariants) {
@@ -142,15 +163,40 @@
 //     window.scrollTo({ top: 0, behavior: 'smooth' });
 //   };
 
+//   // --- FILTER & PAGINATION LOGIC ---
 //   const getFilteredOrders = () => {
+//     let filtered = orders;
+
+//     // 1. Tab Filtering
 //     switch (activeTab) {
-//       case "LEADS": return orders.filter((o) => o.status === "PENDING");
-//       case "PENDING": return orders.filter((o) => o.status === "CONFIRMED");
-//       case "ONGOING": return orders.filter((o) => ["PREPARING", "READY", "OUT_FOR_DELIVERY"].includes(o.status));
-//       case "HISTORY": return orders.filter((o) => ["DELIVERED", "CANCELLED"].includes(o.status));
-//       default: return [];
+//       case "LEADS": filtered = orders.filter((o) => o.status === "PENDING"); break;
+//       case "PENDING": filtered = orders.filter((o) => o.status === "CONFIRMED"); break;
+//       case "ONGOING": filtered = orders.filter((o) => ["PREPARING", "READY", "OUT_FOR_DELIVERY"].includes(o.status)); break;
+//       case "HISTORY": filtered = orders.filter((o) => ["DELIVERED", "CANCELLED"].includes(o.status)); break;
+//       default: filtered = [];
 //     }
+
+//     // 2. History Specific Filters
+//     if (activeTab === "HISTORY") {
+//       // Date Filter
+//       if (historyDateFilter !== "ALL") {
+//         const days = parseInt(historyDateFilter);
+//         const cutoff = new Date();
+//         cutoff.setDate(cutoff.getDate() - days);
+//         filtered = filtered.filter(o => new Date(o.createdAt) >= cutoff);
+//       }
+//       // Status Filter
+//       if (historyStatusFilter !== "ALL") {
+//         filtered = filtered.filter(o => o.status === historyStatusFilter);
+//       }
+//     }
+
+//     return filtered;
 //   };
+
+//   const allFilteredOrders = getFilteredOrders();
+//   const totalPages = Math.ceil(allFilteredOrders.length / ITEMS_PER_PAGE);
+//   const paginatedOrders = allFilteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
 //   const getFilteredProducts = () => {
 //     if (menuFilter === "ALL") return products;
@@ -184,7 +230,6 @@
 //           <button
 //             key={tab.id}
 //             onClick={() => setActiveTab(tab.id)}
-//             // CHANGED: Added logic to make PRODUCTS tab span full width on mobile
 //             className={`flex flex-col md:flex-row items-center justify-center gap-2 p-3 md:px-5 rounded-xl font-bold transition-all text-sm 
 //               ${tab.id === "PRODUCTS" ? "col-span-2" : ""}
 //               ${activeTab === tab.id ? "bg-[#D98292] text-white shadow-lg" : "bg-white text-[#8D6E63]"}`}
@@ -218,16 +263,48 @@
 //         </div>
 //       ) : (
 //         <div className="space-y-4">
+//            {/* HISTORY FILTERS */}
+//            {activeTab === "HISTORY" && (
+//              <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm border border-[#F2E3DB]">
+//                 <div className="flex items-center gap-2 text-sm font-bold text-[#8D6E63] w-full md:w-auto">
+//                   <Filter size={16} /> Filters:
+//                 </div>
+                
+//                 {/* Date Filter - w-full on mobile */}
+//                 <select 
+//                   value={historyDateFilter} 
+//                   onChange={(e) => setHistoryDateFilter(e.target.value)}
+//                   className="w-full md:w-auto px-4 py-2 rounded-lg border border-[#F2E3DB] text-sm text-[#4E342E] bg-[#FFF8F3] focus:outline-none"
+//                 >
+//                   <option value="ALL">All Dates</option>
+//                   <option value="7">Last 7 Days</option>
+//                   <option value="15">Last 15 Days</option>
+//                   <option value="30">Last 30 Days</option>
+//                 </select>
+
+//                 {/* Status Filter - w-full on mobile */}
+//                 <select 
+//                   value={historyStatusFilter} 
+//                   onChange={(e) => setHistoryStatusFilter(e.target.value)}
+//                   className="w-full md:w-auto px-4 py-2 rounded-lg border border-[#F2E3DB] text-sm text-[#4E342E] bg-[#FFF8F3] focus:outline-none"
+//                 >
+//                   <option value="ALL">All Status</option>
+//                   <option value="DELIVERED">Delivered</option>
+//                   <option value="CANCELLED">Rejected</option>
+//                 </select>
+//              </div>
+//            )}
+
 //            {loading ? <p className="text-center text-[#8D6E63] animate-pulse">Loading orders...</p> : 
-//            getFilteredOrders().length === 0 ? <div className="text-center py-12 bg-white/50 rounded-2xl border border-[#F2E3DB] border-dashed"><p className="text-[#8D6E63]">No orders here.</p></div> : 
-//            getFilteredOrders().map((order) => (
+//            paginatedOrders.length === 0 ? <div className="text-center py-12 bg-white/50 rounded-2xl border border-[#F2E3DB] border-dashed"><p className="text-[#8D6E63]">No orders found.</p></div> : 
+//            paginatedOrders.map((order) => (
 //               <div key={order._id} className="bg-white p-5 rounded-2xl shadow-sm border border-[#F2E3DB] flex flex-col md:flex-row justify-between gap-6 relative overflow-hidden">
-//                 {/* 1. Date (Top Right) */}
+//                 {/* Date Badge */}
 //                 <div className="absolute top-0 right-0 bg-[#FFF8F3] px-4 py-1.5 rounded-bl-xl border-b border-l border-[#F2E3DB] text-xs text-[#8D6E63] font-medium flex items-center gap-1.5 opacity-80">
 //                    <Clock size={10} /> {formatDate(order.createdAt)}
 //                 </div>
 
-//                 {/* 2. Order ID (Bottom Right - Fixed Position) */}
+//                 {/* Order ID Badge */}
 //                 <div className="absolute bottom-0 right-0 bg-[#FFF8F3] px-4 py-1.5 rounded-tl-xl border-t border-l border-[#F2E3DB] text-xs text-[#8D6E63] font-bold">
 //                    ID: #{order._id.slice(-6).toUpperCase()}
 //                 </div>
@@ -244,7 +321,7 @@
 //                     </span>
 //                   </div>
                   
-//                   {/* 3. Detailed Contact Info (Vertically Stacked with Tags) */}
+//                   {/* Contact Details */}
 //                   <div className="flex flex-col gap-2 mb-4 text-sm text-[#8D6E63]">
 //                      <div className="flex items-start gap-2">
 //                        <MapPin size={16} className="mt-0.5 text-[#D98292] shrink-0" />
@@ -263,6 +340,7 @@
 //                      </div>
 //                   </div>
                   
+//                   {/* Items */}
 //                   <div className="space-y-1 mb-4">
 //                     {order.items.map((item, idx) => (
 //                       <div key={idx} className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1">
@@ -275,12 +353,18 @@
 //                         </span>
 //                       </div>
 //                     ))}
+                    
+//                     {/* Delivery Fee */}
+//                     <div className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1">
+//                        <span className="font-bold">Delivery Fee</span>
+//                        <span className="font-bold">₹{order.deliveryCharge || 0}</span>
+//                     </div>
 //                   </div>
                   
 //                   <p className="font-bold text-[#4E342E] text-lg">Bill: ₹{order.totalAmount}</p>
 //                 </div>
                 
-//                 {/* Actions (Added Padding Bottom to avoid overlap with Order ID badge) */}
+//                 {/* Actions */}
 //                 <div className="flex flex-col gap-2 justify-center min-w-[180px] pt-4 md:pt-0 pb-8">
 //                   {activeTab === "LEADS" && (<><button onClick={() => updateStatus(order._id, "CONFIRMED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Accept</button><button onClick={() => updateStatus(order._id, "CANCELLED")} className="w-full py-2 text-red-400 text-xs underline">Reject</button></>)}
 //                   {activeTab === "PENDING" && (<><button onClick={() => updateStatus(order._id, "PREPARING")} className="w-full py-2 bg-orange-100 text-orange-700 rounded-lg font-bold text-sm flex justify-center gap-2"><ChefHat size={16}/> Bake</button><button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}
@@ -289,6 +373,29 @@
 //                 </div>
 //               </div>
 //            ))}
+
+//            {/* PAGINATION CONTROLS */}
+//            {totalPages > 1 && (
+//              <div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t border-[#F2E3DB] border-dashed">
+//                <button 
+//                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+//                  disabled={currentPage === 1}
+//                  className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"
+//                >
+//                  <ChevronLeft size={20} />
+//                </button>
+//                <span className="text-sm font-bold text-[#8D6E63]">
+//                  Page {currentPage} of {totalPages}
+//                </span>
+//                <button 
+//                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+//                  disabled={currentPage === totalPages}
+//                  className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"
+//                >
+//                  <ChevronRight size={20} />
+//                </button>
+//              </div>
+//            )}
 //         </div>
 //       )}
 //     </div>
@@ -303,12 +410,18 @@
 
 
 
- "use client";
 
-import { useState, useEffect } from "react";
+
+
+
+
+"use client";
+
+import { useState, useEffect, useRef } from "react";
 import { 
   RefreshCw, ChefHat, Truck, Package, Clock, Plus, Trash2, Edit2, 
-  Image as ImageIcon, RotateCcw, X, AlertTriangle, MapPin, Phone, Mail 
+  Image as ImageIcon, RotateCcw, X, AlertTriangle, MapPin, Phone, Mail,
+  ChevronLeft, ChevronRight, Filter, Calendar
 } from "lucide-react";
 import { Toast } from "@/components/ui/Toast";
 
@@ -345,12 +458,24 @@ type Product = {
   variants?: Variant[];
 };
 
+const ITEMS_PER_PAGE = 7;
+
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("LEADS");
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // Filter States
   const [menuFilter, setMenuFilter] = useState("ALL");
+  const [historyDateFilter, setHistoryDateFilter] = useState("ALL"); 
+  const [historyStatusFilter, setHistoryStatusFilter] = useState("ALL");
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const dashboardTopRef = useRef<HTMLDivElement>(null); // Ref for scrolling
+
+  // Form States
   const [isUploading, setIsUploading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success"|"error"|"warning" });
@@ -380,6 +505,11 @@ export default function AdminDashboard() {
 
   useEffect(() => { fetchOrders(); fetchProducts(); }, []);
 
+  // Reset pagination when tab or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, historyDateFilter, historyStatusFilter]);
+
   const showToast = (message: string, type: "success"|"error"|"warning") => {
     setToast({ show: true, message, type });
   };
@@ -401,6 +531,16 @@ export default function AdminDashboard() {
     });
   };
 
+  // Pagination & Scroll Handler
+  const changePage = (newPage: number) => {
+    setCurrentPage(newPage);
+    // Smooth scroll to the top of the dashboard content
+    setTimeout(() => {
+      dashboardTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
+
+  // Product Handlers
   const addVariant = () => setFormData({ ...formData, variants: [...formData.variants, { name: "", price: "" }] });
   const removeVariant = (index: number) => { const v = [...formData.variants]; v.splice(index, 1); setFormData({...formData, variants: v}); };
   const updateVariant = (index: number, f: "name"|"price", v: string) => { const va = [...formData.variants]; va[index][f] = v; setFormData({...formData, variants: va}); };
@@ -450,15 +590,40 @@ export default function AdminDashboard() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // --- FILTER & PAGINATION LOGIC ---
   const getFilteredOrders = () => {
+    let filtered = orders;
+
+    // 1. Tab Filtering
     switch (activeTab) {
-      case "LEADS": return orders.filter((o) => o.status === "PENDING");
-      case "PENDING": return orders.filter((o) => o.status === "CONFIRMED");
-      case "ONGOING": return orders.filter((o) => ["PREPARING", "READY", "OUT_FOR_DELIVERY"].includes(o.status));
-      case "HISTORY": return orders.filter((o) => ["DELIVERED", "CANCELLED"].includes(o.status));
-      default: return [];
+      case "LEADS": filtered = orders.filter((o) => o.status === "PENDING"); break;
+      case "PENDING": filtered = orders.filter((o) => o.status === "CONFIRMED"); break;
+      case "ONGOING": filtered = orders.filter((o) => ["PREPARING", "READY", "OUT_FOR_DELIVERY"].includes(o.status)); break;
+      case "HISTORY": filtered = orders.filter((o) => ["DELIVERED", "CANCELLED"].includes(o.status)); break;
+      default: filtered = [];
     }
+
+    // 2. History Specific Filters
+    if (activeTab === "HISTORY") {
+      // Date Filter
+      if (historyDateFilter !== "ALL") {
+        const days = parseInt(historyDateFilter);
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - days);
+        filtered = filtered.filter(o => new Date(o.createdAt) >= cutoff);
+      }
+      // Status Filter
+      if (historyStatusFilter !== "ALL") {
+        filtered = filtered.filter(o => o.status === historyStatusFilter);
+      }
+    }
+
+    return filtered;
   };
+
+  const allFilteredOrders = getFilteredOrders();
+  const totalPages = Math.ceil(allFilteredOrders.length / ITEMS_PER_PAGE);
+  const paginatedOrders = allFilteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const getFilteredProducts = () => {
     if (menuFilter === "ALL") return products;
@@ -486,7 +651,7 @@ export default function AdminDashboard() {
         <button onClick={() => { fetchOrders(); fetchProducts(); }} className="p-2 bg-white rounded-full shadow text-[#D98292] hover:rotate-180 transition duration-500"><RefreshCw size={20} /></button>
       </div>
 
-      <div className="grid grid-cols-2 md:flex gap-3 mb-8">
+      <div ref={dashboardTopRef} className="grid grid-cols-2 md:flex gap-3 mb-8 scroll-mt-24">
         {[{ id: "LEADS", label: "Leads", icon: <Clock size={18} /> }, { id: "PENDING", label: "To Make", icon: <ChefHat size={18} /> }, { id: "ONGOING", label: "Ongoing", icon: <Truck size={18} /> }, { id: "HISTORY", label: "History", icon: <Package size={18} /> }, { id: "PRODUCTS", label: "Menu Editor", icon: <Plus size={18} /> }]
         .map((tab) => (
           <button
@@ -525,16 +690,48 @@ export default function AdminDashboard() {
         </div>
       ) : (
         <div className="space-y-4">
+           {/* HISTORY FILTERS */}
+           {activeTab === "HISTORY" && (
+             <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm border border-[#F2E3DB]">
+                <div className="flex items-center gap-2 text-sm font-bold text-[#8D6E63] w-full md:w-auto">
+                  <Filter size={16} /> Filters:
+                </div>
+                
+                {/* Date Filter */}
+                <select 
+                  value={historyDateFilter} 
+                  onChange={(e) => setHistoryDateFilter(e.target.value)}
+                  className="w-full md:w-auto px-4 py-2 rounded-lg border border-[#F2E3DB] text-sm text-[#4E342E] bg-[#FFF8F3] focus:outline-none"
+                >
+                  <option value="ALL">All Dates</option>
+                  <option value="7">Last 7 Days</option>
+                  <option value="15">Last 15 Days</option>
+                  <option value="30">Last 30 Days</option>
+                </select>
+
+                {/* Status Filter */}
+                <select 
+                  value={historyStatusFilter} 
+                  onChange={(e) => setHistoryStatusFilter(e.target.value)}
+                  className="w-full md:w-auto px-4 py-2 rounded-lg border border-[#F2E3DB] text-sm text-[#4E342E] bg-[#FFF8F3] focus:outline-none"
+                >
+                  <option value="ALL">All Status</option>
+                  <option value="DELIVERED">Delivered</option>
+                  <option value="CANCELLED">Rejected</option>
+                </select>
+             </div>
+           )}
+
            {loading ? <p className="text-center text-[#8D6E63] animate-pulse">Loading orders...</p> : 
-           getFilteredOrders().length === 0 ? <div className="text-center py-12 bg-white/50 rounded-2xl border border-[#F2E3DB] border-dashed"><p className="text-[#8D6E63]">No orders here.</p></div> : 
-           getFilteredOrders().map((order) => (
+           paginatedOrders.length === 0 ? <div className="text-center py-12 bg-white/50 rounded-2xl border border-[#F2E3DB] border-dashed"><p className="text-[#8D6E63]">No orders found.</p></div> : 
+           paginatedOrders.map((order) => (
               <div key={order._id} className="bg-white p-5 rounded-2xl shadow-sm border border-[#F2E3DB] flex flex-col md:flex-row justify-between gap-6 relative overflow-hidden">
-                {/* 1. Date (Top Right) */}
+                {/* Date Badge */}
                 <div className="absolute top-0 right-0 bg-[#FFF8F3] px-4 py-1.5 rounded-bl-xl border-b border-l border-[#F2E3DB] text-xs text-[#8D6E63] font-medium flex items-center gap-1.5 opacity-80">
                    <Clock size={10} /> {formatDate(order.createdAt)}
                 </div>
 
-                {/* 2. Order ID (Bottom Right - Fixed Position) */}
+                {/* Order ID Badge */}
                 <div className="absolute bottom-0 right-0 bg-[#FFF8F3] px-4 py-1.5 rounded-tl-xl border-t border-l border-[#F2E3DB] text-xs text-[#8D6E63] font-bold">
                    ID: #{order._id.slice(-6).toUpperCase()}
                 </div>
@@ -551,7 +748,7 @@ export default function AdminDashboard() {
                     </span>
                   </div>
                   
-                  {/* Contact Info */}
+                  {/* Contact Details */}
                   <div className="flex flex-col gap-2 mb-4 text-sm text-[#8D6E63]">
                      <div className="flex items-start gap-2">
                        <MapPin size={16} className="mt-0.5 text-[#D98292] shrink-0" />
@@ -570,7 +767,7 @@ export default function AdminDashboard() {
                      </div>
                   </div>
                   
-                  {/* Items + Delivery Fee */}
+                  {/* Items */}
                   <div className="space-y-1 mb-4">
                     {order.items.map((item, idx) => (
                       <div key={idx} className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1">
@@ -584,7 +781,7 @@ export default function AdminDashboard() {
                       </div>
                     ))}
                     
-                    {/* Delivery Fee - Aligned with items */}
+                    {/* Delivery Fee */}
                     <div className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1">
                        <span className="font-bold">Delivery Fee</span>
                        <span className="font-bold">₹{order.deliveryCharge || 0}</span>
@@ -594,7 +791,7 @@ export default function AdminDashboard() {
                   <p className="font-bold text-[#4E342E] text-lg">Bill: ₹{order.totalAmount}</p>
                 </div>
                 
-                {/* Actions (Added Padding Bottom to avoid overlap with Order ID badge) */}
+                {/* Actions */}
                 <div className="flex flex-col gap-2 justify-center min-w-[180px] pt-4 md:pt-0 pb-8">
                   {activeTab === "LEADS" && (<><button onClick={() => updateStatus(order._id, "CONFIRMED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Accept</button><button onClick={() => updateStatus(order._id, "CANCELLED")} className="w-full py-2 text-red-400 text-xs underline">Reject</button></>)}
                   {activeTab === "PENDING" && (<><button onClick={() => updateStatus(order._id, "PREPARING")} className="w-full py-2 bg-orange-100 text-orange-700 rounded-lg font-bold text-sm flex justify-center gap-2"><ChefHat size={16}/> Bake</button><button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}
@@ -603,6 +800,29 @@ export default function AdminDashboard() {
                 </div>
               </div>
            ))}
+
+           {/* PAGINATION CONTROLS */}
+           {totalPages > 1 && (
+             <div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t border-[#F2E3DB] border-dashed">
+               <button 
+                 onClick={() => changePage(Math.max(1, currentPage - 1))}
+                 disabled={currentPage === 1}
+                 className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"
+               >
+                 <ChevronLeft size={20} />
+               </button>
+               <span className="text-sm font-bold text-[#8D6E63]">
+                 Page {currentPage} of {totalPages}
+               </span>
+               <button 
+                 onClick={() => changePage(Math.min(totalPages, currentPage + 1))}
+                 disabled={currentPage === totalPages}
+                 className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"
+               >
+                 <ChevronRight size={20} />
+               </button>
+             </div>
+           )}
         </div>
       )}
     </div>
