@@ -1,24 +1,33 @@
 // import { NextResponse } from "next/server";
 // import { getServerSession } from "next-auth";
-// import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+// import { authOptions } from "@/lib/auth"; // FIX: Import from lib/auth
 // import connectDB from "@/lib/db";
 // import User from "@/lib/models/User";
+// import OrderIntent from "@/lib/models/OrderIntent";
 
 // export async function PUT(req: Request) {
 //   const session = await getServerSession(authOptions);
-  
-//   // Security Check: Is user logged in?
 //   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
 //   try {
 //     const { name, phone } = await req.json();
 //     await connectDB();
 
-//     // Update the user found by the session email
+//     // 1. Update the User Profile
 //     const updatedUser = await User.findOneAndUpdate(
 //       { email: session.user?.email },
 //       { name, phone },
-//       { new: true } // Return the updated document
+//       { new: true }
+//     );
+
+//     // 2. SYNC FIX: Update ALL past orders to match the new Name/Phone
+//     // This ensures the Admin Dashboard always sees the latest details
+//     await OrderIntent.updateMany(
+//       { email: session.user?.email },
+//       { 
+//         customerName: name,
+//         phone: phone
+//       }
 //     );
 
 //     return NextResponse.json({ success: true, user: updatedUser });
@@ -36,10 +45,10 @@
 
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth"; // FIX: Import from lib/auth
 import connectDB from "@/lib/db";
 import User from "@/lib/models/User";
-import OrderIntent from "@/lib/models/OrderIntent"; // Import Order Model
+import OrderIntent from "@/lib/models/OrderIntent";
 
 export async function PUT(req: Request) {
   const session = await getServerSession(authOptions);
@@ -58,13 +67,15 @@ export async function PUT(req: Request) {
 
     // 2. SYNC FIX: Update ALL past orders to match the new Name/Phone
     // This ensures the Admin Dashboard always sees the latest details
-    await OrderIntent.updateMany(
-      { email: session.user?.email },
-      { 
-        customerName: name,
-        phone: phone
-      }
-    );
+    if (updatedUser) {
+        await OrderIntent.updateMany(
+          { email: session.user?.email },
+          { 
+            customerName: name,
+            phone: phone
+          }
+        );
+    }
 
     return NextResponse.json({ success: true, user: updatedUser });
   } catch (error) {
