@@ -1,8 +1,8 @@
 // "use client";
 
 // import { useState, useEffect, useRef } from "react";
-// import {
-//   RefreshCw, ChefHat, Truck, Package, Clock, Plus, Trash2, Edit2,
+// import { 
+//   RefreshCw, ChefHat, Truck, Package, Clock, Plus, Trash2, Edit2, 
 //   Image as ImageIcon, RotateCcw, X, AlertTriangle, MapPin, Phone, Mail,
 //   ChevronLeft, ChevronRight, Filter, Calendar, Info
 // } from "lucide-react";
@@ -27,7 +27,7 @@
 //   address: string;
 //   items: OrderItem[];
 //   createdAt: string;
-//   notes?: string; // Must be here to be read
+//   notes?: string; 
 // };
 
 // type Variant = { name: string; price: number };
@@ -50,7 +50,7 @@
 //   const [products, setProducts] = useState<Product[]>([]);
 //   const [loading, setLoading] = useState(false);
 //   const [menuFilter, setMenuFilter] = useState("ALL");
-//   const [historyDateFilter, setHistoryDateFilter] = useState("ALL");
+//   const [historyDateFilter, setHistoryDateFilter] = useState("ALL"); 
 //   const [historyStatusFilter, setHistoryStatusFilter] = useState("ALL");
 //   const [currentPage, setCurrentPage] = useState(1);
 //   const dashboardTopRef = useRef<HTMLDivElement>(null);
@@ -116,6 +116,7 @@
 //     const data = new FormData();
 //     data.append("name", formData.name); data.append("category", formData.category); data.append("description", formData.description);
 //     if(formData.image) data.append("image", formData.image);
+    
 //     if (formData.hasVariants) {
 //       const valid = formData.variants.filter(v => v.name && v.price).map(v => ({ name: v.name, price: parseFloat(v.price) }));
 //       if(!valid.length) { showToast("Add a size", "error"); setIsUploading(false); return; }
@@ -124,8 +125,10 @@
 //       if(!formData.basePrice) { showToast("Price required", "error"); setIsUploading(false); return; }
 //       data.append("price", formData.basePrice); data.append("variants", "[]");
 //     }
+
 //     const method = editingId ? "PUT" : "POST";
 //     if (editingId) data.append("id", editingId);
+
 //     try {
 //       const res = await fetch("/api/admin/products", { method, body: data });
 //       if(res.ok) { showToast(editingId ? "Updated!" : "Added!", "success"); setFormData({name:"", category:"CAKE", description:"", image:null, hasVariants:false, basePrice:"", variants:[]}); setEditingId(null); fetchProducts(); }
@@ -187,8 +190,8 @@
 //       ) : (
 //         <div className="space-y-4">
 //            {activeTab === "HISTORY" && (<div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm border border-[#F2E3DB]"><div className="flex items-center gap-2 text-sm font-bold text-[#8D6E63] w-full md:w-auto"><Filter size={16} /> Filters:</div><select value={historyDateFilter} onChange={(e) => setHistoryDateFilter(e.target.value)} className="w-full md:w-auto px-4 py-2 rounded-lg border border-[#F2E3DB] text-sm text-[#4E342E] bg-[#FFF8F3] focus:outline-none"><option value="ALL">All Dates</option><option value="7">Last 7 Days</option><option value="15">Last 15 Days</option><option value="30">Last 30 Days</option></select><select value={historyStatusFilter} onChange={(e) => setHistoryStatusFilter(e.target.value)} className="w-full md:w-auto px-4 py-2 rounded-lg border border-[#F2E3DB] text-sm text-[#4E342E] bg-[#FFF8F3] focus:outline-none"><option value="ALL">All Status</option><option value="DELIVERED">Delivered</option><option value="CANCELLED">Rejected</option></select></div>)}
-//            {loading ? <p className="text-center text-[#8D6E63] animate-pulse">Loading orders...</p> :
-//            paginatedOrders.length === 0 ? <div className="text-center py-12 bg-white/50 rounded-2xl border border-[#F2E3DB] border-dashed"><p className="text-[#8D6E63]">No orders found.</p></div> :
+//            {loading ? <p className="text-center text-[#8D6E63] animate-pulse">Loading orders...</p> : 
+//            paginatedOrders.length === 0 ? <div className="text-center py-12 bg-white/50 rounded-2xl border border-[#F2E3DB] border-dashed"><p className="text-[#8D6E63]">No orders found.</p></div> : 
 //            paginatedOrders.map((order) => (
 //               <div key={order._id} className="bg-white p-5 rounded-2xl shadow-sm border border-[#F2E3DB] flex flex-col md:flex-row justify-between gap-6 relative overflow-hidden">
 //                 <div className="absolute top-0 right-0 bg-[#FFF8F3] px-4 py-1.5 rounded-bl-xl border-b border-l border-[#F2E3DB] text-xs text-[#8D6E63] font-medium flex items-center gap-1.5 opacity-80"><Clock size={10} /> {formatDate(order.createdAt)}</div>
@@ -196,12 +199,15 @@
 //                 <div className="flex-1 mt-6 md:mt-0">
 //                   <div className="flex items-center gap-3 mb-2"><h3 className="font-bold text-[#4E342E] text-lg">{order.customerName}</h3><span className={`px-3 py-1 text-xs font-bold rounded-full border ${order.status === 'CANCELLED' ? 'bg-red-50 text-red-500 border-red-100' : order.status === 'DELIVERED' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-[#FFF8F3] text-[#D98292] border-[#D98292]/20'}`}>{order.status}</span></div>
 //                   <div className="flex flex-col gap-2 mb-4 text-sm text-[#8D6E63]"><div className="flex items-start gap-2"><MapPin size={16} className="mt-0.5 text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Address:</span><span className="flex-1">{order.address}</span></div><div className="flex items-center gap-2"><Mail size={16} className="text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Email:</span><span>{order.email || "N/A"}</span></div><div className="flex items-center gap-2"><Phone size={16} className="text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Phone:</span><span>{order.phone || "N/A"}</span></div>
-
-//                   {/* NEW: Note Display */}
+                  
+//                   {/* NOTE SECTION: Constrained Width to 45% on Desktop */}
 //                   {order.notes && (
-//                     <div className="mt-2 flex items-start gap-2 bg-[#FFF8F3] p-2 rounded-lg border border-[#F2E3DB]/50">
+//                     <div className="mt-2 flex items-start gap-2 bg-[#FFF8F3] p-2 rounded-lg border border-[#F2E3DB]/50 w-full md:max-w-[45%]">
 //                       <Info size={16} className="mt-0.5 text-[#D98292] shrink-0" />
-//                       <div><span className="block text-xs font-bold text-[#4E342E] uppercase tracking-wider">Note from User:</span><span className="text-xs text-[#8D6E63] italic">{order.notes}</span></div>
+//                       <div className="min-w-0 flex-1">
+//                         <span className="block text-xs font-bold text-[#4E342E] uppercase tracking-wider">Note from User:</span>
+//                         <span className="text-xs text-[#8D6E63] italic break-words whitespace-pre-wrap">{order.notes}</span>
+//                       </div>
 //                     </div>
 //                   )}
 //                   </div>
@@ -223,16 +229,13 @@
 
 
 
-
-
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
 import { 
   RefreshCw, ChefHat, Truck, Package, Clock, Plus, Trash2, Edit2, 
   Image as ImageIcon, RotateCcw, X, AlertTriangle, MapPin, Phone, Mail,
-  ChevronLeft, ChevronRight, Filter, Calendar, Info
+  ChevronLeft, ChevronRight, Filter, Calendar, Info, Check
 } from "lucide-react";
 import { Toast } from "@/components/ui/Toast";
 
@@ -291,6 +294,10 @@ export default function AdminDashboard() {
     hasVariants: false, basePrice: "", variants: [] as { name: string; price: string }[]
   });
 
+  // Price Editing State
+  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
+  const [newPriceValue, setNewPriceValue] = useState("");
+
   const fetchOrders = async () => {
     setLoading(true);
     try {
@@ -322,6 +329,25 @@ export default function AdminDashboard() {
       });
       if (res.ok) { fetchOrders(); showToast(`Order updated: ${newStatus}`, "success"); }
     } catch (error) { showToast("Failed to update", "error"); }
+  };
+
+  // NEW: Update Price Function
+  const updatePrice = async (orderId: string) => {
+    if (!newPriceValue) return;
+    try {
+      const res = await fetch("/api/admin/update-price", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, newPrice: newPriceValue }),
+      });
+      if (res.ok) { 
+        fetchOrders(); 
+        showToast("Price updated!", "success"); 
+        setEditingPriceId(null);
+      } else {
+        showToast("Failed to update price", "error");
+      }
+    } catch (error) { showToast("Server error", "error"); }
   };
 
   const formatDate = (dateString: string) => {
@@ -427,19 +453,46 @@ export default function AdminDashboard() {
                 <div className="flex-1 mt-6 md:mt-0">
                   <div className="flex items-center gap-3 mb-2"><h3 className="font-bold text-[#4E342E] text-lg">{order.customerName}</h3><span className={`px-3 py-1 text-xs font-bold rounded-full border ${order.status === 'CANCELLED' ? 'bg-red-50 text-red-500 border-red-100' : order.status === 'DELIVERED' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-[#FFF8F3] text-[#D98292] border-[#D98292]/20'}`}>{order.status}</span></div>
                   <div className="flex flex-col gap-2 mb-4 text-sm text-[#8D6E63]"><div className="flex items-start gap-2"><MapPin size={16} className="mt-0.5 text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Address:</span><span className="flex-1">{order.address}</span></div><div className="flex items-center gap-2"><Mail size={16} className="text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Email:</span><span>{order.email || "N/A"}</span></div><div className="flex items-center gap-2"><Phone size={16} className="text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Phone:</span><span>{order.phone || "N/A"}</span></div>
-                  
-                  {/* NOTE SECTION: Constrained Width to 45% on Desktop */}
-                  {order.notes && (
-                    <div className="mt-2 flex items-start gap-2 bg-[#FFF8F3] p-2 rounded-lg border border-[#F2E3DB]/50 w-full md:max-w-[45%]">
-                      <Info size={16} className="mt-0.5 text-[#D98292] shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <span className="block text-xs font-bold text-[#4E342E] uppercase tracking-wider">Note from User:</span>
-                        <span className="text-xs text-[#8D6E63] italic break-words whitespace-pre-wrap">{order.notes}</span>
-                      </div>
-                    </div>
-                  )}
+                  {order.notes && (<div className="mt-2 flex items-start gap-2 bg-[#FFF8F3] p-2 rounded-lg border border-[#F2E3DB]/50 w-full md:max-w-[45%]"><Info size={16} className="mt-0.5 text-[#D98292] shrink-0" /><div className="min-w-0 flex-1"><span className="block text-xs font-bold text-[#4E342E] uppercase tracking-wider">Note from User:</span><span className="text-xs text-[#8D6E63] italic break-words whitespace-pre-wrap">{order.notes}</span></div></div>)}
                   </div>
-                  <div className="space-y-1 mb-4">{order.items.map((item, idx) => (<div key={idx} className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1"><span><span className="font-bold">{item.quantity} x</span> {item.name} {item.variant && <span className="text-[#8D6E63] text-xs"> ({item.variant})</span>}</span><span className="font-bold text-[#4E342E]">{item.price ? `₹${item.price * item.quantity}` : ''}</span></div>))}<div className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1"><span className="font-bold">Delivery Fee</span><span className="font-bold">₹{order.deliveryCharge || 0}</span></div></div><p className="font-bold text-[#4E342E] text-lg">Bill: ₹{order.totalAmount}</p>
+                  <div className="space-y-1 mb-4">{order.items.map((item, idx) => (<div key={idx} className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1"><span><span className="font-bold">{item.quantity} x</span> {item.name} {item.variant && <span className="text-[#8D6E63] text-xs"> ({item.variant})</span>}</span><span className="font-bold text-[#4E342E]">{item.price ? `₹${item.price * item.quantity}` : ''}</span></div>))}<div className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1"><span className="font-bold">Delivery Fee</span><span className="font-bold">₹{order.deliveryCharge || 0}</span></div></div>
+                  
+                  {/* EDITABLE BILL AMOUNT: Shows Cake Price in input, displays Total Bill when saved */}
+                  <div className="flex items-center gap-3">
+                    <p className="font-bold text-[#4E342E] text-lg">Bill: 
+                      {editingPriceId === order._id ? (
+                        <span className="inline-flex items-center gap-1 ml-2">
+                          <input 
+                            type="number" 
+                            value={newPriceValue} 
+                            onChange={(e) => setNewPriceValue(e.target.value)} 
+                            className="w-24 p-1 text-sm border border-[#D98292] rounded focus:outline-none"
+                            autoFocus
+                            placeholder="Cake Price"
+                          />
+                          <button onClick={() => updatePrice(order._id)} className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200"><Check size={16} /></button>
+                          <button onClick={() => setEditingPriceId(null)} className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200"><X size={16} /></button>
+                          <span className="text-xs text-[#8D6E63] ml-1 whitespace-nowrap">(+ ₹{order.deliveryCharge || 0} delivery)</span>
+                        </span>
+                      ) : (
+                        <span> ₹{order.totalAmount}</span>
+                      )}
+                    </p>
+                    {activeTab !== "HISTORY" && editingPriceId !== order._id && (
+                      <button 
+                        onClick={() => { 
+                          setEditingPriceId(order._id); 
+                          // PRE-FILL with CAKE PRICE (Total - Delivery) so admin edits item cost
+                          setNewPriceValue((order.totalAmount - (order.deliveryCharge || 0)).toString()); 
+                        }} 
+                        className="text-[#D98292] hover:text-[#b0606f] p-1 rounded-full hover:bg-[#FFF8F3]" 
+                        title="Edit Cake Price"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                    )}
+                  </div>
+
                 </div>
                 <div className="flex flex-col gap-2 justify-center min-w-[180px] pt-4 md:pt-0 pb-8">{activeTab === "LEADS" && (<><button onClick={() => updateStatus(order._id, "CONFIRMED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Accept</button><button onClick={() => updateStatus(order._id, "CANCELLED")} className="w-full py-2 text-red-400 text-xs underline">Reject</button></>)}{activeTab === "PENDING" && (<><button onClick={() => updateStatus(order._id, "PREPARING")} className="w-full py-2 bg-orange-100 text-orange-700 rounded-lg font-bold text-sm flex justify-center gap-2"><ChefHat size={16}/> Bake</button><button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "ONGOING" && (<>{order.status === "PREPARING" && <button onClick={() => updateStatus(order._id, "READY")} className="w-full py-2 bg-yellow-100 text-yellow-700 rounded-lg font-bold text-sm">Mark Ready</button>}{order.status === "READY" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="w-full py-2 bg-blue-100 text-blue-700 rounded-lg font-bold text-sm">Dispatch</button>}{order.status === "OUT_FOR_DELIVERY" && <button onClick={() => updateStatus(order._id, "DELIVERED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Delivered</button>}<button onClick={() => {if(order.status === "PREPARING") updateStatus(order._id, "CONFIRMED");if(order.status === "READY") updateStatus(order._id, "PREPARING");if(order.status === "OUT_FOR_DELIVERY") updateStatus(order._id, "READY");}} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "HISTORY" && (<>{order.status === "DELIVERED" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="flex items-center justify-center gap-1 text-xs text-red-400 py-1"><RotateCcw size={12}/> Not Delivered</button>}{order.status === "CANCELLED" && <button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Re-open</button>}</>)}</div>
               </div>
