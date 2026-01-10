@@ -2,27 +2,25 @@
 
 // const ProductSchema = new Schema({
 //   name: { type: String, required: true },
-//   description: { type: String }, // Made optional as not all PDF items have descriptions
+//   description: { type: String }, 
 //   category: { 
 //     type: String, 
-//     enum: ["CAKE", "CHOCOLATE", "JAR", "GIFT_BOX"], 
+//     // ENUM FIX: Includes "CUSTOM" to prevent crashes
+//     enum: ["CAKE", "CHOCOLATE", "JAR", "GIFT_BOX", "CUSTOM"], 
 //     required: true 
 //   },
-//   images: [{ type: String }], // Array of image URLs
+//   images: [{ type: String }], 
   
-//   // Tags for filtering (e.g., "Birthday", "Anniversary", "Eggless", "Best Seller")
 //   tags: [{ type: String }], 
   
 //   isBestSeller: { type: Boolean, default: false },
 //   isSeasonal: { type: Boolean, default: false },
   
-//   // Pricing Strategy
-//   // For items with a single price (like Jars), use basePrice.
-//   // For items with sizes (Cakes, Chocolates), use variants.
-//   basePrice: { type: Number }, 
+//   // PRICING FIX: Matches your frontend logic
+//   basePrice: { type: Number, default: 0 }, 
 //   variants: [
 //     {
-//       name: { type: String }, // e.g., "0.5kg", "1kg", "Bar", "Mini", "10pcs"
+//       name: { type: String }, 
 //       price: { type: Number },
 //     }
 //   ],
@@ -39,25 +37,30 @@
 
 
 
+
+
 import mongoose, { Schema, model, models } from "mongoose";
+
+const ReviewSchema = new Schema({
+  user: { type: String, required: true }, // Stores customer name
+  rating: { type: Number, required: true, min: 1, max: 5 },
+  comment: { type: String, required: true },
+  date: { type: Date, default: Date.now },
+});
 
 const ProductSchema = new Schema({
   name: { type: String, required: true },
-  description: { type: String }, 
+  description: { type: String, default: "A delicious homemade treat made with premium ingredients." }, // Added Description
   category: { 
     type: String, 
-    // ENUM FIX: Includes "CUSTOM" to prevent crashes
     enum: ["CAKE", "CHOCOLATE", "JAR", "GIFT_BOX", "CUSTOM"], 
     required: true 
   },
   images: [{ type: String }], 
-  
   tags: [{ type: String }], 
-  
   isBestSeller: { type: Boolean, default: false },
   isSeasonal: { type: Boolean, default: false },
   
-  // PRICING FIX: Matches your frontend logic
   basePrice: { type: Number, default: 0 }, 
   variants: [
     {
@@ -66,8 +69,11 @@ const ProductSchema = new Schema({
     }
   ],
   
-  rating: { type: Number, default: 5 },
+  // Rating System
+  reviews: [ReviewSchema], // Array of review objects
+  averageRating: { type: Number, default: 0 },
   reviewsCount: { type: Number, default: 0 },
+  
   isVisible: { type: Boolean, default: true },
 }, { timestamps: true });
 
