@@ -1,22 +1,25 @@
 // import mongoose, { Schema, model, models } from "mongoose";
 
+// const ReviewSchema = new Schema({
+//   user: { type: String, required: true }, // Stores customer name
+//   rating: { type: Number, required: true, min: 1, max: 5 },
+//   comment: { type: String, required: true },
+//   date: { type: Date, default: Date.now },
+// });
+
 // const ProductSchema = new Schema({
 //   name: { type: String, required: true },
-//   description: { type: String }, 
+//   description: { type: String, default: "A delicious homemade treat made with premium ingredients." }, // Added Description
 //   category: { 
 //     type: String, 
-//     // ENUM FIX: Includes "CUSTOM" to prevent crashes
 //     enum: ["CAKE", "CHOCOLATE", "JAR", "GIFT_BOX", "CUSTOM"], 
 //     required: true 
 //   },
 //   images: [{ type: String }], 
-  
 //   tags: [{ type: String }], 
-  
 //   isBestSeller: { type: Boolean, default: false },
 //   isSeasonal: { type: Boolean, default: false },
   
-//   // PRICING FIX: Matches your frontend logic
 //   basePrice: { type: Number, default: 0 }, 
 //   variants: [
 //     {
@@ -25,8 +28,11 @@
 //     }
 //   ],
   
-//   rating: { type: Number, default: 5 },
+//   // Rating System
+//   reviews: [ReviewSchema], // Array of review objects
+//   averageRating: { type: Number, default: 0 },
 //   reviewsCount: { type: Number, default: 0 },
+  
 //   isVisible: { type: Boolean, default: true },
 // }, { timestamps: true });
 
@@ -38,11 +44,12 @@
 
 
 
-
 import mongoose, { Schema, model, models } from "mongoose";
 
 const ReviewSchema = new Schema({
-  user: { type: String, required: true }, // Stores customer name
+  user: { type: String, required: true }, 
+  // FIX: Set to false so old reviews without emails don't cause crashes
+  userEmail: { type: String, required: false }, 
   rating: { type: Number, required: true, min: 1, max: 5 },
   comment: { type: String, required: true },
   date: { type: Date, default: Date.now },
@@ -50,7 +57,7 @@ const ReviewSchema = new Schema({
 
 const ProductSchema = new Schema({
   name: { type: String, required: true },
-  description: { type: String, default: "A delicious homemade treat made with premium ingredients." }, // Added Description
+  description: { type: String, default: "A delicious homemade treat made with premium ingredients." },
   category: { 
     type: String, 
     enum: ["CAKE", "CHOCOLATE", "JAR", "GIFT_BOX", "CUSTOM"], 
@@ -70,7 +77,7 @@ const ProductSchema = new Schema({
   ],
   
   // Rating System
-  reviews: [ReviewSchema], // Array of review objects
+  reviews: [ReviewSchema], 
   averageRating: { type: Number, default: 0 },
   reviewsCount: { type: Number, default: 0 },
   
