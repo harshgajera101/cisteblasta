@@ -6,6 +6,7 @@
 // import Link from "next/link";
 // import { Filter, ArrowDownUp, X, RefreshCw, Search } from "lucide-react"; 
 
+// // Updated Interface to match Schema
 // interface ProductType {
 //   _id: string;
 //   name: string;
@@ -13,8 +14,8 @@
 //   category: string;
 //   variants?: { name: string; price: number }[];
 //   description?: string;
-//   tags?: string[]; // Added tags to interface
-//   isBestSeller?: boolean;
+//   tags?: string[]; // Using the existing tags field
+//   isBestSeller?: boolean; // Using the existing bestSeller field
 //   averageRating?: number; 
 //   createdAt?: string;     
 // }
@@ -25,8 +26,8 @@
 //   const [products, setProducts] = useState<ProductType[]>([]);
 //   const [loading, setLoading] = useState(true);
   
-//   // --- SEARCH & FILTER STATES ---
-//   const [searchQuery, setSearchQuery] = useState(""); // NEW: Search State
+//   // --- FILTER & SEARCH STATES ---
+//   const [searchQuery, setSearchQuery] = useState(""); // Search State
 //   const [activeCategory, setActiveCategory] = useState("All");
 //   const [priceFilter, setPriceFilter] = useState("ALL");
 //   const [weightFilter, setWeightFilter] = useState("ALL");
@@ -52,18 +53,18 @@
 //     fetchProducts();
 //   }, []);
 
-//   // 2. Visual Feedback Effect (Simulate Loading on Filter/Search Change)
+//   // 2. Visual Feedback Effect
 //   useEffect(() => {
 //     if (!loading) {
 //       setIsFiltering(true);
 //       const timer = setTimeout(() => {
 //         setIsFiltering(false);
-//       }, 300); // Increased slightly to 300ms for better "search" feel
+//       }, 300); // 300ms delay for visual feedback
 //       return () => clearTimeout(timer);
 //     }
 //   }, [searchQuery, activeCategory, priceFilter, weightFilter, flavorFilter, sortOption]);
 
-//   // --- HELPER: Check if any filter is active ---
+//   // --- HELPER: Check if any filter/search is active ---
 //   const isAnyFilterActive = 
 //     searchQuery !== "" ||
 //     activeCategory !== "All" || 
@@ -84,25 +85,32 @@
 //   // --- FILTERING LOGIC ---
 //   const filteredProducts = products
 //     .filter((product) => {
-//       // 0. SEARCH BAR LOGIC (The "Smart" Search)
+//       // 0. SMART SEARCH LOGIC
 //       if (searchQuery) {
-//         const query = searchQuery.toLowerCase();
+//         const query = searchQuery.toLowerCase().trim();
         
+//         // A. Keyword Search: "Best" or "Trending"
+//         if ((query === "best" || query === "best seller" || query === "trending") && product.isBestSeller) {
+//            return true; 
+//         }
+
+//         // B. Standard Fields Search
 //         const matchesName = product.name.toLowerCase().includes(query);
 //         const matchesDesc = product.description?.toLowerCase().includes(query);
 //         const matchesCategory = product.category.toLowerCase().includes(query);
         
-//         // Search inside Variants (e.g. User types "1kg")
+//         // C. Variants Search (e.g. "1kg")
 //         const matchesVariant = product.variants?.some(v => 
 //           v.name.toLowerCase().includes(query) || v.price.toString().includes(query)
 //         );
 
-//         // Search inside Tags (Occasion) - Safely checks if tags exist
+//         // D. Tags Search (Occasion) - Checks database tags
 //         const matchesTag = product.tags?.some(tag => tag.toLowerCase().includes(query));
 
-//         // Search by Price (e.g. User types "500")
+//         // E. Price Search (e.g. "500")
 //         const matchesPrice = product.basePrice.toString().includes(query);
 
+//         // If NONE match, exclude product
 //         if (!matchesName && !matchesDesc && !matchesCategory && !matchesVariant && !matchesPrice && !matchesTag) {
 //           return false;
 //         }
@@ -116,7 +124,7 @@
 //       if (priceFilter === "500_1000" && (product.basePrice < 500 || product.basePrice > 1000)) return false;
 //       if (priceFilter === "ABOVE_1000" && product.basePrice <= 1000) return false;
 
-//       // 3. Weight Filter (Checks Variants)
+//       // 3. Weight Filter
 //       if (weightFilter !== "ALL") {
 //         const hasVariant = product.variants?.some((v) => 
 //           v.name.toLowerCase().includes(weightFilter.toLowerCase())
@@ -124,7 +132,7 @@
 //         if (!hasVariant) return false;
 //       }
 
-//       // 4. Flavor Filter (Checks Name)
+//       // 4. Flavor Filter
 //       if (flavorFilter !== "ALL") {
 //         if (!product.name.toLowerCase().includes(flavorFilter.toLowerCase())) return false;
 //       }
@@ -158,21 +166,22 @@
 //         </p>
 //       </div>
 
-//       {/* --- NEW SEARCH BAR --- */}
-//       <div className="max-w-md mx-auto mb-8 relative">
+//       {/* --- SMART SEARCH BAR (Added Here) --- */}
+//       <div className="max-w-md mx-auto mb-8 relative z-20">
 //         <div className="relative group">
 //           <input 
 //             type="text" 
-//             placeholder="Search cakes, flavors, occasions..." 
+//             placeholder="Search 'Birthday', 'Truffle', '1kg'..." 
 //             value={searchQuery}
 //             onChange={(e) => setSearchQuery(e.target.value)}
-//             className="w-full pl-12 pr-4 py-3 rounded-full border border-[#F2E3DB] bg-white text-[#4E342E] shadow-sm focus:outline-none focus:border-[#D98292] focus:ring-2 focus:ring-[#D98292]/20 transition-all placeholder:text-[#8D6E63]/60"
+//             className="w-full pl-12 pr-10 py-3 rounded-full border border-[#F2E3DB] bg-white text-[#4E342E] shadow-sm focus:outline-none focus:border-[#D98292] focus:ring-2 focus:ring-[#D98292]/20 transition-all placeholder:text-[#8D6E63]/60 font-medium"
 //           />
 //           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8D6E63] group-focus-within:text-[#D98292] transition-colors" size={20} />
+          
 //           {searchQuery && (
 //             <button 
 //               onClick={() => setSearchQuery("")}
-//               className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8D6E63] hover:text-[#D98292] p-1 rounded-full hover:bg-[#FFF8F3] transition-colors"
+//               className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8D6E63] hover:text-[#D98292] p-1.5 rounded-full hover:bg-[#FFF8F3] transition-colors"
 //             >
 //               <X size={16} />
 //             </button>
@@ -242,7 +251,7 @@
 //             <option value="Truffle">Truffle</option>
 //           </select>
 
-//           {/* CLEAR FILTER BUTTON (Conditionally Rendered) */}
+//           {/* CLEAR FILTER BUTTON */}
 //           <AnimatePresence>
 //             {isAnyFilterActive && (
 //               <motion.button
@@ -277,7 +286,7 @@
 
 //       {/* Product Display Area */}
 //       {loading || isFiltering ? (
-//         // LOADING STATE (Also shown during filter interaction)
+//         // LOADING STATE
 //         <div className="flex flex-col justify-center items-center py-20 min-h-[400px]">
 //           <motion.div 
 //             animate={{ rotate: 360 }}
@@ -315,7 +324,7 @@
       
 //       {!loading && !isFiltering && filteredProducts.length === 0 && (
 //         <div className="text-center py-20 bg-white rounded-3xl border border-[#F2E3DB] border-dashed">
-//           <p className="text-xl text-[#8D6E63]">No items match your filters.</p>
+//           <p className="text-xl text-[#8D6E63]">No items match your search.</p>
 //           <button 
 //             onClick={clearFilters}
 //             className="mt-4 text-sm font-bold text-[#D98292] hover:underline"
@@ -327,10 +336,6 @@
 //     </div>
 //   );
 // }
-
-
-
-
 
 
 
@@ -359,8 +364,8 @@ interface ProductType {
   category: string;
   variants?: { name: string; price: number }[];
   description?: string;
-  tags?: string[]; // Using the existing tags field
-  isBestSeller?: boolean; // Using the existing bestSeller field
+  occasions?: string[]; // Using the correct field now
+  isBestSeller?: boolean; 
   averageRating?: number; 
   createdAt?: string;     
 }
@@ -372,7 +377,7 @@ export default function MenuPage() {
   const [loading, setLoading] = useState(true);
   
   // --- FILTER & SEARCH STATES ---
-  const [searchQuery, setSearchQuery] = useState(""); // Search State
+  const [searchQuery, setSearchQuery] = useState(""); 
   const [activeCategory, setActiveCategory] = useState("All");
   const [priceFilter, setPriceFilter] = useState("ALL");
   const [weightFilter, setWeightFilter] = useState("ALL");
@@ -404,18 +409,10 @@ export default function MenuPage() {
       setIsFiltering(true);
       const timer = setTimeout(() => {
         setIsFiltering(false);
-      }, 300); // 300ms delay for visual feedback
+      }, 300); 
       return () => clearTimeout(timer);
     }
   }, [searchQuery, activeCategory, priceFilter, weightFilter, flavorFilter, sortOption]);
-
-  // --- HELPER: Check if any filter/search is active ---
-  const isAnyFilterActive = 
-    searchQuery !== "" ||
-    activeCategory !== "All" || 
-    priceFilter !== "ALL" || 
-    weightFilter !== "ALL" || 
-    flavorFilter !== "ALL";
 
   // --- HELPER: Reset Filters ---
   const clearFilters = () => {
@@ -434,29 +431,29 @@ export default function MenuPage() {
       if (searchQuery) {
         const query = searchQuery.toLowerCase().trim();
         
-        // A. Keyword Search: "Best" or "Trending"
+        // A. Keyword Search
         if ((query === "best" || query === "best seller" || query === "trending") && product.isBestSeller) {
            return true; 
         }
 
-        // B. Standard Fields Search
+        // B. Standard Fields
         const matchesName = product.name.toLowerCase().includes(query);
         const matchesDesc = product.description?.toLowerCase().includes(query);
         const matchesCategory = product.category.toLowerCase().includes(query);
         
-        // C. Variants Search (e.g. "1kg")
+        // C. Variants
         const matchesVariant = product.variants?.some(v => 
           v.name.toLowerCase().includes(query) || v.price.toString().includes(query)
         );
 
-        // D. Tags Search (Occasion) - Checks database tags
-        const matchesTag = product.tags?.some(tag => tag.toLowerCase().includes(query));
+        // D. Occasions Search (FIXED: Checks the occasions array)
+        const matchesOccasion = product.occasions?.some(occ => occ.toLowerCase().includes(query));
 
-        // E. Price Search (e.g. "500")
+        // E. Price Search
         const matchesPrice = product.basePrice.toString().includes(query);
 
         // If NONE match, exclude product
-        if (!matchesName && !matchesDesc && !matchesCategory && !matchesVariant && !matchesPrice && !matchesTag) {
+        if (!matchesName && !matchesDesc && !matchesCategory && !matchesVariant && !matchesPrice && !matchesOccasion) {
           return false;
         }
       }
@@ -485,7 +482,6 @@ export default function MenuPage() {
       return true;
     })
     .sort((a, b) => {
-      // --- SORTING LOGIC ---
       switch (sortOption) {
         case "PRICE_LOW":
           return a.basePrice - b.basePrice;
@@ -511,7 +507,7 @@ export default function MenuPage() {
         </p>
       </div>
 
-      {/* --- SMART SEARCH BAR (Added Here) --- */}
+      {/* --- SMART SEARCH BAR --- */}
       <div className="max-w-md mx-auto mb-8 relative z-20">
         <div className="relative group">
           <input 
@@ -598,7 +594,7 @@ export default function MenuPage() {
 
           {/* CLEAR FILTER BUTTON */}
           <AnimatePresence>
-            {isAnyFilterActive && (
+            {(activeCategory !== "All" || priceFilter !== "ALL" || weightFilter !== "ALL" || flavorFilter !== "ALL" || searchQuery !== "") && (
               <motion.button
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -631,7 +627,6 @@ export default function MenuPage() {
 
       {/* Product Display Area */}
       {loading || isFiltering ? (
-        // LOADING STATE
         <div className="flex flex-col justify-center items-center py-20 min-h-[400px]">
           <motion.div 
             animate={{ rotate: 360 }}
@@ -643,7 +638,6 @@ export default function MenuPage() {
           <p className="text-[#8D6E63] font-bold animate-pulse">Curating your delights...</p>
         </div>
       ) : (
-        /* Product Grid */
         <motion.div 
           layout
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8"

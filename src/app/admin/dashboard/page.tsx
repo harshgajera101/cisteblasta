@@ -5,7 +5,7 @@
 //   RefreshCw, ChefHat, Truck, Package, Clock, Plus, Trash2, Edit2, 
 //   Image as ImageIcon, RotateCcw, X, AlertTriangle, MapPin, Phone, Mail,
 //   ChevronLeft, ChevronRight, Filter, Calendar, Info, Check, ArrowDownUp,
-//   XCircle, History
+//   XCircle, History, Gift
 // } from "lucide-react";
 // import { Toast } from "@/components/ui/Toast";
 
@@ -42,9 +42,11 @@
 //   images: string[];
 //   description?: string;
 //   variants?: Variant[];
+//   occasions?: string[]; // New Field
 // };
 
 // const ITEMS_PER_PAGE = 7;
+// const OCCASION_OPTIONS = ["Birthday", "Anniversary", "Kids", "Wedding", "Festival", "Gift"];
 
 // // Status Colors
 // const statusColors: Record<string, string> = {
@@ -66,7 +68,6 @@
 //   const [historyDateFilter, setHistoryDateFilter] = useState("ALL"); 
 //   const [historyStatusFilter, setHistoryStatusFilter] = useState("ALL");
   
-//   // Sorting State - Default is UPDATED (Latest Activity)
 //   const [sortBy, setSortBy] = useState<"UPDATED" | "CREATED">("UPDATED"); 
 
 //   const [currentPage, setCurrentPage] = useState(1);
@@ -75,9 +76,11 @@
 //   const [editingId, setEditingId] = useState<string | null>(null);
 //   const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success"|"error"|"warning" });
 //   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean, id: string | null }>({ show: false, id: null });
+  
 //   const [formData, setFormData] = useState({
 //     name: "", category: "CAKE", description: "", image: null as File | null,
-//     hasVariants: false, basePrice: "", variants: [] as { name: string; price: string }[]
+//     hasVariants: false, basePrice: "", variants: [] as { name: string; price: string }[],
+//     occasions: [] as string[]
 //   });
 
 //   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
@@ -138,7 +141,6 @@
 //     return new Date(dateString).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true });
 //   };
 
-//   // Helper to get Icon for Updated Time
 //   const getUpdateIcon = (status: string) => {
 //     if (status === "DELIVERED") return <Package size={10} />;
 //     if (status === "CANCELLED") return <XCircle size={10} />;
@@ -154,12 +156,27 @@
 //   const removeVariant = (index: number) => { const v = [...formData.variants]; v.splice(index, 1); setFormData({...formData, variants: v}); };
 //   const updateVariant = (index: number, f: "name"|"price", v: string) => { const va = [...formData.variants]; va[index][f] = v; setFormData({...formData, variants: va}); };
 
+//   // Toggle Occasion Checkbox
+//   const toggleOccasion = (occasion: string) => {
+//     setFormData(prev => {
+//       const exists = prev.occasions.includes(occasion);
+//       if (exists) {
+//         return { ...prev, occasions: prev.occasions.filter(o => o !== occasion) };
+//       } else {
+//         return { ...prev, occasions: [...prev.occasions, occasion] };
+//       }
+//     });
+//   };
+
 //   const handleProductSubmit = async (e: React.FormEvent) => {
 //     e.preventDefault();
 //     if (!formData.name) { showToast("Name required", "error"); return; }
 //     setIsUploading(true);
 //     const data = new FormData();
 //     data.append("name", formData.name); data.append("category", formData.category); data.append("description", formData.description);
+    
+//     data.append("occasions", JSON.stringify(formData.occasions));
+
 //     if(formData.image) data.append("image", formData.image);
 //     if (formData.hasVariants) {
 //       const valid = formData.variants.filter(v => v.name && v.price).map(v => ({ name: v.name, price: parseFloat(v.price) }));
@@ -173,7 +190,12 @@
 //     if (editingId) data.append("id", editingId);
 //     try {
 //       const res = await fetch("/api/admin/products", { method, body: data });
-//       if(res.ok) { showToast(editingId ? "Updated!" : "Added!", "success"); setFormData({name:"", category:"CAKE", description:"", image:null, hasVariants:false, basePrice:"", variants:[]}); setEditingId(null); fetchProducts(); }
+//       if(res.ok) { 
+//         showToast(editingId ? "Updated!" : "Added!", "success"); 
+//         setFormData({name:"", category:"CAKE", description:"", image:null, hasVariants:false, basePrice:"", variants:[], occasions:[]}); 
+//         setEditingId(null); 
+//         fetchProducts(); 
+//       }
 //       else showToast("Failed", "error");
 //     } catch(e) { showToast("Error", "error"); } finally { setIsUploading(false); }
 //   };
@@ -186,7 +208,16 @@
 
 //   const handleEditClick = (p: Product) => {
 //     setEditingId(p._id);
-//     setFormData({ name: p.name, category: p.category, description: p.description||"", image: null, hasVariants: !!(p.variants?.length), basePrice: p.basePrice?.toString()||"", variants: p.variants ? p.variants.map(v => ({name: v.name, price: v.price.toString()})) : [] });
+//     setFormData({ 
+//       name: p.name, 
+//       category: p.category, 
+//       description: p.description||"", 
+//       image: null, 
+//       hasVariants: !!(p.variants?.length), 
+//       basePrice: p.basePrice?.toString()||"", 
+//       variants: p.variants ? p.variants.map(v => ({name: v.name, price: v.price.toString()})) : [],
+//       occasions: p.occasions || []
+//     });
 //     window.scrollTo({ top: 0, behavior: 'smooth' });
 //   };
 
@@ -215,10 +246,22 @@
 //     filtered.sort((a, b) => {
 //       const dateA = new Date(sortBy === "UPDATED" ? a.updatedAt : a.createdAt).getTime();
 //       const dateB = new Date(sortBy === "UPDATED" ? b.updatedAt : b.createdAt).getTime();
-//       return dateB - dateA; // Descending (Newest first)
+//       return dateB - dateA; 
 //     });
 
 //     return filtered;
+//   };
+
+//   // Helper to calculate Price Range for display
+//   const getPriceDisplay = (p: Product) => {
+//     if (p.variants && p.variants.length > 0) {
+//       const prices = p.variants.map(v => v.price);
+//       const min = Math.min(...prices);
+//       const max = Math.max(...prices);
+//       if (min === max) return `₹${min}`;
+//       return `₹${min} - ₹${max}`;
+//     }
+//     return `₹${p.basePrice}`;
 //   };
 
 //   const allFilteredOrders = getFilteredOrders();
@@ -232,26 +275,162 @@
 //       {deleteConfirm.show && (<div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"><div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"><div className="text-center"><div className="mb-4 inline-block rounded-full bg-red-100 p-3"><AlertTriangle className="h-8 w-8 text-red-600"/></div><h3 className="mb-2 text-xl font-bold text-[#4E342E]">Delete Item?</h3><div className="grid grid-cols-2 gap-3 mt-6"><button onClick={()=>setDeleteConfirm({show:false,id:null})} className="rounded-xl border border-[#F2E3DB] py-3 font-bold text-[#8D6E63]">Cancel</button><button onClick={confirmDelete} className="rounded-xl bg-red-500 py-3 font-bold text-white">Delete</button></div></div></div></div>)}
 //       <div className="flex justify-between items-center mb-6"><h1 className="text-2xl md:text-3xl font-playfair font-bold text-[#4E342E]">Admin Dashboard</h1><button onClick={() => { fetchOrders(); fetchProducts(); }} className="p-2 bg-white rounded-full shadow text-[#D98292] hover:rotate-180 transition duration-500"><RefreshCw size={20} /></button></div>
 //       <div ref={dashboardTopRef} className="grid grid-cols-2 md:flex gap-3 mb-8 scroll-mt-24">{[{ id: "LEADS", label: "Leads", icon: <Clock size={18} /> }, { id: "PENDING", label: "To Make", icon: <ChefHat size={18} /> }, { id: "ONGOING", label: "Ongoing", icon: <Truck size={18} /> }, { id: "HISTORY", label: "History", icon: <Package size={18} /> }, { id: "PRODUCTS", label: "Menu Editor", icon: <Plus size={18} /> }].map((tab) => (<button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex flex-col md:flex-row items-center justify-center gap-2 p-3 md:px-5 rounded-xl font-bold transition-all text-sm ${tab.id === "PRODUCTS" ? "col-span-2" : ""} ${activeTab === tab.id ? "bg-[#D98292] text-white shadow-lg" : "bg-white text-[#8D6E63]"}`}>{tab.icon} <span>{tab.label}</span></button>))}</div>
+      
 //       {activeTab === "PRODUCTS" ? (
 //         <div className="grid md:grid-cols-3 gap-8">
-//            <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] md:col-span-1 h-fit md:sticky md:top-4"><h3 className="font-bold text-lg mb-4 text-[#4E342E]">{editingId ? "Edit Item" : "Add New Item"}</h3><form onSubmit={handleProductSubmit} className="space-y-4"><div className="border-2 border-dashed border-[#F2E3DB] rounded-lg p-4 text-center hover:bg-[#FFF8F3] relative cursor-pointer"><input type="file" accept="image/*" onChange={(e)=>setFormData({...formData, image:e.target.files?.[0]||null})} className="absolute inset-0 opacity-0 cursor-pointer"/><ImageIcon className="mx-auto text-[#D98292] mb-2"/><p className="text-xs text-[#8D6E63] truncate">{formData.image ? formData.image.name : "Tap to upload"}</p></div><input type="text" placeholder="Name" value={formData.name} onChange={(e)=>setFormData({...formData, name:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm"/><select value={formData.category} onChange={(e)=>setFormData({...formData, category:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm bg-white"><option value="CAKE">Cake</option><option value="CHOCOLATE">Chocolate</option><option value="JAR">Jar</option><option value="GIFT_BOX">Gift Box</option><option value="CUSTOM">Custom</option></select><div className="bg-[#FFF8F3] p-3 rounded-lg border border-[#F2E3DB]"><div className="flex items-center gap-2 mb-3"><input type="checkbox" checked={formData.hasVariants} onChange={(e)=>setFormData({...formData, hasVariants:e.target.checked})} className="w-4 h-4 text-[#D98292] rounded"/><label className="text-sm font-bold text-[#4E342E]">Variants?</label></div>{!formData.hasVariants ? <input type="number" placeholder="Price (₹)" value={formData.basePrice} onChange={(e)=>setFormData({...formData, basePrice:e.target.value})} className="w-full p-2 rounded border border-[#F2E3DB] text-sm"/> : <div className="space-y-2">{formData.variants.map((v,i)=>(<div key={i} className="flex gap-2"><input type="text" placeholder="Size" value={v.name} onChange={(e)=>updateVariant(i,"name",e.target.value)} className="w-1/2 p-2 rounded border border-[#F2E3DB] text-xs"/><input type="number" placeholder="₹" value={v.price} onChange={(e)=>updateVariant(i,"price",e.target.value)} className="w-1/3 p-2 rounded border border-[#F2E3DB] text-xs"/><button type="button" onClick={()=>removeVariant(i)} className="text-red-400"><X size={16}/></button></div>))}<button type="button" onClick={addVariant} className="text-xs font-bold text-[#D98292] mt-2 flex items-center gap-1"><Plus size={14}/> Add Size</button></div>}</div><textarea placeholder="Description" value={formData.description} onChange={(e)=>setFormData({...formData, description:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm h-20"></textarea><div className="flex gap-2"><button type="submit" disabled={isUploading} className="flex-1 py-3 bg-[#4E342E] text-white font-bold rounded-xl hover:bg-[#3d2924] disabled:opacity-50">{isUploading?"Saving...":editingId?"Update":"Add"}</button>{editingId && <button type="button" onClick={()=>{setEditingId(null); setFormData({name:"",category:"CAKE",description:"",image:null,hasVariants:false,basePrice:"",variants:[]})}} className="px-4 py-3 bg-gray-100 text-gray-500 font-bold rounded-xl">Cancel</button>}</div></form></div>
-//            <div className="md:col-span-2 space-y-4"><div className="flex justify-between items-center"><h3 className="font-bold text-lg text-[#4E342E]">Menu ({getFilteredProducts().length})</h3><div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB]">{["ALL","CAKE","CHOCOLATE","JAR"].map(c=><button key={c} onClick={()=>setMenuFilter(c)} className={`px-3 py-1 text-[10px] font-bold rounded-md transition ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63]"}`}>{c}</button>)}</div></div>{getFilteredProducts().map(p=>(<div key={p._id} className="bg-white p-4 rounded-xl border border-[#F2E3DB] flex items-center justify-between shadow-sm"><div className="flex items-center gap-4"><div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden border border-[#F2E3DB]">{p.images[0]?<img src={p.images[0]} className="w-full h-full object-cover"/>:<div className="w-full h-full flex items-center justify-center text-[#D98292]/30 font-bold">{p.name[0]}</div>}</div><div><h4 className="font-bold text-[#4E342E]">{p.name}</h4><p className="text-xs text-[#8D6E63]">{p.category} • {p.variants?.length ? `${p.variants.length} Sizes` : `₹${p.basePrice}`}</p></div></div><div className="flex gap-2"><button onClick={()=>handleEditClick(p)} className="p-2 text-blue-400 hover:bg-blue-50 rounded-lg"><Edit2 size={18}/></button><button onClick={()=>setDeleteConfirm({show:true,id:p._id})} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><Trash2 size={18}/></button></div></div>))}</div>
+           
+//            {/* LEFT: FORM */}
+//            <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] md:col-span-1 h-fit">
+//              <h3 className="font-bold text-lg mb-4 text-[#4E342E]">{editingId ? "Edit Item" : "Add New Item"}</h3>
+//              <form onSubmit={handleProductSubmit} className="space-y-4">
+               
+//                {/* Image Upload */}
+//                <div>
+//                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Product Image</label>
+//                  <div className="border-2 border-dashed border-[#F2E3DB] rounded-lg p-4 text-center hover:bg-[#FFF8F3] relative cursor-pointer">
+//                    <input type="file" accept="image/*" onChange={(e)=>setFormData({...formData, image:e.target.files?.[0]||null})} className="absolute inset-0 opacity-0 cursor-pointer"/>
+//                    <ImageIcon className="mx-auto text-[#D98292] mb-2"/>
+//                    <p className="text-xs text-[#8D6E63] truncate">{formData.image ? formData.image.name : "Tap to upload"}</p>
+//                  </div>
+//                  <p className="text-[10px] text-[#8D6E63] mt-1 text-center">Best size for image (1:1 square ratio and 1024x1024 px)</p>
+//                </div>
+
+//                {/* Name Input */}
+//                <div>
+//                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Product Name</label>
+//                  <input type="text" placeholder="e.g. Chocolate Truffle" value={formData.name} onChange={(e)=>setFormData({...formData, name:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292]"/>
+//                </div>
+
+//                {/* Category Input */}
+//                <div>
+//                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Category</label>
+//                  <select value={formData.category} onChange={(e)=>setFormData({...formData, category:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm bg-white focus:outline-none focus:border-[#D98292]">
+//                    <option value="CAKE">Cake</option>
+//                    <option value="CHOCOLATE">Chocolate</option>
+//                    <option value="JAR">Jar</option>
+//                    <option value="GIFT_BOX">Gift Box</option>
+//                    <option value="CUSTOM">Custom</option>
+//                  </select>
+//                </div>
+
+//                {/* Occasions (Clean Style) */}
+//                <div>
+//                  <label className="text-xs font-bold text-[#8D6E63] mb-2 block">Occasions</label>
+//                  <div className="grid grid-cols-2 gap-2">
+//                    {OCCASION_OPTIONS.map((occ) => (
+//                      <div key={occ} className="flex items-center gap-2">
+//                        <input 
+//                          type="checkbox" 
+//                          checked={formData.occasions.includes(occ)} 
+//                          onChange={() => toggleOccasion(occ)}
+//                          className="w-3.5 h-3.5 text-[#D98292] rounded accent-[#D98292]" 
+//                        />
+//                        <span className="text-xs text-[#4E342E]">{occ}</span>
+//                      </div>
+//                    ))}
+//                  </div>
+//                </div>
+
+//                {/* Price / Variants Section */}
+//                <div className="bg-[#FFF8F3] p-3 rounded-lg border border-[#F2E3DB]">
+//                  <div className="flex items-center gap-2 mb-3">
+//                    <input type="checkbox" checked={formData.hasVariants} onChange={(e)=>setFormData({...formData, hasVariants:e.target.checked})} className="w-4 h-4 text-[#D98292] rounded accent-[#D98292]"/>
+//                    <label className="text-sm font-bold text-[#4E342E]">Has Multiple Sizes?</label>
+//                  </div>
+                 
+//                  {!formData.hasVariants ? (
+//                    <div>
+//                      <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Base Price (₹)</label>
+//                      <input type="number" placeholder="0" value={formData.basePrice} onChange={(e)=>setFormData({...formData, basePrice:e.target.value})} className="w-full p-2 rounded border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292]"/>
+//                    </div>
+//                  ) : (
+//                    <div className="space-y-2">
+//                      <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Variants (Size & Price)</label>
+//                      {formData.variants.map((v,i)=>(
+//                        <div key={i} className="flex gap-2">
+//                          <input type="text" placeholder="Size (e.g. 1kg)" value={v.name} onChange={(e)=>updateVariant(i,"name",e.target.value)} className="w-1/2 p-2 rounded border border-[#F2E3DB] text-xs focus:outline-none focus:border-[#D98292]"/>
+//                          <input type="number" placeholder="₹ Price" value={v.price} onChange={(e)=>updateVariant(i,"price",e.target.value)} className="w-1/3 p-2 rounded border border-[#F2E3DB] text-xs focus:outline-none focus:border-[#D98292]"/>
+//                          <button type="button" onClick={()=>removeVariant(i)} className="text-red-400 hover:text-red-600"><X size={16}/></button>
+//                        </div>
+//                      ))}
+//                      <button type="button" onClick={addVariant} className="text-xs font-bold text-[#D98292] mt-2 flex items-center gap-1 hover:underline"><Plus size={14}/> Add Size</button>
+//                    </div>
+//                  )}
+//                </div>
+
+//                {/* Description Input */}
+//                <div>
+//                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Description</label>
+//                  <textarea placeholder="Describe the product..." value={formData.description} onChange={(e)=>setFormData({...formData, description:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm h-20 focus:outline-none focus:border-[#D98292]"></textarea>
+//                </div>
+
+//                <div className="flex gap-2">
+//                  <button type="submit" disabled={isUploading} className="flex-1 py-3 bg-[#4E342E] text-white font-bold rounded-xl hover:bg-[#3d2924] disabled:opacity-50 transition-colors">
+//                    {isUploading ? "Saving..." : editingId ? "Update Item" : "Add Item"}
+//                  </button>
+//                  {editingId && (
+//                    <button type="button" onClick={()=>{setEditingId(null); setFormData({name:"",category:"CAKE",description:"",image:null,hasVariants:false,basePrice:"",variants:[],occasions:[]})}} className="px-4 py-3 bg-gray-100 text-gray-500 font-bold rounded-xl hover:bg-gray-200 transition-colors">
+//                      Cancel
+//                    </button>
+//                  )}
+//                </div>
+//              </form>
+//            </div>
+
+//            {/* RIGHT: MENU LIST */}
+//            <div className="md:col-span-2 space-y-4">
+//              <div className="flex justify-between items-center">
+//                <h3 className="font-bold text-lg text-[#4E342E]">Menu ({getFilteredProducts().length})</h3>
+//                <div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB]">
+//                  {["ALL","CAKE","CHOCOLATE","JAR"].map(c=>(
+//                    <button key={c} onClick={()=>setMenuFilter(c)} className={`px-3 py-1 text-[10px] font-bold rounded-md transition ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63] hover:bg-[#FFF8F3]"}`}>{c}</button>
+//                  ))}
+//                </div>
+//              </div>
+//              {getFilteredProducts().map(p=>(
+//                <div key={p._id} className="bg-white p-4 rounded-xl border border-[#F2E3DB] flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+//                  <div className="flex items-center gap-4">
+//                    <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden border border-[#F2E3DB]">
+//                      {p.images[0] ? <img src={p.images[0]} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-[#D98292]/30 font-bold">{p.name[0]}</div>}
+//                    </div>
+//                    <div>
+//                      <h4 className="font-bold text-[#4E342E]">{p.name}</h4>
+                     
+//                      {/* MERGED DETAILS LINE: Category • Size • Price (Pink) */}
+//                      <p className="text-xs text-[#8D6E63]">
+//                         {p.category} • {p.variants?.length ? `${p.variants.length} Sizes` : "Standard"} • <span className="font-bold text-[#D98292]">{getPriceDisplay(p)}</span>
+//                      </p>
+
+//                      {/* RESTORED: Occasions List on Next Line */}
+//                      {p.occasions && p.occasions.length > 0 && (
+//                        <div className="flex flex-wrap gap-1 mt-1.5">
+//                          {p.occasions.map(occ => (
+//                            <span key={occ} className="text-[10px] bg-[#FFF8F3] text-[#8D6E63] px-2 py-0.5 rounded border border-[#F2E3DB]">
+//                              {occ}
+//                            </span>
+//                          ))}
+//                        </div>
+//                      )}
+//                    </div>
+//                  </div>
+//                  <div className="flex gap-2">
+//                    <button onClick={()=>handleEditClick(p)} className="p-2 text-blue-400 hover:bg-blue-50 rounded-lg transition-colors"><Edit2 size={18}/></button>
+//                    <button onClick={()=>setDeleteConfirm({show:true,id:p._id})} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={18}/></button>
+//                  </div>
+//                </div>
+//              ))}
+//            </div>
 //         </div>
 //       ) : (
+//         // ... Orders View ...
 //         <div className="space-y-4">
 //            {activeTab === "HISTORY" && (
 //              <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm border border-[#F2E3DB]">
 //                 <div className="flex items-center gap-2 text-sm font-bold text-[#8D6E63] w-full md:w-auto">
 //                   <Filter size={16} /> Filters:
 //                 </div>
-                
-//                 {/* Date Filter */}
 //                 <select value={historyDateFilter} onChange={(e) => setHistoryDateFilter(e.target.value)} className="w-full md:w-auto px-4 py-2 rounded-lg border border-[#F2E3DB] text-sm text-[#4E342E] bg-[#FFF8F3] focus:outline-none"><option value="ALL">All Dates</option><option value="7">Last 7 Days</option><option value="15">Last 15 Days</option><option value="30">Last 30 Days</option></select>
-                
-//                 {/* Status Filter */}
 //                 <select value={historyStatusFilter} onChange={(e) => setHistoryStatusFilter(e.target.value)} className="w-full md:w-auto px-4 py-2 rounded-lg border border-[#F2E3DB] text-sm text-[#4E342E] bg-[#FFF8F3] focus:outline-none"><option value="ALL">All Status</option><option value="DELIVERED">Delivered</option><option value="CANCELLED">Rejected</option></select>
-
-//                 {/* SORT OPTIONS */}
 //                 <div className="flex items-center gap-2 w-full md:w-auto md:ml-auto border-l border-[#F2E3DB] md:pl-4 pt-4 md:pt-0 border-t md:border-t-0 mt-2 md:mt-0">
 //                   <ArrowDownUp size={16} className="text-[#8D6E63]" />
 //                   <select value={sortBy} onChange={(e) => setSortBy(e.target.value as "UPDATED" | "CREATED")} className="w-full md:w-auto px-4 py-2 rounded-lg border border-[#F2E3DB] text-sm text-[#4E342E] bg-[#FFF8F3] focus:outline-none font-medium">
@@ -266,13 +445,11 @@
 //            paginatedOrders.length === 0 ? <div className="text-center py-12 bg-white/50 rounded-2xl border border-[#F2E3DB] border-dashed"><p className="text-[#8D6E63]">No orders found.</p></div> : 
 //            paginatedOrders.map((order) => (
 //               <div key={order._id} className="bg-white p-5 rounded-2xl shadow-sm border border-[#F2E3DB] flex flex-col md:flex-row justify-between gap-6 relative overflow-hidden">
-//                 {/* UNIFIED DATE BOX */}
 //                 <div className="absolute top-0 right-0 bg-[#FFF8F3] px-4 py-2 rounded-bl-xl border-b border-l border-[#F2E3DB] text-xs">
 //                   <div className="flex flex-col items-end gap-1">
 //                     <div className="text-[#8D6E63] font-medium flex items-center gap-1.5 opacity-80">
 //                       <Clock size={10} /> {formatDate(order.createdAt)}
 //                     </div>
-//                     {/* UPDATED DATE LINE (In same box) */}
 //                     {order.updatedAt && (
 //                       <div className={`flex items-center gap-1.5 ${
 //                         order.status === 'DELIVERED' ? 'text-green-600' : 
@@ -286,7 +463,7 @@
 //                 </div>
 
 //                 <div className="absolute bottom-0 right-0 bg-[#FFF8F3] px-4 py-1.5 rounded-tl-xl border-t border-l border-[#F2E3DB] text-xs text-[#8D6E63] font-bold">ID: #{order._id.slice(-6).toUpperCase()}</div>
-//                 <div className="flex-1 mt-14 md:mt-0"> {/* Adjusted margin for mobile to clear larger date box */}
+//                 <div className="flex-1 mt-14 md:mt-0">
 //                   <div className="flex items-center gap-3 mb-2">
 //                     <h3 className="font-bold text-[#4E342E] text-lg">{order.customerName}</h3>
 //                     <span className={`px-3 py-1 text-xs font-bold rounded-full border ${statusColors[order.status] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
@@ -317,6 +494,11 @@
 
 
 
+
+
+
+
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -324,7 +506,7 @@ import {
   RefreshCw, ChefHat, Truck, Package, Clock, Plus, Trash2, Edit2, 
   Image as ImageIcon, RotateCcw, X, AlertTriangle, MapPin, Phone, Mail,
   ChevronLeft, ChevronRight, Filter, Calendar, Info, Check, ArrowDownUp,
-  XCircle, History
+  XCircle, History, Gift, Search
 } from "lucide-react";
 import { Toast } from "@/components/ui/Toast";
 
@@ -361,9 +543,11 @@ type Product = {
   images: string[];
   description?: string;
   variants?: Variant[];
+  occasions?: string[]; 
 };
 
 const ITEMS_PER_PAGE = 7;
+const OCCASION_OPTIONS = ["Birthday", "Anniversary", "Kids", "Wedding", "Festival", "Gift"];
 
 // Status Colors
 const statusColors: Record<string, string> = {
@@ -382,6 +566,7 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [menuFilter, setMenuFilter] = useState("ALL");
+  const [searchQuery, setSearchQuery] = useState(""); 
   const [historyDateFilter, setHistoryDateFilter] = useState("ALL"); 
   const [historyStatusFilter, setHistoryStatusFilter] = useState("ALL");
   
@@ -393,9 +578,11 @@ export default function AdminDashboard() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success"|"error"|"warning" });
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean, id: string | null }>({ show: false, id: null });
+  
   const [formData, setFormData] = useState({
     name: "", category: "CAKE", description: "", image: null as File | null,
-    hasVariants: false, basePrice: "", variants: [] as { name: string; price: string }[]
+    hasVariants: false, basePrice: "", variants: [] as { name: string; price: string }[],
+    occasions: [] as string[]
   });
 
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
@@ -471,12 +658,26 @@ export default function AdminDashboard() {
   const removeVariant = (index: number) => { const v = [...formData.variants]; v.splice(index, 1); setFormData({...formData, variants: v}); };
   const updateVariant = (index: number, f: "name"|"price", v: string) => { const va = [...formData.variants]; va[index][f] = v; setFormData({...formData, variants: va}); };
 
+  const toggleOccasion = (occasion: string) => {
+    setFormData(prev => {
+      const exists = prev.occasions.includes(occasion);
+      if (exists) {
+        return { ...prev, occasions: prev.occasions.filter(o => o !== occasion) };
+      } else {
+        return { ...prev, occasions: [...prev.occasions, occasion] };
+      }
+    });
+  };
+
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name) { showToast("Name required", "error"); return; }
     setIsUploading(true);
     const data = new FormData();
     data.append("name", formData.name); data.append("category", formData.category); data.append("description", formData.description);
+    
+    data.append("occasions", JSON.stringify(formData.occasions));
+
     if(formData.image) data.append("image", formData.image);
     if (formData.hasVariants) {
       const valid = formData.variants.filter(v => v.name && v.price).map(v => ({ name: v.name, price: parseFloat(v.price) }));
@@ -490,7 +691,12 @@ export default function AdminDashboard() {
     if (editingId) data.append("id", editingId);
     try {
       const res = await fetch("/api/admin/products", { method, body: data });
-      if(res.ok) { showToast(editingId ? "Updated!" : "Added!", "success"); setFormData({name:"", category:"CAKE", description:"", image:null, hasVariants:false, basePrice:"", variants:[]}); setEditingId(null); fetchProducts(); }
+      if(res.ok) { 
+        showToast(editingId ? "Updated!" : "Added!", "success"); 
+        setFormData({name:"", category:"CAKE", description:"", image:null, hasVariants:false, basePrice:"", variants:[], occasions:[]}); 
+        setEditingId(null); 
+        fetchProducts(); 
+      }
       else showToast("Failed", "error");
     } catch(e) { showToast("Error", "error"); } finally { setIsUploading(false); }
   };
@@ -503,7 +709,16 @@ export default function AdminDashboard() {
 
   const handleEditClick = (p: Product) => {
     setEditingId(p._id);
-    setFormData({ name: p.name, category: p.category, description: p.description||"", image: null, hasVariants: !!(p.variants?.length), basePrice: p.basePrice?.toString()||"", variants: p.variants ? p.variants.map(v => ({name: v.name, price: v.price.toString()})) : [] });
+    setFormData({ 
+      name: p.name, 
+      category: p.category, 
+      description: p.description||"", 
+      image: null, 
+      hasVariants: !!(p.variants?.length), 
+      basePrice: p.basePrice?.toString()||"", 
+      variants: p.variants ? p.variants.map(v => ({name: v.name, price: v.price.toString()})) : [],
+      occasions: p.occasions || []
+    });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -532,16 +747,47 @@ export default function AdminDashboard() {
     filtered.sort((a, b) => {
       const dateA = new Date(sortBy === "UPDATED" ? a.updatedAt : a.createdAt).getTime();
       const dateB = new Date(sortBy === "UPDATED" ? b.updatedAt : b.createdAt).getTime();
-      return dateB - dateA; // Descending (Newest first)
+      return dateB - dateA; 
     });
 
     return filtered;
   };
 
+  const getPriceDisplay = (p: Product) => {
+    if (p.variants && p.variants.length > 0) {
+      const prices = p.variants.map(v => v.price);
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+      if (min === max) return `₹${min}`;
+      return `₹${min} - ₹${max}`;
+    }
+    return `₹${p.basePrice}`;
+  };
+
   const allFilteredOrders = getFilteredOrders();
   const totalPages = Math.ceil(allFilteredOrders.length / ITEMS_PER_PAGE);
   const paginatedOrders = allFilteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  const getFilteredProducts = () => { if (menuFilter === "ALL") return products; return products.filter(p => p.category === menuFilter); };
+  
+  // UPDATED: Search Logic including Occasions and Price
+  const getFilteredProducts = () => { 
+    let filtered = products;
+    // 1. Category Filter
+    if (menuFilter !== "ALL") {
+      filtered = filtered.filter(p => p.category === menuFilter); 
+    }
+    // 2. Search Filter (Name, Category, Price, Occasions)
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(p => 
+        p.name.toLowerCase().includes(q) || 
+        p.category.toLowerCase().includes(q) ||
+        p.basePrice.toString().includes(q) ||
+        p.variants?.some(v => v.price.toString().includes(q)) ||
+        p.occasions?.some(o => o.toLowerCase().includes(q))
+      );
+    }
+    return filtered;
+  };
 
   return (
     <div className="min-h-screen bg-[#FFF8F3] p-4 md:p-8">
@@ -552,11 +798,12 @@ export default function AdminDashboard() {
       
       {activeTab === "PRODUCTS" ? (
         <div className="grid md:grid-cols-3 gap-8">
-           <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] md:col-span-1 h-fit md:sticky md:top-4">
+           
+           {/* LEFT: FORM */}
+           <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] md:col-span-1 h-fit">
              <h3 className="font-bold text-lg mb-4 text-[#4E342E]">{editingId ? "Edit Item" : "Add New Item"}</h3>
              <form onSubmit={handleProductSubmit} className="space-y-4">
-               
-               {/* Image Upload */}
+               {/* Inputs... */}
                <div>
                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Product Image</label>
                  <div className="border-2 border-dashed border-[#F2E3DB] rounded-lg p-4 text-center hover:bg-[#FFF8F3] relative cursor-pointer">
@@ -564,17 +811,14 @@ export default function AdminDashboard() {
                    <ImageIcon className="mx-auto text-[#D98292] mb-2"/>
                    <p className="text-xs text-[#8D6E63] truncate">{formData.image ? formData.image.name : "Tap to upload"}</p>
                  </div>
-                 {/* HELPER TEXT ADDED HERE */}
-                 <p className="text-[10px] text-[#8D6E63] mt-1">Recommended: Square image (1:1 ratio), 1024 x 1024 px.</p>
+                 <p className="text-[10px] text-[#8D6E63] mt-1 text-center">Best size for image (1:1 square ratio and 1024x1024 px)</p>
                </div>
 
-               {/* Name Input */}
                <div>
                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Product Name</label>
                  <input type="text" placeholder="e.g. Chocolate Truffle" value={formData.name} onChange={(e)=>setFormData({...formData, name:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292]"/>
                </div>
 
-               {/* Category Input */}
                <div>
                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Category</label>
                  <select value={formData.category} onChange={(e)=>setFormData({...formData, category:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm bg-white focus:outline-none focus:border-[#D98292]">
@@ -586,13 +830,28 @@ export default function AdminDashboard() {
                  </select>
                </div>
 
-               {/* Price / Variants Section */}
+               <div>
+                 <label className="text-xs font-bold text-[#8D6E63] mb-2 block">Occasions</label>
+                 <div className="grid grid-cols-2 gap-2">
+                   {OCCASION_OPTIONS.map((occ) => (
+                     <div key={occ} className="flex items-center gap-2">
+                       <input 
+                         type="checkbox" 
+                         checked={formData.occasions.includes(occ)} 
+                         onChange={() => toggleOccasion(occ)}
+                         className="w-3.5 h-3.5 text-[#D98292] rounded accent-[#D98292]" 
+                       />
+                       <span className="text-xs text-[#4E342E]">{occ}</span>
+                     </div>
+                   ))}
+                 </div>
+               </div>
+
                <div className="bg-[#FFF8F3] p-3 rounded-lg border border-[#F2E3DB]">
                  <div className="flex items-center gap-2 mb-3">
                    <input type="checkbox" checked={formData.hasVariants} onChange={(e)=>setFormData({...formData, hasVariants:e.target.checked})} className="w-4 h-4 text-[#D98292] rounded accent-[#D98292]"/>
                    <label className="text-sm font-bold text-[#4E342E]">Has Multiple Sizes?</label>
                  </div>
-                 
                  {!formData.hasVariants ? (
                    <div>
                      <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Base Price (₹)</label>
@@ -613,7 +872,6 @@ export default function AdminDashboard() {
                  )}
                </div>
 
-               {/* Description Input */}
                <div>
                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Description</label>
                  <textarea placeholder="Describe the product..." value={formData.description} onChange={(e)=>setFormData({...formData, description:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm h-20 focus:outline-none focus:border-[#D98292]"></textarea>
@@ -624,7 +882,7 @@ export default function AdminDashboard() {
                    {isUploading ? "Saving..." : editingId ? "Update Item" : "Add Item"}
                  </button>
                  {editingId && (
-                   <button type="button" onClick={()=>{setEditingId(null); setFormData({name:"",category:"CAKE",description:"",image:null,hasVariants:false,basePrice:"",variants:[]})}} className="px-4 py-3 bg-gray-100 text-gray-500 font-bold rounded-xl hover:bg-gray-200 transition-colors">
+                   <button type="button" onClick={()=>{setEditingId(null); setFormData({name:"",category:"CAKE",description:"",image:null,hasVariants:false,basePrice:"",variants:[],occasions:[]})}} className="px-4 py-3 bg-gray-100 text-gray-500 font-bold rounded-xl hover:bg-gray-200 transition-colors">
                      Cancel
                    </button>
                  )}
@@ -632,24 +890,69 @@ export default function AdminDashboard() {
              </form>
            </div>
 
+           {/* RIGHT: MENU LIST */}
            <div className="md:col-span-2 space-y-4">
-             <div className="flex justify-between items-center">
-               <h3 className="font-bold text-lg text-[#4E342E]">Menu ({getFilteredProducts().length})</h3>
-               <div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB]">
-                 {["ALL","CAKE","CHOCOLATE","JAR"].map(c=>(
-                   <button key={c} onClick={()=>setMenuFilter(c)} className={`px-3 py-1 text-[10px] font-bold rounded-md transition ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63] hover:bg-[#FFF8F3]"}`}>{c}</button>
-                 ))}
+             
+             {/* === MOBILE LAYOUT (Hidden on Desktop) === */}
+             <div className="md:hidden flex flex-col gap-3">
+               <div className="flex justify-between items-center">
+                 <h3 className="font-bold text-lg text-[#4E342E]">Menu ({getFilteredProducts().length})</h3>
+                 {/* Pills on Mobile: Just width auto, right side */}
+                 <div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB]">
+                   {["ALL","CAKE","CHOCOLATE","JAR"].map(c=>(
+                     <button key={c} onClick={()=>setMenuFilter(c)} className={`px-2 py-1 text-[10px] font-bold rounded-md transition whitespace-nowrap ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63] hover:bg-[#FFF8F3]"}`}>{c}</button>
+                   ))}
+                 </div>
+               </div>
+               {/* Search Below Title/Pills */}
+               <div className="relative w-full">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8D6E63]" size={16} />
+                  <input type="text" placeholder="Search menu..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292] bg-white"/>
                </div>
              </div>
+
+             {/* === DESKTOP LAYOUT (Hidden on Mobile) === */}
+             <div className="hidden md:grid grid-cols-3 items-center gap-4">
+               {/* Col 1: Title (Left) */}
+               <div className="justify-self-start">
+                 <h3 className="font-bold text-lg text-[#4E342E]">Menu ({getFilteredProducts().length})</h3>
+               </div>
+               {/* Col 2: Pills (Center) */}
+               <div className="justify-self-center">
+                 <div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB]">
+                   {["ALL","CAKE","CHOCOLATE","JAR"].map(c=>(
+                     <button key={c} onClick={()=>setMenuFilter(c)} className={`px-3 py-1 text-[10px] font-bold rounded-md transition whitespace-nowrap ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63] hover:bg-[#FFF8F3]"}`}>{c}</button>
+                   ))}
+                 </div>
+               </div>
+               {/* Col 3: Search (Right) */}
+               <div className="justify-self-end w-64 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8D6E63]" size={16} />
+                  <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292] bg-white"/>
+               </div>
+             </div>
+
+             {/* PRODUCTS LIST */}
              {getFilteredProducts().map(p=>(
                <div key={p._id} className="bg-white p-4 rounded-xl border border-[#F2E3DB] flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
                  <div className="flex items-center gap-4">
-                   <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden border border-[#F2E3DB]">
+                   <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden border border-[#F2E3DB] shrink-0">
                      {p.images[0] ? <img src={p.images[0]} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-[#D98292]/30 font-bold">{p.name[0]}</div>}
                    </div>
                    <div>
                      <h4 className="font-bold text-[#4E342E]">{p.name}</h4>
-                     <p className="text-xs text-[#8D6E63]">{p.category} • {p.variants?.length ? `${p.variants.length} Sizes` : `₹${p.basePrice}`}</p>
+                     <p className="text-xs text-[#8D6E63]">
+                        {p.category} • {p.variants?.length ? `${p.variants.length} Sizes` : "Standard"} • <span className="font-bold text-[#D98292]">{getPriceDisplay(p)}</span>
+                     </p>
+                     {p.occasions && p.occasions.length > 0 && (
+                       <div className="flex flex-wrap gap-1 mt-1.5">
+                         {p.occasions.map(occ => (
+                           <span key={occ} className="text-[10px] bg-[#FFF8F3] text-[#8D6E63] px-2 py-0.5 rounded border border-[#F2E3DB]">
+                             {occ}
+                           </span>
+                         ))}
+                       </div>
+                     )}
                    </div>
                  </div>
                  <div className="flex gap-2">
@@ -661,7 +964,7 @@ export default function AdminDashboard() {
            </div>
         </div>
       ) : (
-        // ... (No changes to the Orders View section) ...
+        // ... Orders View ...
         <div className="space-y-4">
            {activeTab === "HISTORY" && (
              <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm border border-[#F2E3DB]">

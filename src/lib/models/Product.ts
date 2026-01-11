@@ -2,11 +2,11 @@
 
 // const ReviewSchema = new Schema({
 //   user: { type: String, required: true }, 
-//   // FIX: Set to false so old reviews without emails don't cause crashes
 //   userEmail: { type: String, required: false }, 
 //   rating: { type: Number, required: true, min: 1, max: 5 },
 //   comment: { type: String, required: true },
 //   date: { type: Date, default: Date.now },
+//   isEdited: { type: Boolean, default: false } // NEW FIELD
 // });
 
 // const ProductSchema = new Schema({
@@ -47,6 +47,8 @@
 
 
 
+
+
 import mongoose, { Schema, model, models } from "mongoose";
 
 const ReviewSchema = new Schema({
@@ -55,7 +57,7 @@ const ReviewSchema = new Schema({
   rating: { type: Number, required: true, min: 1, max: 5 },
   comment: { type: String, required: true },
   date: { type: Date, default: Date.now },
-  isEdited: { type: Boolean, default: false } // NEW FIELD
+  isEdited: { type: Boolean, default: false }
 });
 
 const ProductSchema = new Schema({
@@ -67,7 +69,11 @@ const ProductSchema = new Schema({
     required: true 
   },
   images: [{ type: String }], 
-  tags: [{ type: String }], 
+  
+  // NEW: Distinct Occasions Array
+  occasions: [{ type: String }], 
+  
+  tags: [{ type: String }], // Keeping tags for generic SEO keywords if needed later
   isBestSeller: { type: Boolean, default: false },
   isSeasonal: { type: Boolean, default: false },
   
@@ -79,7 +85,6 @@ const ProductSchema = new Schema({
     }
   ],
   
-  // Rating System
   reviews: [ReviewSchema], 
   averageRating: { type: Number, default: 0 },
   reviewsCount: { type: Number, default: 0 },

@@ -130,7 +130,7 @@
       
 //       const data = await res.json();
 //       if (!data.success) {
-//         setIsLiked(!newState);
+//         setIsLiked(!newState); // Revert on failure
 //         setToast({ show: true, message: "Failed to update wishlist", type: "error" });
 //       }
 //     } catch (error) {
@@ -333,8 +333,8 @@
 //       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row min-h-[calc(100vh-140px)]">
           
 //         {/* LEFT: Image Section */}
-//         {/* FIX: Removed lg:top-20 and lg:pt-20 (using lg:top-0 and lg:pt-0) to align top */}
-//         <div className="lg:w-1/2 relative bg-[#FFF8F3] flex items-center justify-center p-6 md:p-12 lg:pt-0 lg:sticky lg:top-0 lg:h-screen">
+//         {/* Added lg:self-start to fix sticky issue and ensure alignment */}
+//         <div className="lg:w-1/2 relative bg-[#FFF8F3] flex items-center justify-center p-6 md:p-12 lg:pt-0 lg:sticky lg:top-0 lg:h-screen lg:self-start">
 //           <div className="relative w-full h-full max-h-[600px] flex items-center justify-center">
 //             {product.images && product.images.length > 0 ? (
 //               <img 
@@ -357,7 +357,6 @@
 //         </div>
 
 //         {/* RIGHT: Details Section */}
-//         {/* FIX: Changed lg:pt-20 to lg:pt-0 to align content with image */}
 //         <div className="lg:w-1/2 p-6 md:p-12 lg:pt-0 flex flex-col bg-white lg:bg-transparent">
           
 //           {/* Header & Rating */}
@@ -410,10 +409,10 @@
 //             </div>
 //           )}
 
-//           {/* Description */}
+//           {/* Description - FIXED: Added break-words */}
 //           <div className="mb-8">
 //             <h3 className="font-playfair font-bold text-xl text-[#4E342E] mb-3">Description</h3>
-//             <p className="text-[#8D6E63] text-sm leading-8 text-justify">
+//             <p className="text-[#8D6E63] text-sm leading-8 text-justify break-words">
 //               {product.description || `Indulge in the sweet and creamy delight of our ${product.name}. Crafted with the finest ingredients and a rich, buttery flavor profile.`}
 //             </p>
 //           </div>
@@ -648,12 +647,17 @@
 
 
 
+
+
+
+
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, ShieldCheck, Heart, Award, Info, ShoppingCart, ChevronRight, CheckCircle2, ChevronLeft, PenLine, ArrowLeft, Trash2, Edit2, X, Check } from "lucide-react";
+import { Star, ShieldCheck, Heart, Award, Info, ShoppingCart, ChevronRight, CheckCircle2, ChevronLeft, PenLine, ArrowLeft, Trash2, Edit2, X, Check, Gift } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { Toast } from "@/components/ui/Toast";
 import { useSession } from "next-auth/react";
@@ -683,6 +687,7 @@ interface Product {
   images: string[];
   basePrice: number;
   variants: ProductVariant[];
+  occasions?: string[]; // NEW FIELD
   averageRating: number;
   reviewsCount: number;
   reviews: Review[];
@@ -784,7 +789,7 @@ export default function ProductDetailPage() {
         setToast({ show: true, message: "Failed to update wishlist", type: "error" });
       }
     } catch (error) {
-      setIsLiked(!newState);
+      setIsLiked(!newState); // Revert on failure
       setToast({ show: true, message: "Server Error", type: "error" });
     }
   };
@@ -983,7 +988,6 @@ export default function ProductDetailPage() {
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row min-h-[calc(100vh-140px)]">
           
         {/* LEFT: Image Section */}
-        {/* Added lg:self-start to fix sticky issue and ensure alignment */}
         <div className="lg:w-1/2 relative bg-[#FFF8F3] flex items-center justify-center p-6 md:p-12 lg:pt-0 lg:sticky lg:top-0 lg:h-screen lg:self-start">
           <div className="relative w-full h-full max-h-[600px] flex items-center justify-center">
             {product.images && product.images.length > 0 ? (
@@ -1059,13 +1063,32 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {/* Description - FIXED: Added break-words */}
+          {/* Description */}
           <div className="mb-8">
             <h3 className="font-playfair font-bold text-xl text-[#4E342E] mb-3">Description</h3>
             <p className="text-[#8D6E63] text-sm leading-8 text-justify break-words">
               {product.description || `Indulge in the sweet and creamy delight of our ${product.name}. Crafted with the finest ingredients and a rich, buttery flavor profile.`}
             </p>
           </div>
+
+          {/* NEW: Occasions Section (Perfect For) */}
+          {product.occasions && product.occasions.length > 0 && (
+            <div className="mb-8 bg-[#FFF8F3] p-4 rounded-xl border border-[#D98292]/30 flex items-start gap-3">
+              <div className="p-2 bg-white rounded-lg shadow-sm text-[#D98292]">
+                <Gift size={20} />
+              </div>
+              <div>
+                <h4 className="font-bold text-[#4E342E] text-sm mb-2">Perfect For:</h4>
+                <div className="flex flex-wrap gap-2">
+                  {product.occasions.map((occasion) => (
+                    <span key={occasion} className="px-3 py-1 bg-white border border-[#F2E3DB] text-[#8D6E63] text-xs font-bold rounded-full shadow-sm">
+                      {occasion}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Personalize Info */}
           <div className="mb-10 bg-[#FFF8F3] p-5 rounded-2xl border border-[#D98292]/20 flex gap-4 items-center shadow-sm">
