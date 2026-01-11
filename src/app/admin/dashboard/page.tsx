@@ -5,7 +5,7 @@
 //   RefreshCw, ChefHat, Truck, Package, Clock, Plus, Trash2, Edit2, 
 //   Image as ImageIcon, RotateCcw, X, AlertTriangle, MapPin, Phone, Mail,
 //   ChevronLeft, ChevronRight, Filter, Calendar, Info, Check, ArrowDownUp,
-//   XCircle, History, Gift
+//   XCircle, History, Gift, Search
 // } from "lucide-react";
 // import { Toast } from "@/components/ui/Toast";
 
@@ -42,7 +42,7 @@
 //   images: string[];
 //   description?: string;
 //   variants?: Variant[];
-//   occasions?: string[]; // New Field
+//   occasions?: string[]; 
 // };
 
 // const ITEMS_PER_PAGE = 7;
@@ -65,6 +65,7 @@
 //   const [products, setProducts] = useState<Product[]>([]);
 //   const [loading, setLoading] = useState(false);
 //   const [menuFilter, setMenuFilter] = useState("ALL");
+//   const [searchQuery, setSearchQuery] = useState(""); 
 //   const [historyDateFilter, setHistoryDateFilter] = useState("ALL"); 
 //   const [historyStatusFilter, setHistoryStatusFilter] = useState("ALL");
   
@@ -156,7 +157,6 @@
 //   const removeVariant = (index: number) => { const v = [...formData.variants]; v.splice(index, 1); setFormData({...formData, variants: v}); };
 //   const updateVariant = (index: number, f: "name"|"price", v: string) => { const va = [...formData.variants]; va[index][f] = v; setFormData({...formData, variants: va}); };
 
-//   // Toggle Occasion Checkbox
 //   const toggleOccasion = (occasion: string) => {
 //     setFormData(prev => {
 //       const exists = prev.occasions.includes(occasion);
@@ -252,7 +252,6 @@
 //     return filtered;
 //   };
 
-//   // Helper to calculate Price Range for display
 //   const getPriceDisplay = (p: Product) => {
 //     if (p.variants && p.variants.length > 0) {
 //       const prices = p.variants.map(v => v.price);
@@ -267,7 +266,27 @@
 //   const allFilteredOrders = getFilteredOrders();
 //   const totalPages = Math.ceil(allFilteredOrders.length / ITEMS_PER_PAGE);
 //   const paginatedOrders = allFilteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-//   const getFilteredProducts = () => { if (menuFilter === "ALL") return products; return products.filter(p => p.category === menuFilter); };
+  
+//   // UPDATED: Search Logic including Occasions and Price
+//   const getFilteredProducts = () => { 
+//     let filtered = products;
+//     // 1. Category Filter
+//     if (menuFilter !== "ALL") {
+//       filtered = filtered.filter(p => p.category === menuFilter); 
+//     }
+//     // 2. Search Filter (Name, Category, Price, Occasions)
+//     if (searchQuery) {
+//       const q = searchQuery.toLowerCase();
+//       filtered = filtered.filter(p => 
+//         p.name.toLowerCase().includes(q) || 
+//         p.category.toLowerCase().includes(q) ||
+//         p.basePrice.toString().includes(q) ||
+//         p.variants?.some(v => v.price.toString().includes(q)) ||
+//         p.occasions?.some(o => o.toLowerCase().includes(q))
+//       );
+//     }
+//     return filtered;
+//   };
 
 //   return (
 //     <div className="min-h-screen bg-[#FFF8F3] p-4 md:p-8">
@@ -283,8 +302,7 @@
 //            <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] md:col-span-1 h-fit">
 //              <h3 className="font-bold text-lg mb-4 text-[#4E342E]">{editingId ? "Edit Item" : "Add New Item"}</h3>
 //              <form onSubmit={handleProductSubmit} className="space-y-4">
-               
-//                {/* Image Upload */}
+//                {/* Inputs... */}
 //                <div>
 //                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Product Image</label>
 //                  <div className="border-2 border-dashed border-[#F2E3DB] rounded-lg p-4 text-center hover:bg-[#FFF8F3] relative cursor-pointer">
@@ -295,13 +313,11 @@
 //                  <p className="text-[10px] text-[#8D6E63] mt-1 text-center">Best size for image (1:1 square ratio and 1024x1024 px)</p>
 //                </div>
 
-//                {/* Name Input */}
 //                <div>
 //                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Product Name</label>
 //                  <input type="text" placeholder="e.g. Chocolate Truffle" value={formData.name} onChange={(e)=>setFormData({...formData, name:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292]"/>
 //                </div>
 
-//                {/* Category Input */}
 //                <div>
 //                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Category</label>
 //                  <select value={formData.category} onChange={(e)=>setFormData({...formData, category:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm bg-white focus:outline-none focus:border-[#D98292]">
@@ -313,7 +329,6 @@
 //                  </select>
 //                </div>
 
-//                {/* Occasions (Clean Style) */}
 //                <div>
 //                  <label className="text-xs font-bold text-[#8D6E63] mb-2 block">Occasions</label>
 //                  <div className="grid grid-cols-2 gap-2">
@@ -331,13 +346,11 @@
 //                  </div>
 //                </div>
 
-//                {/* Price / Variants Section */}
 //                <div className="bg-[#FFF8F3] p-3 rounded-lg border border-[#F2E3DB]">
 //                  <div className="flex items-center gap-2 mb-3">
 //                    <input type="checkbox" checked={formData.hasVariants} onChange={(e)=>setFormData({...formData, hasVariants:e.target.checked})} className="w-4 h-4 text-[#D98292] rounded accent-[#D98292]"/>
 //                    <label className="text-sm font-bold text-[#4E342E]">Has Multiple Sizes?</label>
 //                  </div>
-                 
 //                  {!formData.hasVariants ? (
 //                    <div>
 //                      <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Base Price (₹)</label>
@@ -358,7 +371,6 @@
 //                  )}
 //                </div>
 
-//                {/* Description Input */}
 //                <div>
 //                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Description</label>
 //                  <textarea placeholder="Describe the product..." value={formData.description} onChange={(e)=>setFormData({...formData, description:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm h-20 focus:outline-none focus:border-[#D98292]"></textarea>
@@ -379,29 +391,58 @@
 
 //            {/* RIGHT: MENU LIST */}
 //            <div className="md:col-span-2 space-y-4">
-//              <div className="flex justify-between items-center">
-//                <h3 className="font-bold text-lg text-[#4E342E]">Menu ({getFilteredProducts().length})</h3>
-//                <div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB]">
-//                  {["ALL","CAKE","CHOCOLATE","JAR"].map(c=>(
-//                    <button key={c} onClick={()=>setMenuFilter(c)} className={`px-3 py-1 text-[10px] font-bold rounded-md transition ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63] hover:bg-[#FFF8F3]"}`}>{c}</button>
-//                  ))}
+             
+//              {/* === MOBILE LAYOUT (Hidden on Desktop) === */}
+//              <div className="md:hidden flex flex-col gap-3">
+//                <div className="flex justify-between items-center">
+//                  <h3 className="font-bold text-lg text-[#4E342E]">Menu ({getFilteredProducts().length})</h3>
+//                  {/* Pills on Mobile: Just width auto, right side */}
+//                  <div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB]">
+//                    {["ALL","CAKE","CHOCOLATE","JAR"].map(c=>(
+//                      <button key={c} onClick={()=>setMenuFilter(c)} className={`px-2 py-1 text-[10px] font-bold rounded-md transition whitespace-nowrap ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63] hover:bg-[#FFF8F3]"}`}>{c}</button>
+//                    ))}
+//                  </div>
+//                </div>
+//                {/* Search Below Title/Pills */}
+//                <div className="relative w-full">
+//                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8D6E63]" size={16} />
+//                   <input type="text" placeholder="Search menu..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292] bg-white"/>
 //                </div>
 //              </div>
+
+//              {/* === DESKTOP LAYOUT (Hidden on Mobile) === */}
+//              <div className="hidden md:grid grid-cols-3 items-center gap-4">
+//                {/* Col 1: Title (Left) */}
+//                <div className="justify-self-start">
+//                  <h3 className="font-bold text-lg text-[#4E342E]">Menu ({getFilteredProducts().length})</h3>
+//                </div>
+//                {/* Col 2: Pills (Center) */}
+//                <div className="justify-self-center">
+//                  <div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB]">
+//                    {["ALL","CAKE","CHOCOLATE","JAR"].map(c=>(
+//                      <button key={c} onClick={()=>setMenuFilter(c)} className={`px-3 py-1 text-[10px] font-bold rounded-md transition whitespace-nowrap ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63] hover:bg-[#FFF8F3]"}`}>{c}</button>
+//                    ))}
+//                  </div>
+//                </div>
+//                {/* Col 3: Search (Right) */}
+//                <div className="justify-self-end w-64 relative">
+//                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8D6E63]" size={16} />
+//                   <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292] bg-white"/>
+//                </div>
+//              </div>
+
+//              {/* PRODUCTS LIST */}
 //              {getFilteredProducts().map(p=>(
 //                <div key={p._id} className="bg-white p-4 rounded-xl border border-[#F2E3DB] flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
 //                  <div className="flex items-center gap-4">
-//                    <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden border border-[#F2E3DB]">
+//                    <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden border border-[#F2E3DB] shrink-0">
 //                      {p.images[0] ? <img src={p.images[0]} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-[#D98292]/30 font-bold">{p.name[0]}</div>}
 //                    </div>
 //                    <div>
 //                      <h4 className="font-bold text-[#4E342E]">{p.name}</h4>
-                     
-//                      {/* MERGED DETAILS LINE: Category • Size • Price (Pink) */}
 //                      <p className="text-xs text-[#8D6E63]">
 //                         {p.category} • {p.variants?.length ? `${p.variants.length} Sizes` : "Standard"} • <span className="font-bold text-[#D98292]">{getPriceDisplay(p)}</span>
 //                      </p>
-
-//                      {/* RESTORED: Occasions List on Next Line */}
 //                      {p.occasions && p.occasions.length > 0 && (
 //                        <div className="flex flex-wrap gap-1 mt-1.5">
 //                          {p.occasions.map(occ => (
@@ -485,6 +526,7 @@
 //     </div>
 //   );
 // }
+
 
 
 
@@ -768,14 +810,11 @@ export default function AdminDashboard() {
   const totalPages = Math.ceil(allFilteredOrders.length / ITEMS_PER_PAGE);
   const paginatedOrders = allFilteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
   
-  // UPDATED: Search Logic including Occasions and Price
   const getFilteredProducts = () => { 
     let filtered = products;
-    // 1. Category Filter
     if (menuFilter !== "ALL") {
       filtered = filtered.filter(p => p.category === menuFilter); 
     }
-    // 2. Search Filter (Name, Category, Price, Occasions)
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(p => 
@@ -893,31 +932,27 @@ export default function AdminDashboard() {
            {/* RIGHT: MENU LIST */}
            <div className="md:col-span-2 space-y-4">
              
-             {/* === MOBILE LAYOUT (Hidden on Desktop) === */}
+             {/* === MOBILE LAYOUT === */}
              <div className="md:hidden flex flex-col gap-3">
                <div className="flex justify-between items-center">
                  <h3 className="font-bold text-lg text-[#4E342E]">Menu ({getFilteredProducts().length})</h3>
-                 {/* Pills on Mobile: Just width auto, right side */}
                  <div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB]">
                    {["ALL","CAKE","CHOCOLATE","JAR"].map(c=>(
                      <button key={c} onClick={()=>setMenuFilter(c)} className={`px-2 py-1 text-[10px] font-bold rounded-md transition whitespace-nowrap ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63] hover:bg-[#FFF8F3]"}`}>{c}</button>
                    ))}
                  </div>
                </div>
-               {/* Search Below Title/Pills */}
                <div className="relative w-full">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8D6E63]" size={16} />
                   <input type="text" placeholder="Search menu..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292] bg-white"/>
                </div>
              </div>
 
-             {/* === DESKTOP LAYOUT (Hidden on Mobile) === */}
+             {/* === DESKTOP LAYOUT === */}
              <div className="hidden md:grid grid-cols-3 items-center gap-4">
-               {/* Col 1: Title (Left) */}
                <div className="justify-self-start">
                  <h3 className="font-bold text-lg text-[#4E342E]">Menu ({getFilteredProducts().length})</h3>
                </div>
-               {/* Col 2: Pills (Center) */}
                <div className="justify-self-center">
                  <div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB]">
                    {["ALL","CAKE","CHOCOLATE","JAR"].map(c=>(
@@ -925,7 +960,6 @@ export default function AdminDashboard() {
                    ))}
                  </div>
                </div>
-               {/* Col 3: Search (Right) */}
                <div className="justify-self-end w-64 relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8D6E63]" size={16} />
                   <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292] bg-white"/>
@@ -1021,7 +1055,7 @@ export default function AdminDashboard() {
                 <div className="flex flex-col gap-2 justify-center min-w-[180px] pt-4 md:pt-0 pb-8">{activeTab === "LEADS" && (<><button onClick={() => updateStatus(order._id, "CONFIRMED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Accept</button><button onClick={() => updateStatus(order._id, "CANCELLED")} className="w-full py-2 text-red-400 text-xs underline">Reject</button></>)}{activeTab === "PENDING" && (<><button onClick={() => updateStatus(order._id, "PREPARING")} className="w-full py-2 bg-orange-100 text-orange-700 rounded-lg font-bold text-sm flex justify-center gap-2"><ChefHat size={16}/> Bake</button><button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "ONGOING" && (<>{order.status === "PREPARING" && <button onClick={() => updateStatus(order._id, "READY")} className="w-full py-2 bg-yellow-100 text-yellow-700 rounded-lg font-bold text-sm">Mark Ready</button>}{order.status === "READY" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="w-full py-2 bg-blue-100 text-blue-700 rounded-lg font-bold text-sm">Dispatch</button>}{order.status === "OUT_FOR_DELIVERY" && <button onClick={() => updateStatus(order._id, "DELIVERED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Delivered</button>}<button onClick={() => {if(order.status === "PREPARING") updateStatus(order._id, "CONFIRMED");if(order.status === "READY") updateStatus(order._id, "PREPARING");if(order.status === "OUT_FOR_DELIVERY") updateStatus(order._id, "READY");}} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "HISTORY" && (<>{order.status === "DELIVERED" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="flex items-center justify-center gap-1 text-xs text-red-400 py-1"><RotateCcw size={12}/> Not Delivered</button>}{order.status === "CANCELLED" && <button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Re-open</button>}</>)}</div>
               </div>
            ))}
-           {totalPages > 1 && (<div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t border-[#F2E3DB] border-dashed"><button onClick={() => changePage(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"><ChevronLeft size={20} /></button><span className="text-sm font-bold text-[#8D6E63]">Page {currentPage} of {totalPages}</span><button onClick={() => changePage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"><ChevronRight size={20} /></button></div>)}
+           {totalPages > 1 && (<div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t border-[#F2E3DB] border-dashed"><button onClick={() => changePage(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"><ChevronLeft size={20} /></button><span className="text-sm font-bold text-[#8D6E63]">Page <span className="text-[#D98292] text-base">{currentPage}</span> of {totalPages}</span><button onClick={() => changePage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"><ChevronRight size={20} /></button></div>)}
         </div>
       )}
     </div>

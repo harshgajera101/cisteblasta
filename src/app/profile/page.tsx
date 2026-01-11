@@ -12,6 +12,17 @@
 
 // const ITEMS_PER_PAGE = 5;
 
+// // Status Color Map
+// const statusColors: Record<string, string> = {
+//   PENDING: "bg-orange-100 text-orange-700 border-orange-200",
+//   CONFIRMED: "bg-blue-100 text-blue-700 border-blue-200",
+//   PREPARING: "bg-yellow-100 text-yellow-800 border-yellow-200",
+//   READY: "bg-purple-100 text-purple-700 border-purple-200",
+//   OUT_FOR_DELIVERY: "bg-indigo-100 text-indigo-700 border-indigo-200",
+//   DELIVERED: "bg-green-100 text-green-700 border-green-200",
+//   CANCELLED: "bg-red-100 text-red-700 border-red-200",
+// };
+
 // export default function ProfilePage() {
 //   const { data: session, status, update } = useSession();
 //   const router = useRouter();
@@ -28,7 +39,7 @@
   
 //   // UI States
 //   const [isEditing, setIsEditing] = useState(false);
-//   const [editForm, setEditForm] = useState({ name: "", phone: "", address: "" }); // ADDED ADDRESS
+//   const [editForm, setEditForm] = useState({ name: "", phone: "", address: "" }); 
 //   const [isSaving, setIsSaving] = useState(false);
   
 //   // Logout Modal State
@@ -41,13 +52,12 @@
 //     if (status === "unauthenticated") router.push("/login");
     
 //     if (session?.user) {
-//       // Initialize form with session data (address might need fetching if not in session)
 //       setEditForm({ 
 //         name: session.user.name || "", 
 //         phone: (session.user as any).phone || "",
-//         address: "" // Will be populated by fetchProfile
+//         address: "" 
 //       });
-//       fetchProfile(); // Fetch full profile to get address
+//       fetchProfile(); 
 //       fetchOrders();
 //     }
 //   }, [session, status, router]);
@@ -89,7 +99,7 @@
 //       });
       
 //       if (res.ok) {
-//         await update(); // Update session
+//         await update(); 
 //         setIsEditing(false);
 //         setToast({ show: true, message: "Profile updated successfully!", type: "success" });
 //       } else {
@@ -173,7 +183,6 @@
 //                       <Mail size={18} className="text-[#D98292]" />
 //                       <span className="truncate">{session?.user?.email}</span>
 //                     </div>
-//                     {/* ADDED: Address Display */}
 //                     <div className="flex items-start gap-3 p-3 bg-[#FFF8F3] rounded-xl text-sm text-[#4E342E] text-left">
 //                       <MapPin size={18} className="text-[#D98292] shrink-0 mt-0.5" />
 //                       <span className="break-words">{editForm.address || "No address saved"}</span>
@@ -207,7 +216,6 @@
 //                       className="w-full p-3 rounded-xl border border-[#D98292] text-sm text-[#4E342E] focus:outline-none bg-[#FFF8F3]"
 //                     />
 //                   </div>
-//                   {/* ADDED: Address Edit Field */}
 //                   <div>
 //                     <label className="text-xs font-bold text-[#8D6E63] ml-1 uppercase">Address</label>
 //                     <textarea 
@@ -273,11 +281,8 @@
 //                       <div>
 //                         <div className="flex items-center gap-3">
 //                           <span className="font-bold text-[#4E342E] text-lg">#{order._id.slice(-6).toUpperCase()}</span>
-//                           <span className={`px-3 py-1 text-[10px] font-bold rounded-full border ${
-//                             order.status === 'DELIVERED' ? 'bg-green-50 text-green-600 border-green-100' :
-//                             order.status === 'CANCELLED' ? 'bg-red-50 text-red-500 border-red-100' :
-//                             'bg-orange-50 text-orange-600 border-orange-100'
-//                           }`}>
+//                           {/* NEW: Colored Status Tag */}
+//                           <span className={`px-3 py-1 text-[10px] font-bold rounded-full border ${statusColors[order.status] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
 //                             {order.status}
 //                           </span>
 //                         </div>
@@ -360,8 +365,6 @@
 //     </div>
 //   );
 // }
-
-
 
 
 
@@ -717,7 +720,7 @@ export default function ProfilePage() {
                     <ChevronLeft size={20} />
                   </button>
                   <span className="text-sm font-bold text-[#8D6E63]">
-                    Page {currentPage} of {totalPages}
+                    Page <span className="text-[#D98292] text-base">{currentPage}</span> of {totalPages}
                   </span>
                   <button 
                     onClick={() => changePage(Math.min(totalPages, currentPage + 1))}

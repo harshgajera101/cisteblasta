@@ -14,8 +14,8 @@
 //   category: string;
 //   variants?: { name: string; price: number }[];
 //   description?: string;
-//   tags?: string[]; // Using the existing tags field
-//   isBestSeller?: boolean; // Using the existing bestSeller field
+//   occasions?: string[]; // Using the correct field now
+//   isBestSeller?: boolean; 
 //   averageRating?: number; 
 //   createdAt?: string;     
 // }
@@ -27,7 +27,7 @@
 //   const [loading, setLoading] = useState(true);
   
 //   // --- FILTER & SEARCH STATES ---
-//   const [searchQuery, setSearchQuery] = useState(""); // Search State
+//   const [searchQuery, setSearchQuery] = useState(""); 
 //   const [activeCategory, setActiveCategory] = useState("All");
 //   const [priceFilter, setPriceFilter] = useState("ALL");
 //   const [weightFilter, setWeightFilter] = useState("ALL");
@@ -59,18 +59,10 @@
 //       setIsFiltering(true);
 //       const timer = setTimeout(() => {
 //         setIsFiltering(false);
-//       }, 300); // 300ms delay for visual feedback
+//       }, 300); 
 //       return () => clearTimeout(timer);
 //     }
 //   }, [searchQuery, activeCategory, priceFilter, weightFilter, flavorFilter, sortOption]);
-
-//   // --- HELPER: Check if any filter/search is active ---
-//   const isAnyFilterActive = 
-//     searchQuery !== "" ||
-//     activeCategory !== "All" || 
-//     priceFilter !== "ALL" || 
-//     weightFilter !== "ALL" || 
-//     flavorFilter !== "ALL";
 
 //   // --- HELPER: Reset Filters ---
 //   const clearFilters = () => {
@@ -89,29 +81,29 @@
 //       if (searchQuery) {
 //         const query = searchQuery.toLowerCase().trim();
         
-//         // A. Keyword Search: "Best" or "Trending"
+//         // A. Keyword Search
 //         if ((query === "best" || query === "best seller" || query === "trending") && product.isBestSeller) {
 //            return true; 
 //         }
 
-//         // B. Standard Fields Search
+//         // B. Standard Fields
 //         const matchesName = product.name.toLowerCase().includes(query);
 //         const matchesDesc = product.description?.toLowerCase().includes(query);
 //         const matchesCategory = product.category.toLowerCase().includes(query);
         
-//         // C. Variants Search (e.g. "1kg")
+//         // C. Variants
 //         const matchesVariant = product.variants?.some(v => 
 //           v.name.toLowerCase().includes(query) || v.price.toString().includes(query)
 //         );
 
-//         // D. Tags Search (Occasion) - Checks database tags
-//         const matchesTag = product.tags?.some(tag => tag.toLowerCase().includes(query));
+//         // D. Occasions Search (FIXED: Checks the occasions array)
+//         const matchesOccasion = product.occasions?.some(occ => occ.toLowerCase().includes(query));
 
-//         // E. Price Search (e.g. "500")
+//         // E. Price Search
 //         const matchesPrice = product.basePrice.toString().includes(query);
 
 //         // If NONE match, exclude product
-//         if (!matchesName && !matchesDesc && !matchesCategory && !matchesVariant && !matchesPrice && !matchesTag) {
+//         if (!matchesName && !matchesDesc && !matchesCategory && !matchesVariant && !matchesPrice && !matchesOccasion) {
 //           return false;
 //         }
 //       }
@@ -140,7 +132,6 @@
 //       return true;
 //     })
 //     .sort((a, b) => {
-//       // --- SORTING LOGIC ---
 //       switch (sortOption) {
 //         case "PRICE_LOW":
 //           return a.basePrice - b.basePrice;
@@ -166,7 +157,7 @@
 //         </p>
 //       </div>
 
-//       {/* --- SMART SEARCH BAR (Added Here) --- */}
+//       {/* --- SMART SEARCH BAR --- */}
 //       <div className="max-w-md mx-auto mb-8 relative z-20">
 //         <div className="relative group">
 //           <input 
@@ -253,7 +244,7 @@
 
 //           {/* CLEAR FILTER BUTTON */}
 //           <AnimatePresence>
-//             {isAnyFilterActive && (
+//             {(activeCategory !== "All" || priceFilter !== "ALL" || weightFilter !== "ALL" || flavorFilter !== "ALL" || searchQuery !== "") && (
 //               <motion.button
 //                 initial={{ opacity: 0, scale: 0.8 }}
 //                 animate={{ opacity: 1, scale: 1 }}
@@ -286,7 +277,6 @@
 
 //       {/* Product Display Area */}
 //       {loading || isFiltering ? (
-//         // LOADING STATE
 //         <div className="flex flex-col justify-center items-center py-20 min-h-[400px]">
 //           <motion.div 
 //             animate={{ rotate: 360 }}
@@ -298,7 +288,6 @@
 //           <p className="text-[#8D6E63] font-bold animate-pulse">Curating your delights...</p>
 //         </div>
 //       ) : (
-//         /* Product Grid */
 //         <motion.div 
 //           layout
 //           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8"
@@ -346,15 +335,13 @@
 
 
 
-
-
 "use client";
 
 import { useState, useEffect } from "react";
 import ProductCard from "@/components/ui/ProductCard";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Filter, ArrowDownUp, X, RefreshCw, Search } from "lucide-react"; 
+import { Filter, ArrowDownUp, X, RefreshCw, Search, ChevronLeft, ChevronRight } from "lucide-react"; 
 
 // Updated Interface to match Schema
 interface ProductType {
@@ -364,13 +351,15 @@ interface ProductType {
   category: string;
   variants?: { name: string; price: number }[];
   description?: string;
-  occasions?: string[]; // Using the correct field now
+  tags?: string[];
+  occasions?: string[]; 
   isBestSeller?: boolean; 
   averageRating?: number; 
   createdAt?: string;     
 }
 
 const categories = ["All", "CAKE", "CHOCOLATE", "JAR", "GIFT_BOX"];
+const ITEMS_PER_PAGE = 12; // Number of items per page
 
 export default function MenuPage() {
   const [products, setProducts] = useState<ProductType[]>([]);
@@ -383,6 +372,9 @@ export default function MenuPage() {
   const [weightFilter, setWeightFilter] = useState("ALL");
   const [flavorFilter, setFlavorFilter] = useState("ALL");
   const [sortOption, setSortOption] = useState("NEWEST");
+
+  // --- PAGINATION STATE ---
+  const [currentPage, setCurrentPage] = useState(1);
 
   // --- UI FEEDBACK STATE ---
   const [isFiltering, setIsFiltering] = useState(false);
@@ -403,16 +395,25 @@ export default function MenuPage() {
     fetchProducts();
   }, []);
 
-  // 2. Visual Feedback Effect
+  // 2. Visual Feedback & Pagination Reset
   useEffect(() => {
     if (!loading) {
       setIsFiltering(true);
+      setCurrentPage(1); // RESET PAGE TO 1 ON FILTER CHANGE
       const timer = setTimeout(() => {
         setIsFiltering(false);
       }, 300); 
       return () => clearTimeout(timer);
     }
   }, [searchQuery, activeCategory, priceFilter, weightFilter, flavorFilter, sortOption]);
+
+  // --- HELPER: Check if any filter/search is active ---
+  const isAnyFilterActive = 
+    searchQuery !== "" ||
+    activeCategory !== "All" || 
+    priceFilter !== "ALL" || 
+    weightFilter !== "ALL" || 
+    flavorFilter !== "ALL";
 
   // --- HELPER: Reset Filters ---
   const clearFilters = () => {
@@ -422,6 +423,7 @@ export default function MenuPage() {
     setWeightFilter("ALL");
     setFlavorFilter("ALL");
     setSortOption("NEWEST");
+    setCurrentPage(1);
   };
 
   // --- FILTERING LOGIC ---
@@ -431,29 +433,23 @@ export default function MenuPage() {
       if (searchQuery) {
         const query = searchQuery.toLowerCase().trim();
         
-        // A. Keyword Search
         if ((query === "best" || query === "best seller" || query === "trending") && product.isBestSeller) {
            return true; 
         }
 
-        // B. Standard Fields
         const matchesName = product.name.toLowerCase().includes(query);
         const matchesDesc = product.description?.toLowerCase().includes(query);
         const matchesCategory = product.category.toLowerCase().includes(query);
         
-        // C. Variants
         const matchesVariant = product.variants?.some(v => 
           v.name.toLowerCase().includes(query) || v.price.toString().includes(query)
         );
 
-        // D. Occasions Search (FIXED: Checks the occasions array)
+        const matchesTag = product.tags?.some(tag => tag.toLowerCase().includes(query));
         const matchesOccasion = product.occasions?.some(occ => occ.toLowerCase().includes(query));
-
-        // E. Price Search
         const matchesPrice = product.basePrice.toString().includes(query);
 
-        // If NONE match, exclude product
-        if (!matchesName && !matchesDesc && !matchesCategory && !matchesVariant && !matchesPrice && !matchesOccasion) {
+        if (!matchesName && !matchesDesc && !matchesCategory && !matchesVariant && !matchesPrice && !matchesTag && !matchesOccasion) {
           return false;
         }
       }
@@ -494,6 +490,18 @@ export default function MenuPage() {
           return (b.createdAt || b._id) > (a.createdAt || a._id) ? 1 : -1;
       }
     });
+
+  // --- PAGINATION LOGIC ---
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const currentProducts = filteredProducts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" }); // Scroll to top on page change
+  };
 
   return (
     <div className="container mx-auto px-4 py-16 flex-grow">
@@ -594,7 +602,7 @@ export default function MenuPage() {
 
           {/* CLEAR FILTER BUTTON */}
           <AnimatePresence>
-            {(activeCategory !== "All" || priceFilter !== "ALL" || weightFilter !== "ALL" || flavorFilter !== "ALL" || searchQuery !== "") && (
+            {isAnyFilterActive && (
               <motion.button
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -627,6 +635,7 @@ export default function MenuPage() {
 
       {/* Product Display Area */}
       {loading || isFiltering ? (
+        // LOADING STATE
         <div className="flex flex-col justify-center items-center py-20 min-h-[400px]">
           <motion.div 
             animate={{ rotate: 360 }}
@@ -638,27 +647,56 @@ export default function MenuPage() {
           <p className="text-[#8D6E63] font-bold animate-pulse">Curating your delights...</p>
         </div>
       ) : (
-        <motion.div 
-          layout
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8"
-        >
-          <AnimatePresence mode="popLayout">
-            {filteredProducts.map((product) => (
-              <motion.div
-                key={product._id}
-                layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
+        /* Product Grid */
+        <>
+          <motion.div 
+            layout
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8"
+          >
+            <AnimatePresence mode="popLayout">
+              {currentProducts.map((product) => (
+                <motion.div
+                  key={product._id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Link href={`/product/${product._id}`} className="block h-full">
+                    <ProductCard product={product} />
+                  </Link>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
+
+          {/* PAGINATION CONTROLS */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4 mt-12 py-8 border-t border-[#F2E3DB] border-dashed">
+              <button 
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors bg-[#FFF8F3]/50"
               >
-                <Link href={`/product/${product._id}`} className="block h-full">
-                  <ProductCard product={product} />
-                </Link>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
+                <ChevronLeft size={20} />
+              </button>
+              
+              {/* Highlighted Active Page Number */}
+              <span className="text-sm font-bold text-[#8D6E63]">
+                Page <span className="text-[#D98292] text-base">{currentPage}</span> of {totalPages}
+              </span>
+
+              <button 
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors bg-[#FFF8F3]/50"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
+        </>
       )}
       
       {!loading && !isFiltering && filteredProducts.length === 0 && (
