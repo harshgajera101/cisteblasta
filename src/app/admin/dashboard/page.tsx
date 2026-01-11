@@ -565,7 +565,7 @@ export default function AdminDashboard() {
                    <p className="text-xs text-[#8D6E63] truncate">{formData.image ? formData.image.name : "Tap to upload"}</p>
                  </div>
                  {/* HELPER TEXT ADDED HERE */}
-                 <p className="text-[10px] text-[#8D6E63] mt-1 text-center">Best size for image (1:1 square ratio and 1024x1024 px)</p>
+                 <p className="text-[10px] text-[#8D6E63] mt-1">Recommended: Square image (1:1 ratio), 1024 x 1024 px.</p>
                </div>
 
                {/* Name Input */}
