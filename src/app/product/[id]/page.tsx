@@ -3,11 +3,12 @@
 // import { useState, useEffect } from "react";
 // import { useParams, useRouter } from "next/navigation";
 // import { motion, AnimatePresence } from "framer-motion";
-// import { Star, ShieldCheck, Heart, Award, Info, ShoppingCart, ChevronRight, CheckCircle2, ChevronLeft, PenLine, ArrowLeft } from "lucide-react";
+// import { Star, ShieldCheck, Heart, Award, Info, ShoppingCart, ChevronRight, CheckCircle2, ChevronLeft, PenLine, ArrowLeft, Trash2, Edit2, X, Check } from "lucide-react";
 // import { useCart } from "@/context/CartContext";
 // import { Toast } from "@/components/ui/Toast";
 // import { useSession } from "next-auth/react";
-// import Link from "next/link"; // Import Link
+// import Link from "next/link"; 
+// import { cn } from "@/lib/utils"; 
 
 // interface ProductVariant {
 //   name: string;
@@ -15,10 +16,13 @@
 // }
 
 // interface Review {
+//   _id: string;
 //   user: string;
+//   userEmail?: string;
 //   rating: number;
 //   comment: string;
 //   date: string;
+//   isEdited?: boolean;
 // }
 
 // interface Product {
@@ -54,6 +58,22 @@
 //   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
 //   const [submittingReview, setSubmittingReview] = useState(false);
 
+//   // Edit State
+//   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+//   const [editComment, setEditComment] = useState("");
+
+//   // Wishlist State
+//   const [isLiked, setIsLiked] = useState(false);
+
+//   // Modal State for Custom Alerts
+//   const [modal, setModal] = useState<{ 
+//     isOpen: boolean; 
+//     type: "delete" | "save_edit" | null; 
+//     reviewId?: string;
+//   }>({ isOpen: false, type: null });
+
+//   const isAdmin = (session?.user as any)?.role === "admin";
+
 //   useEffect(() => {
 //     async function fetchData() {
 //       try {
@@ -62,9 +82,18 @@
 //         if (productData.success) setProduct(productData.product);
 
 //         if (session) {
+//           // Check Review Eligibility
 //           const eligibilityRes = await fetch(`/api/products/${id}/review`);
 //           const eligibilityData = await eligibilityRes.json();
 //           if (eligibilityData.canReview) setCanReview(true);
+
+//           // Check Wishlist Status
+//           const wishlistRes = await fetch("/api/user/wishlist");
+//           const wishlistData = await wishlistRes.json();
+//           if (wishlistData.success && wishlistData.wishlist) {
+//              const found = wishlistData.wishlist.some((item: any) => item._id === id);
+//              setIsLiked(found);
+//           }
 //         }
 //       } catch (e) {
 //         console.error("Error loading page data");
@@ -74,6 +103,43 @@
 //     }
 //     if (id) fetchData();
 //   }, [id, session]);
+
+//   // --- WISHLIST HANDLER ---
+//   const toggleWishlist = async () => {
+//     if (!session) {
+//       setToast({ show: true, message: "Please login to save favorites!", type: "error" });
+//       setTimeout(() => router.push(`/login?callbackUrl=/product/${id}`), 1500);
+//       return;
+//     }
+
+//     const newState = !isLiked;
+//     setIsLiked(newState);
+
+//     if (newState) {
+//       setToast({ show: true, message: "Successfully Wishlisted!", type: "success" });
+//     } else {
+//       setToast({ show: true, message: "Removed from Wishlist", type: "success" });
+//     }
+
+//     try {
+//       const res = await fetch("/api/user/wishlist", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ productId: id }),
+//       });
+      
+//       const data = await res.json();
+//       if (!data.success) {
+//         setIsLiked(!newState);
+//         setToast({ show: true, message: "Failed to update wishlist", type: "error" });
+//       }
+//     } catch (error) {
+//       setIsLiked(!newState);
+//       setToast({ show: true, message: "Server Error", type: "error" });
+//     }
+//   };
+
+//   // --- REVIEW HANDLERS ---
 
 //   const handleReviewSubmit = async () => {
 //     if (!reviewForm.comment.trim()) {
@@ -91,7 +157,12 @@
       
 //       if (data.success) {
 //         setToast({ show: true, message: "Review Submitted!", type: "success" });
-//         setProduct(prev => prev ? { ...prev, reviews: [data.newReview, ...prev.reviews], reviewsCount: prev.reviewsCount + 1 } : null);
+//         setProduct(prev => prev ? { 
+//           ...prev, 
+//           reviews: [data.newReview, ...prev.reviews], 
+//           reviewsCount: prev.reviewsCount + 1 
+//         } : null);
+        
 //         setIsWritingReview(false);
 //         setCanReview(false); 
 //       } else {
@@ -103,6 +174,70 @@
 //       setSubmittingReview(false);
 //     }
 //   };
+
+//   const confirmAction = async () => {
+//     if (!modal.type) return;
+
+//     if (modal.type === "delete" && modal.reviewId) {
+//       await performDelete(modal.reviewId);
+//     } else if (modal.type === "save_edit") {
+//       await performSaveEdit();
+//     }
+//     setModal({ isOpen: false, type: null });
+//   };
+
+//   const performDelete = async (reviewId: string) => {
+//     try {
+//       const res = await fetch(`/api/products/${id}/review`, {
+//         method: "DELETE",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ reviewId }),
+//       });
+//       const data = await res.json();
+//       if (data.success) {
+//         setToast({ show: true, message: "Review Deleted", type: "success" });
+//         setProduct(prev => prev ? {
+//           ...prev,
+//           reviews: prev.reviews.filter(r => r._id !== reviewId),
+//           reviewsCount: Math.max(0, prev.reviewsCount - 1)
+//         } : null);
+//       } else {
+//         setToast({ show: true, message: "Failed to delete", type: "error" });
+//       }
+//     } catch (e) {
+//       setToast({ show: true, message: "Error deleting review", type: "error" });
+//     }
+//   };
+
+//   const performSaveEdit = async () => {
+//     try {
+//       const res = await fetch(`/api/products/${id}/review`, {
+//         method: "PUT",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ comment: editComment }), 
+//       });
+//       const data = await res.json();
+//       if (data.success) {
+//         setToast({ show: true, message: "Review Updated", type: "success" });
+//         setProduct(prev => prev ? {
+//           ...prev,
+//           reviews: prev.reviews.map(r => r._id === editingReviewId ? { ...r, comment: editComment, isEdited: true } : r)
+//         } : null);
+//         setEditingReviewId(null);
+//       } else {
+//         setToast({ show: true, message: "Failed to update", type: "error" });
+//       }
+//     } catch (e) {
+//       setToast({ show: true, message: "Error updating", type: "error" });
+//     }
+//   };
+
+//   const startEditing = (review: Review) => {
+//     setEditingReviewId(review._id);
+//     setEditComment(review.comment);
+//   };
+
+//   // --- RENDER ---
 
 //   if (loading) return <div className="min-h-screen flex items-center justify-center text-[#8D6E63] font-playfair animate-pulse">Loading Delight...</div>;
 //   if (!product) return <div className="min-h-screen flex items-center justify-center text-[#8D6E63]">Product not found.</div>;
@@ -126,15 +261,54 @@
 //   };
 
 //   return (
-//     <div className="min-h-screen bg-[#FFF8F3] pb-32">
+//     <div className="relative min-h-screen bg-[#FFF8F3] pb-32">
 //       <Toast message={toast.message} type={toast.type} isVisible={toast.show} onClose={() => setToast({ ...toast, show: false })} />
       
-//       {/* --- NEW: Back to Menu Button (Fixed Top Left) --- */}
-//       <motion.div 
-//         initial={{ opacity: 0, x: -20 }}
-//         animate={{ opacity: 1, x: 0 }}
-//         className="fixed top-24 left-4 z-50 md:left-8" // Positioned below navbar (approx 80px)
-//       >
+//       {/* CUSTOM CONFIRMATION MODAL */}
+//       <AnimatePresence>
+//         {modal.isOpen && (
+//           <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+//             <motion.div 
+//               initial={{ opacity: 0 }} 
+//               animate={{ opacity: 1 }} 
+//               exit={{ opacity: 0 }}
+//               className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+//               onClick={() => setModal({ isOpen: false, type: null })}
+//             />
+//             <motion.div 
+//               initial={{ scale: 0.9, opacity: 0 }} 
+//               animate={{ scale: 1, opacity: 1 }} 
+//               exit={{ scale: 0.9, opacity: 0 }}
+//               className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full border border-[#F2E3DB]"
+//             >
+//               <h3 className="font-playfair text-xl font-bold text-[#4E342E] mb-2">Are you sure?</h3>
+//               <p className="text-[#8D6E63] text-sm mb-6">
+//                 {modal.type === "delete" 
+//                   ? "Do you really want to delete this review? This action cannot be undone." 
+//                   : "Save changes to your review?"}
+//               </p>
+//               <div className="flex gap-3 justify-end">
+//                 <button 
+//                   onClick={() => setModal({ isOpen: false, type: null })} 
+//                   className="px-4 py-2 rounded-lg text-sm font-bold text-[#8D6E63] hover:bg-[#FFF8F3] transition-colors"
+//                 >
+//                   Cancel
+//                 </button>
+//                 <button 
+//                   onClick={confirmAction}
+//                   className="px-4 py-2 rounded-lg text-sm font-bold text-white bg-[#D98292] hover:bg-[#c46b7d] shadow-md transition-colors"
+//                 >
+//                   Confirm
+//                 </button>
+//               </div>
+//             </motion.div>
+//           </div>
+//         )}
+//       </AnimatePresence>
+
+//       {/* FIXED NAVIGATION ROW */}
+//       <div className="max-w-7xl mx-auto px-4 pt-6 pb-2 flex justify-between items-center">
+//         {/* Back to Menu */}
 //         <Link href="/menu">
 //           <button className="group flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-[#F2E3DB] px-4 py-2 rounded-full shadow-sm hover:shadow-md transition-all duration-300 hover:border-[#D98292]/50">
 //             <ArrowLeft size={16} className="text-[#8D6E63] group-hover:text-[#D98292] transition-colors" />
@@ -143,12 +317,24 @@
 //             </span>
 //           </button>
 //         </Link>
-//       </motion.div>
 
-//       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row min-h-[calc(100vh-80px)] pt-12 lg:pt-0"> {/* Added padding top for mobile button clearance */}
+//         {/* Wishlist Button */}
+//         <button 
+//           onClick={toggleWishlist}
+//           className="group flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-[#F2E3DB] px-4 py-2 rounded-full shadow-sm hover:shadow-md transition-all duration-300 hover:border-[#D98292]/50"
+//         >
+//           <Heart size={16} className={cn("transition-colors", isLiked ? "fill-[#D98292] text-[#D98292]" : "text-[#8D6E63] group-hover:text-[#D98292]")} />
+//           <span className="text-sm font-bold text-[#4E342E] group-hover:text-[#D98292] transition-colors">
+//             Wishlist
+//           </span>
+//         </button>
+//       </div>
+
+//       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row min-h-[calc(100vh-140px)]">
           
 //         {/* LEFT: Image Section */}
-//         <div className="lg:w-1/2 relative bg-[#FFF8F3] flex items-center justify-center p-6 md:p-12 lg:sticky lg:top-20 lg:h-screen">
+//         {/* FIX: Removed lg:top-20 and lg:pt-20 (using lg:top-0 and lg:pt-0) to align top */}
+//         <div className="lg:w-1/2 relative bg-[#FFF8F3] flex items-center justify-center p-6 md:p-12 lg:pt-0 lg:sticky lg:top-0 lg:h-screen">
 //           <div className="relative w-full h-full max-h-[600px] flex items-center justify-center">
 //             {product.images && product.images.length > 0 ? (
 //               <img 
@@ -171,7 +357,8 @@
 //         </div>
 
 //         {/* RIGHT: Details Section */}
-//         <div className="lg:w-1/2 p-6 md:p-12 lg:pt-20 flex flex-col bg-white lg:bg-transparent">
+//         {/* FIX: Changed lg:pt-20 to lg:pt-0 to align content with image */}
+//         <div className="lg:w-1/2 p-6 md:p-12 lg:pt-0 flex flex-col bg-white lg:bg-transparent">
           
 //           {/* Header & Rating */}
 //           <div className="mb-4">
@@ -283,6 +470,7 @@
 //               )}
 //             </div>
 
+//             {/* WRITE REVIEW FORM */}
 //             <AnimatePresence>
 //               {isWritingReview && (
 //                 <motion.div 
@@ -315,12 +503,13 @@
 //               )}
 //             </AnimatePresence>
             
+//             {/* REVIEWS LIST */}
 //             {allReviews.length === 0 ? (
 //               <p className="text-[#8D6E63] italic text-sm">No reviews yet. Be the first to taste!</p>
 //             ) : (
 //               <div className="space-y-4">
 //                 {currentReviews.map((review: any, i) => (
-//                   <div key={i} className="border-b border-[#F2E3DB] pb-4 last:border-0">
+//                   <div key={i} className="border-b border-[#F2E3DB] pb-4 last:border-0 relative group/review">
 //                     <div className="flex items-center justify-between mb-2">
 //                       <div className="flex items-center gap-2">
 //                         <div className="w-8 h-8 rounded-full bg-[#4E342E] text-white flex items-center justify-center font-bold text-xs">
@@ -328,20 +517,66 @@
 //                         </div>
 //                         <div>
 //                           <span className="font-bold text-[#4E342E] text-sm block">{review.user || "Customer"}</span>
-//                           <div className="flex gap-0.5 mt-0.5">
+//                           <div className="flex gap-0.5 mt-0.5 items-center">
 //                              {[1,2,3,4,5].map(star => (
 //                                <Star key={star} size={8} className={`${star <= (review.rating || 5) ? "fill-[#D98292] text-[#D98292]" : "text-[#F2E3DB]"}`} />
 //                              ))}
+//                              {review.isEdited && <span className="text-[9px] text-[#8D6E63] ml-1 opacity-70">(edited)</span>}
 //                           </div>
 //                         </div>
 //                       </div>
-//                       <span className="text-[10px] text-[#8D6E63] bg-[#FFF8F3] px-2 py-1 rounded-full">
-//                         {new Date(review.date).toLocaleDateString()}
-//                       </span>
+//                       <div className="flex items-center gap-2">
+//                         <span className="text-[10px] text-[#8D6E63] bg-[#FFF8F3] px-2 py-1 rounded-full">
+//                           {new Date(review.date).toLocaleDateString()}
+//                         </span>
+                        
+//                         {/* ACTIONS: Edit & Delete (With Custom Modal Trigger) */}
+//                         <div className="flex gap-1">
+//                           {session?.user?.email === review.userEmail && editingReviewId !== review._id && (
+//                             <button 
+//                               onClick={() => startEditing(review)}
+//                               className="p-1.5 text-[#8D6E63] hover:text-[#D98292] hover:bg-[#FFF8F3] rounded-full transition-colors"
+//                               title="Edit Review"
+//                             >
+//                               <Edit2 size={12} />
+//                             </button>
+//                           )}
+//                           {isAdmin && (
+//                             <button 
+//                               onClick={() => setModal({ isOpen: true, type: "delete", reviewId: review._id })}
+//                               className="p-1.5 text-[#8D6E63] hover:text-red-500 hover:bg-[#FFF8F3] rounded-full transition-colors"
+//                               title="Delete Review"
+//                             >
+//                               <Trash2 size={12} />
+//                             </button>
+//                           )}
+//                         </div>
+//                       </div>
 //                     </div>
-//                     <p className="text-xs text-[#8D6E63] leading-relaxed mt-2 pl-10">
-//                       {review.comment}
-//                     </p>
+
+//                     {/* EDIT MODE vs DISPLAY MODE */}
+//                     {editingReviewId === review._id ? (
+//                       <div className="mt-2 animate-in fade-in zoom-in-95">
+//                         <textarea 
+//                           value={editComment}
+//                           onChange={(e) => setEditComment(e.target.value)}
+//                           className="w-full p-2 rounded-lg border border-[#D98292] text-xs focus:outline-none bg-[#FFF8F3] text-[#4E342E]"
+//                           rows={2}
+//                         />
+//                         <div className="flex gap-2 mt-2 justify-end">
+//                           <button onClick={() => setEditingReviewId(null)} className="p-1 bg-gray-100 rounded hover:bg-gray-200">
+//                             <X size={14} className="text-gray-500" />
+//                           </button>
+//                           <button onClick={() => setModal({ isOpen: true, type: "save_edit" })} className="p-1 bg-[#D98292] rounded hover:bg-[#c46b7d]">
+//                             <Check size={14} className="text-white" />
+//                           </button>
+//                         </div>
+//                       </div>
+//                     ) : (
+//                       <p className="text-xs text-[#8D6E63] leading-relaxed mt-2 pl-10 break-words">
+//                         {review.comment}
+//                       </p>
+//                     )}
 //                   </div>
 //                 ))}
 //               </div>
@@ -413,11 +648,6 @@
 
 
 
-
-
-
-
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -428,6 +658,7 @@ import { useCart } from "@/context/CartContext";
 import { Toast } from "@/components/ui/Toast";
 import { useSession } from "next-auth/react";
 import Link from "next/link"; 
+import { cn } from "@/lib/utils"; 
 
 interface ProductVariant {
   name: string;
@@ -481,6 +712,16 @@ export default function ProductDetailPage() {
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
   const [editComment, setEditComment] = useState("");
 
+  // Wishlist State
+  const [isLiked, setIsLiked] = useState(false);
+
+  // Modal State for Custom Alerts
+  const [modal, setModal] = useState<{ 
+    isOpen: boolean; 
+    type: "delete" | "save_edit" | null; 
+    reviewId?: string;
+  }>({ isOpen: false, type: null });
+
   const isAdmin = (session?.user as any)?.role === "admin";
 
   useEffect(() => {
@@ -491,9 +732,18 @@ export default function ProductDetailPage() {
         if (productData.success) setProduct(productData.product);
 
         if (session) {
+          // Check Review Eligibility
           const eligibilityRes = await fetch(`/api/products/${id}/review`);
           const eligibilityData = await eligibilityRes.json();
           if (eligibilityData.canReview) setCanReview(true);
+
+          // Check Wishlist Status
+          const wishlistRes = await fetch("/api/user/wishlist");
+          const wishlistData = await wishlistRes.json();
+          if (wishlistData.success && wishlistData.wishlist) {
+             const found = wishlistData.wishlist.some((item: any) => item._id === id);
+             setIsLiked(found);
+          }
         }
       } catch (e) {
         console.error("Error loading page data");
@@ -503,6 +753,43 @@ export default function ProductDetailPage() {
     }
     if (id) fetchData();
   }, [id, session]);
+
+  // --- WISHLIST HANDLER ---
+  const toggleWishlist = async () => {
+    if (!session) {
+      setToast({ show: true, message: "Please login to save favorites!", type: "error" });
+      setTimeout(() => router.push(`/login?callbackUrl=/product/${id}`), 1500);
+      return;
+    }
+
+    const newState = !isLiked;
+    setIsLiked(newState);
+
+    if (newState) {
+      setToast({ show: true, message: "Successfully Wishlisted!", type: "success" });
+    } else {
+      setToast({ show: true, message: "Removed from Wishlist", type: "success" });
+    }
+
+    try {
+      const res = await fetch("/api/user/wishlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: id }),
+      });
+      
+      const data = await res.json();
+      if (!data.success) {
+        setIsLiked(!newState); // Revert on failure
+        setToast({ show: true, message: "Failed to update wishlist", type: "error" });
+      }
+    } catch (error) {
+      setIsLiked(!newState);
+      setToast({ show: true, message: "Server Error", type: "error" });
+    }
+  };
+
+  // --- REVIEW HANDLERS ---
 
   const handleReviewSubmit = async () => {
     if (!reviewForm.comment.trim()) {
@@ -520,7 +807,12 @@ export default function ProductDetailPage() {
       
       if (data.success) {
         setToast({ show: true, message: "Review Submitted!", type: "success" });
-        setProduct(prev => prev ? { ...prev, reviews: [data.newReview, ...prev.reviews], reviewsCount: prev.reviewsCount + 1 } : null);
+        setProduct(prev => prev ? { 
+          ...prev, 
+          reviews: [data.newReview, ...prev.reviews], 
+          reviewsCount: prev.reviewsCount + 1 
+        } : null);
+        
         setIsWritingReview(false);
         setCanReview(false); 
       } else {
@@ -533,9 +825,18 @@ export default function ProductDetailPage() {
     }
   };
 
-  const handleDeleteReview = async (reviewId: string) => {
-    if (!window.confirm("Are you sure you want to delete this review?")) return;
+  const confirmAction = async () => {
+    if (!modal.type) return;
 
+    if (modal.type === "delete" && modal.reviewId) {
+      await performDelete(modal.reviewId);
+    } else if (modal.type === "save_edit") {
+      await performSaveEdit();
+    }
+    setModal({ isOpen: false, type: null });
+  };
+
+  const performDelete = async (reviewId: string) => {
     try {
       const res = await fetch(`/api/products/${id}/review`, {
         method: "DELETE",
@@ -558,19 +859,12 @@ export default function ProductDetailPage() {
     }
   };
 
-  const startEditing = (review: Review) => {
-    setEditingReviewId(review._id);
-    setEditComment(review.comment);
-  };
-
-  const saveEdit = async () => {
-    if (!window.confirm("Are you sure you want to save changes to your review?")) return;
-    
+  const performSaveEdit = async () => {
     try {
       const res = await fetch(`/api/products/${id}/review`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ comment: editComment }), // Add rating here if you want to allow rating edit
+        body: JSON.stringify({ comment: editComment }), 
       });
       const data = await res.json();
       if (data.success) {
@@ -587,6 +881,13 @@ export default function ProductDetailPage() {
       setToast({ show: true, message: "Error updating", type: "error" });
     }
   };
+
+  const startEditing = (review: Review) => {
+    setEditingReviewId(review._id);
+    setEditComment(review.comment);
+  };
+
+  // --- RENDER ---
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-[#8D6E63] font-playfair animate-pulse">Loading Delight...</div>;
   if (!product) return <div className="min-h-screen flex items-center justify-center text-[#8D6E63]">Product not found.</div>;
@@ -610,15 +911,54 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF8F3] pb-32">
+    <div className="relative min-h-screen bg-[#FFF8F3] pb-32">
       <Toast message={toast.message} type={toast.type} isVisible={toast.show} onClose={() => setToast({ ...toast, show: false })} />
       
-      {/* Back to Menu Button */}
-      <motion.div 
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="fixed top-24 left-4 z-50 md:left-8"
-      >
+      {/* CUSTOM CONFIRMATION MODAL */}
+      <AnimatePresence>
+        {modal.isOpen && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => setModal({ isOpen: false, type: null })}
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full border border-[#F2E3DB]"
+            >
+              <h3 className="font-playfair text-xl font-bold text-[#4E342E] mb-2">Are you sure?</h3>
+              <p className="text-[#8D6E63] text-sm mb-6">
+                {modal.type === "delete" 
+                  ? "Do you really want to delete this review? This action cannot be undone." 
+                  : "Save changes to your review?"}
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button 
+                  onClick={() => setModal({ isOpen: false, type: null })} 
+                  className="px-4 py-2 rounded-lg text-sm font-bold text-[#8D6E63] hover:bg-[#FFF8F3] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmAction}
+                  className="px-4 py-2 rounded-lg text-sm font-bold text-white bg-[#D98292] hover:bg-[#c46b7d] shadow-md transition-colors"
+                >
+                  Confirm
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* FIXED NAVIGATION ROW */}
+      <div className="max-w-7xl mx-auto px-4 pt-6 pb-2 flex justify-between items-center">
+        {/* Back to Menu */}
         <Link href="/menu">
           <button className="group flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-[#F2E3DB] px-4 py-2 rounded-full shadow-sm hover:shadow-md transition-all duration-300 hover:border-[#D98292]/50">
             <ArrowLeft size={16} className="text-[#8D6E63] group-hover:text-[#D98292] transition-colors" />
@@ -627,12 +967,24 @@ export default function ProductDetailPage() {
             </span>
           </button>
         </Link>
-      </motion.div>
 
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row min-h-[calc(100vh-80px)] pt-12 lg:pt-0">
+        {/* Wishlist Button */}
+        <button 
+          onClick={toggleWishlist}
+          className="group flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-[#F2E3DB] px-4 py-2 rounded-full shadow-sm hover:shadow-md transition-all duration-300 hover:border-[#D98292]/50"
+        >
+          <Heart size={16} className={cn("transition-colors", isLiked ? "fill-[#D98292] text-[#D98292]" : "text-[#8D6E63] group-hover:text-[#D98292]")} />
+          <span className="text-sm font-bold text-[#4E342E] group-hover:text-[#D98292] transition-colors">
+            Wishlist
+          </span>
+        </button>
+      </div>
+
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row min-h-[calc(100vh-140px)]">
           
         {/* LEFT: Image Section */}
-        <div className="lg:w-1/2 relative bg-[#FFF8F3] flex items-center justify-center p-6 md:p-12 lg:sticky lg:top-20 lg:h-screen">
+        {/* Added lg:self-start to fix sticky issue and ensure alignment */}
+        <div className="lg:w-1/2 relative bg-[#FFF8F3] flex items-center justify-center p-6 md:p-12 lg:pt-0 lg:sticky lg:top-0 lg:h-screen lg:self-start">
           <div className="relative w-full h-full max-h-[600px] flex items-center justify-center">
             {product.images && product.images.length > 0 ? (
               <img 
@@ -655,7 +1007,7 @@ export default function ProductDetailPage() {
         </div>
 
         {/* RIGHT: Details Section */}
-        <div className="lg:w-1/2 p-6 md:p-12 lg:pt-20 flex flex-col bg-white lg:bg-transparent">
+        <div className="lg:w-1/2 p-6 md:p-12 lg:pt-0 flex flex-col bg-white lg:bg-transparent">
           
           {/* Header & Rating */}
           <div className="mb-4">
@@ -707,10 +1059,10 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {/* Description */}
+          {/* Description - FIXED: Added break-words */}
           <div className="mb-8">
             <h3 className="font-playfair font-bold text-xl text-[#4E342E] mb-3">Description</h3>
-            <p className="text-[#8D6E63] text-sm leading-8 text-justify">
+            <p className="text-[#8D6E63] text-sm leading-8 text-justify break-words">
               {product.description || `Indulge in the sweet and creamy delight of our ${product.name}. Crafted with the finest ingredients and a rich, buttery flavor profile.`}
             </p>
           </div>
@@ -827,7 +1179,7 @@ export default function ProductDetailPage() {
                           {new Date(review.date).toLocaleDateString()}
                         </span>
                         
-                        {/* Actions for User (Edit) & Admin (Delete) */}
+                        {/* ACTIONS: Edit & Delete (With Custom Modal Trigger) */}
                         <div className="flex gap-1">
                           {session?.user?.email === review.userEmail && editingReviewId !== review._id && (
                             <button 
@@ -840,7 +1192,7 @@ export default function ProductDetailPage() {
                           )}
                           {isAdmin && (
                             <button 
-                              onClick={() => handleDeleteReview(review._id)}
+                              onClick={() => setModal({ isOpen: true, type: "delete", reviewId: review._id })}
                               className="p-1.5 text-[#8D6E63] hover:text-red-500 hover:bg-[#FFF8F3] rounded-full transition-colors"
                               title="Delete Review"
                             >
@@ -864,7 +1216,7 @@ export default function ProductDetailPage() {
                           <button onClick={() => setEditingReviewId(null)} className="p-1 bg-gray-100 rounded hover:bg-gray-200">
                             <X size={14} className="text-gray-500" />
                           </button>
-                          <button onClick={saveEdit} className="p-1 bg-[#D98292] rounded hover:bg-[#c46b7d]">
+                          <button onClick={() => setModal({ isOpen: true, type: "save_edit" })} className="p-1 bg-[#D98292] rounded hover:bg-[#c46b7d]">
                             <Check size={14} className="text-white" />
                           </button>
                         </div>

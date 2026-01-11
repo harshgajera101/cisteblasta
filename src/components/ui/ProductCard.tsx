@@ -277,11 +277,11 @@ export default function ProductCard({ product, className, isWishlistedInitially 
     setIsLiked(newState);
 
     if (newState) {
-      setToast({ show: true, message: "Successfully Wishlisted! ❤️", type: "success" });
-      setTimeout(() => setToast(prev => ({ ...prev, show: false })), 800);
+      setToast({ show: true, message: "Successfully Wishlisted!", type: "success" });
+      setTimeout(() => setToast(prev => ({ ...prev, show: false })), 1000);
     } else {
       setToast({ show: true, message: "Removed from Wishlist", type: "success" });
-      setTimeout(() => setToast(prev => ({ ...prev, show: false })), 800);
+      setTimeout(() => setToast(prev => ({ ...prev, show: false })), 1000);
     }
 
     try {

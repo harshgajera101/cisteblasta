@@ -50,7 +50,7 @@
 //         token.role = user.role;
 //         token.phone = user.phone;
 //       }
-//       // Refresh data from DB on every request to keep Profile <-> Admin in sync
+//       // Refresh data from DB on every request (Fixes Profile Sync)
 //       if (token.id && token.id !== "admin") {
 //         try {
 //           await connectDB();
@@ -60,7 +60,7 @@
 //             token.phone = dbUser.phone;
 //           }
 //         } catch (error) {
-//           // Fallback to token data if DB fails
+//           // Fallback
 //         }
 //       }
 //       return token;
@@ -70,7 +70,6 @@
 //         session.user.role = token.role;
 //         session.user.phone = token.phone;
 //         session.user.id = token.id;
-//         // Ensure name comes from token (which is fresh from DB)
 //         if (token.name) session.user.name = token.name;
 //       }
 //       return session;
@@ -81,6 +80,10 @@
 //     signIn: "/login",
 //   },
 // };
+
+
+
+
 
 
 
@@ -103,16 +106,42 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        // 1. Admin Check
+        await connectDB();
+
+        // 1. Admin Check & Sync to DB
         if (
           credentials.email === process.env.ADMIN_EMAIL &&
           credentials.password === process.env.ADMIN_PASSWORD
         ) {
-          return { id: "admin", name: "Sister Admin", email: credentials.email, role: "admin" };
+          // FIX: Ensure Admin exists in MongoDB so they have an ID and Wishlist
+          // We use findOneAndUpdate with upsert: true
+          const adminUser = await User.findOneAndUpdate(
+            { email: credentials.email },
+            {
+              $set: {
+                name: "Sister Admin",
+                role: "admin",
+                phone: "0000000000", // Placeholder phone
+              },
+              $setOnInsert: {
+                // Dummy hash for DB validation (won't be used for login as we check env vars first)
+                password: await bcrypt.hash(credentials.password, 10),
+                wishlist: []
+              }
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+          );
+
+          return { 
+            id: adminUser._id.toString(), // Use the REAL MongoDB ID
+            name: adminUser.name, 
+            email: adminUser.email, 
+            role: "admin",
+            phone: adminUser.phone 
+          };
         }
 
         // 2. Customer Check
-        await connectDB();
         const user = await User.findOne({ email: credentials.email });
         
         if (user) {
@@ -139,7 +168,7 @@ export const authOptions: NextAuthOptions = {
         token.phone = user.phone;
       }
       // Refresh data from DB on every request (Fixes Profile Sync)
-      if (token.id && token.id !== "admin") {
+      if (token.id) { // Removed '&& token.id !== "admin"' since admin is now in DB
         try {
           await connectDB();
           const dbUser = await User.findById(token.id);
