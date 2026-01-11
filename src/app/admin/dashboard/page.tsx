@@ -4,7 +4,8 @@
 // import { 
 //   RefreshCw, ChefHat, Truck, Package, Clock, Plus, Trash2, Edit2, 
 //   Image as ImageIcon, RotateCcw, X, AlertTriangle, MapPin, Phone, Mail,
-//   ChevronLeft, ChevronRight, Filter, Calendar, Info, Check
+//   ChevronLeft, ChevronRight, Filter, Calendar, Info, Check, ArrowDownUp,
+//   XCircle, History
 // } from "lucide-react";
 // import { Toast } from "@/components/ui/Toast";
 
@@ -27,6 +28,7 @@
 //   address: string;
 //   items: OrderItem[];
 //   createdAt: string;
+//   updatedAt: string;
 //   notes?: string; 
 // };
 
@@ -63,6 +65,10 @@
 //   const [menuFilter, setMenuFilter] = useState("ALL");
 //   const [historyDateFilter, setHistoryDateFilter] = useState("ALL"); 
 //   const [historyStatusFilter, setHistoryStatusFilter] = useState("ALL");
+  
+//   // Sorting State - Default is UPDATED (Latest Activity)
+//   const [sortBy, setSortBy] = useState<"UPDATED" | "CREATED">("UPDATED"); 
+
 //   const [currentPage, setCurrentPage] = useState(1);
 //   const dashboardTopRef = useRef<HTMLDivElement>(null);
 //   const [isUploading, setIsUploading] = useState(false);
@@ -74,7 +80,6 @@
 //     hasVariants: false, basePrice: "", variants: [] as { name: string; price: string }[]
 //   });
 
-//   // Price Editing State
 //   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
 //   const [newPriceValue, setNewPriceValue] = useState("");
 
@@ -96,7 +101,7 @@
 //   };
 
 //   useEffect(() => { fetchOrders(); fetchProducts(); }, []);
-//   useEffect(() => { setCurrentPage(1); }, [activeTab, historyDateFilter, historyStatusFilter]);
+//   useEffect(() => { setCurrentPage(1); }, [activeTab, historyDateFilter, historyStatusFilter, sortBy]);
 
 //   const showToast = (message: string, type: "success"|"error"|"warning") => { setToast({ show: true, message, type }); };
 
@@ -131,6 +136,13 @@
 
 //   const formatDate = (dateString: string) => {
 //     return new Date(dateString).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true });
+//   };
+
+//   // Helper to get Icon for Updated Time
+//   const getUpdateIcon = (status: string) => {
+//     if (status === "DELIVERED") return <Package size={10} />;
+//     if (status === "CANCELLED") return <XCircle size={10} />;
+//     return <History size={10} />;
 //   };
 
 //   const changePage = (newPage: number) => {
@@ -179,12 +191,12 @@
 //   };
 
 //   const getFilteredOrders = () => {
-//     let filtered = orders;
+//     let filtered = [...orders]; 
 //     switch (activeTab) {
-//       case "LEADS": filtered = orders.filter((o) => o.status === "PENDING"); break;
-//       case "PENDING": filtered = orders.filter((o) => o.status === "CONFIRMED"); break;
-//       case "ONGOING": filtered = orders.filter((o) => ["PREPARING", "READY", "OUT_FOR_DELIVERY"].includes(o.status)); break;
-//       case "HISTORY": filtered = orders.filter((o) => ["DELIVERED", "CANCELLED"].includes(o.status)); break;
+//       case "LEADS": filtered = filtered.filter((o) => o.status === "PENDING"); break;
+//       case "PENDING": filtered = filtered.filter((o) => o.status === "CONFIRMED"); break;
+//       case "ONGOING": filtered = filtered.filter((o) => ["PREPARING", "READY", "OUT_FOR_DELIVERY"].includes(o.status)); break;
+//       case "HISTORY": filtered = filtered.filter((o) => ["DELIVERED", "CANCELLED"].includes(o.status)); break;
 //       default: filtered = [];
 //     }
 //     if (activeTab === "HISTORY") {
@@ -198,6 +210,14 @@
 //         filtered = filtered.filter(o => o.status === historyStatusFilter);
 //       }
 //     }
+    
+//     // SORTING LOGIC
+//     filtered.sort((a, b) => {
+//       const dateA = new Date(sortBy === "UPDATED" ? a.updatedAt : a.createdAt).getTime();
+//       const dateB = new Date(sortBy === "UPDATED" ? b.updatedAt : b.createdAt).getTime();
+//       return dateB - dateA; // Descending (Newest first)
+//     });
+
 //     return filtered;
 //   };
 
@@ -219,17 +239,56 @@
 //         </div>
 //       ) : (
 //         <div className="space-y-4">
-//            {activeTab === "HISTORY" && (<div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm border border-[#F2E3DB]"><div className="flex items-center gap-2 text-sm font-bold text-[#8D6E63] w-full md:w-auto"><Filter size={16} /> Filters:</div><select value={historyDateFilter} onChange={(e) => setHistoryDateFilter(e.target.value)} className="w-full md:w-auto px-4 py-2 rounded-lg border border-[#F2E3DB] text-sm text-[#4E342E] bg-[#FFF8F3] focus:outline-none"><option value="ALL">All Dates</option><option value="7">Last 7 Days</option><option value="15">Last 15 Days</option><option value="30">Last 30 Days</option></select><select value={historyStatusFilter} onChange={(e) => setHistoryStatusFilter(e.target.value)} className="w-full md:w-auto px-4 py-2 rounded-lg border border-[#F2E3DB] text-sm text-[#4E342E] bg-[#FFF8F3] focus:outline-none"><option value="ALL">All Status</option><option value="DELIVERED">Delivered</option><option value="CANCELLED">Rejected</option></select></div>)}
+//            {activeTab === "HISTORY" && (
+//              <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm border border-[#F2E3DB]">
+//                 <div className="flex items-center gap-2 text-sm font-bold text-[#8D6E63] w-full md:w-auto">
+//                   <Filter size={16} /> Filters:
+//                 </div>
+                
+//                 {/* Date Filter */}
+//                 <select value={historyDateFilter} onChange={(e) => setHistoryDateFilter(e.target.value)} className="w-full md:w-auto px-4 py-2 rounded-lg border border-[#F2E3DB] text-sm text-[#4E342E] bg-[#FFF8F3] focus:outline-none"><option value="ALL">All Dates</option><option value="7">Last 7 Days</option><option value="15">Last 15 Days</option><option value="30">Last 30 Days</option></select>
+                
+//                 {/* Status Filter */}
+//                 <select value={historyStatusFilter} onChange={(e) => setHistoryStatusFilter(e.target.value)} className="w-full md:w-auto px-4 py-2 rounded-lg border border-[#F2E3DB] text-sm text-[#4E342E] bg-[#FFF8F3] focus:outline-none"><option value="ALL">All Status</option><option value="DELIVERED">Delivered</option><option value="CANCELLED">Rejected</option></select>
+
+//                 {/* SORT OPTIONS */}
+//                 <div className="flex items-center gap-2 w-full md:w-auto md:ml-auto border-l border-[#F2E3DB] md:pl-4 pt-4 md:pt-0 border-t md:border-t-0 mt-2 md:mt-0">
+//                   <ArrowDownUp size={16} className="text-[#8D6E63]" />
+//                   <select value={sortBy} onChange={(e) => setSortBy(e.target.value as "UPDATED" | "CREATED")} className="w-full md:w-auto px-4 py-2 rounded-lg border border-[#F2E3DB] text-sm text-[#4E342E] bg-[#FFF8F3] focus:outline-none font-medium">
+//                     <option value="UPDATED">Last Updated (Default)</option>
+//                     <option value="CREATED">Order Date</option>
+//                   </select>
+//                 </div>
+//              </div>
+//            )}
+
 //            {loading ? <p className="text-center text-[#8D6E63] animate-pulse">Loading orders...</p> : 
 //            paginatedOrders.length === 0 ? <div className="text-center py-12 bg-white/50 rounded-2xl border border-[#F2E3DB] border-dashed"><p className="text-[#8D6E63]">No orders found.</p></div> : 
 //            paginatedOrders.map((order) => (
 //               <div key={order._id} className="bg-white p-5 rounded-2xl shadow-sm border border-[#F2E3DB] flex flex-col md:flex-row justify-between gap-6 relative overflow-hidden">
-//                 <div className="absolute top-0 right-0 bg-[#FFF8F3] px-4 py-1.5 rounded-bl-xl border-b border-l border-[#F2E3DB] text-xs text-[#8D6E63] font-medium flex items-center gap-1.5 opacity-80"><Clock size={10} /> {formatDate(order.createdAt)}</div>
+//                 {/* UNIFIED DATE BOX */}
+//                 <div className="absolute top-0 right-0 bg-[#FFF8F3] px-4 py-2 rounded-bl-xl border-b border-l border-[#F2E3DB] text-xs">
+//                   <div className="flex flex-col items-end gap-1">
+//                     <div className="text-[#8D6E63] font-medium flex items-center gap-1.5 opacity-80">
+//                       <Clock size={10} /> {formatDate(order.createdAt)}
+//                     </div>
+//                     {/* UPDATED DATE LINE (In same box) */}
+//                     {order.updatedAt && (
+//                       <div className={`flex items-center gap-1.5 ${
+//                         order.status === 'DELIVERED' ? 'text-green-600' : 
+//                         order.status === 'CANCELLED' ? 'text-red-600' : 
+//                         'text-[#8D6E63]'
+//                       }`}>
+//                         {getUpdateIcon(order.status)} {formatDate(order.updatedAt)}
+//                       </div>
+//                     )}
+//                   </div>
+//                 </div>
+
 //                 <div className="absolute bottom-0 right-0 bg-[#FFF8F3] px-4 py-1.5 rounded-tl-xl border-t border-l border-[#F2E3DB] text-xs text-[#8D6E63] font-bold">ID: #{order._id.slice(-6).toUpperCase()}</div>
-//                 <div className="flex-1 mt-6 md:mt-0">
+//                 <div className="flex-1 mt-14 md:mt-0"> {/* Adjusted margin for mobile to clear larger date box */}
 //                   <div className="flex items-center gap-3 mb-2">
 //                     <h3 className="font-bold text-[#4E342E] text-lg">{order.customerName}</h3>
-//                     {/* UPDATED: Status Tag with custom colors */}
 //                     <span className={`px-3 py-1 text-xs font-bold rounded-full border ${statusColors[order.status] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
 //                       {order.status}
 //                     </span>
@@ -249,6 +308,9 @@
 //     </div>
 //   );
 // }
+
+
+
 
 
 
@@ -323,7 +385,6 @@ export default function AdminDashboard() {
   const [historyDateFilter, setHistoryDateFilter] = useState("ALL"); 
   const [historyStatusFilter, setHistoryStatusFilter] = useState("ALL");
   
-  // Sorting State - Default is UPDATED (Latest Activity)
   const [sortBy, setSortBy] = useState<"UPDATED" | "CREATED">("UPDATED"); 
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -395,7 +456,6 @@ export default function AdminDashboard() {
     return new Date(dateString).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true });
   };
 
-  // Helper to get Icon for Updated Time
   const getUpdateIcon = (status: string) => {
     if (status === "DELIVERED") return <Package size={10} />;
     if (status === "CANCELLED") return <XCircle size={10} />;
@@ -489,26 +549,127 @@ export default function AdminDashboard() {
       {deleteConfirm.show && (<div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"><div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"><div className="text-center"><div className="mb-4 inline-block rounded-full bg-red-100 p-3"><AlertTriangle className="h-8 w-8 text-red-600"/></div><h3 className="mb-2 text-xl font-bold text-[#4E342E]">Delete Item?</h3><div className="grid grid-cols-2 gap-3 mt-6"><button onClick={()=>setDeleteConfirm({show:false,id:null})} className="rounded-xl border border-[#F2E3DB] py-3 font-bold text-[#8D6E63]">Cancel</button><button onClick={confirmDelete} className="rounded-xl bg-red-500 py-3 font-bold text-white">Delete</button></div></div></div></div>)}
       <div className="flex justify-between items-center mb-6"><h1 className="text-2xl md:text-3xl font-playfair font-bold text-[#4E342E]">Admin Dashboard</h1><button onClick={() => { fetchOrders(); fetchProducts(); }} className="p-2 bg-white rounded-full shadow text-[#D98292] hover:rotate-180 transition duration-500"><RefreshCw size={20} /></button></div>
       <div ref={dashboardTopRef} className="grid grid-cols-2 md:flex gap-3 mb-8 scroll-mt-24">{[{ id: "LEADS", label: "Leads", icon: <Clock size={18} /> }, { id: "PENDING", label: "To Make", icon: <ChefHat size={18} /> }, { id: "ONGOING", label: "Ongoing", icon: <Truck size={18} /> }, { id: "HISTORY", label: "History", icon: <Package size={18} /> }, { id: "PRODUCTS", label: "Menu Editor", icon: <Plus size={18} /> }].map((tab) => (<button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex flex-col md:flex-row items-center justify-center gap-2 p-3 md:px-5 rounded-xl font-bold transition-all text-sm ${tab.id === "PRODUCTS" ? "col-span-2" : ""} ${activeTab === tab.id ? "bg-[#D98292] text-white shadow-lg" : "bg-white text-[#8D6E63]"}`}>{tab.icon} <span>{tab.label}</span></button>))}</div>
+      
       {activeTab === "PRODUCTS" ? (
         <div className="grid md:grid-cols-3 gap-8">
-           <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] md:col-span-1 h-fit md:sticky md:top-4"><h3 className="font-bold text-lg mb-4 text-[#4E342E]">{editingId ? "Edit Item" : "Add New Item"}</h3><form onSubmit={handleProductSubmit} className="space-y-4"><div className="border-2 border-dashed border-[#F2E3DB] rounded-lg p-4 text-center hover:bg-[#FFF8F3] relative cursor-pointer"><input type="file" accept="image/*" onChange={(e)=>setFormData({...formData, image:e.target.files?.[0]||null})} className="absolute inset-0 opacity-0 cursor-pointer"/><ImageIcon className="mx-auto text-[#D98292] mb-2"/><p className="text-xs text-[#8D6E63] truncate">{formData.image ? formData.image.name : "Tap to upload"}</p></div><input type="text" placeholder="Name" value={formData.name} onChange={(e)=>setFormData({...formData, name:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm"/><select value={formData.category} onChange={(e)=>setFormData({...formData, category:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm bg-white"><option value="CAKE">Cake</option><option value="CHOCOLATE">Chocolate</option><option value="JAR">Jar</option><option value="GIFT_BOX">Gift Box</option><option value="CUSTOM">Custom</option></select><div className="bg-[#FFF8F3] p-3 rounded-lg border border-[#F2E3DB]"><div className="flex items-center gap-2 mb-3"><input type="checkbox" checked={formData.hasVariants} onChange={(e)=>setFormData({...formData, hasVariants:e.target.checked})} className="w-4 h-4 text-[#D98292] rounded"/><label className="text-sm font-bold text-[#4E342E]">Variants?</label></div>{!formData.hasVariants ? <input type="number" placeholder="Price (₹)" value={formData.basePrice} onChange={(e)=>setFormData({...formData, basePrice:e.target.value})} className="w-full p-2 rounded border border-[#F2E3DB] text-sm"/> : <div className="space-y-2">{formData.variants.map((v,i)=>(<div key={i} className="flex gap-2"><input type="text" placeholder="Size" value={v.name} onChange={(e)=>updateVariant(i,"name",e.target.value)} className="w-1/2 p-2 rounded border border-[#F2E3DB] text-xs"/><input type="number" placeholder="₹" value={v.price} onChange={(e)=>updateVariant(i,"price",e.target.value)} className="w-1/3 p-2 rounded border border-[#F2E3DB] text-xs"/><button type="button" onClick={()=>removeVariant(i)} className="text-red-400"><X size={16}/></button></div>))}<button type="button" onClick={addVariant} className="text-xs font-bold text-[#D98292] mt-2 flex items-center gap-1"><Plus size={14}/> Add Size</button></div>}</div><textarea placeholder="Description" value={formData.description} onChange={(e)=>setFormData({...formData, description:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm h-20"></textarea><div className="flex gap-2"><button type="submit" disabled={isUploading} className="flex-1 py-3 bg-[#4E342E] text-white font-bold rounded-xl hover:bg-[#3d2924] disabled:opacity-50">{isUploading?"Saving...":editingId?"Update":"Add"}</button>{editingId && <button type="button" onClick={()=>{setEditingId(null); setFormData({name:"",category:"CAKE",description:"",image:null,hasVariants:false,basePrice:"",variants:[]})}} className="px-4 py-3 bg-gray-100 text-gray-500 font-bold rounded-xl">Cancel</button>}</div></form></div>
-           <div className="md:col-span-2 space-y-4"><div className="flex justify-between items-center"><h3 className="font-bold text-lg text-[#4E342E]">Menu ({getFilteredProducts().length})</h3><div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB]">{["ALL","CAKE","CHOCOLATE","JAR"].map(c=><button key={c} onClick={()=>setMenuFilter(c)} className={`px-3 py-1 text-[10px] font-bold rounded-md transition ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63]"}`}>{c}</button>)}</div></div>{getFilteredProducts().map(p=>(<div key={p._id} className="bg-white p-4 rounded-xl border border-[#F2E3DB] flex items-center justify-between shadow-sm"><div className="flex items-center gap-4"><div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden border border-[#F2E3DB]">{p.images[0]?<img src={p.images[0]} className="w-full h-full object-cover"/>:<div className="w-full h-full flex items-center justify-center text-[#D98292]/30 font-bold">{p.name[0]}</div>}</div><div><h4 className="font-bold text-[#4E342E]">{p.name}</h4><p className="text-xs text-[#8D6E63]">{p.category} • {p.variants?.length ? `${p.variants.length} Sizes` : `₹${p.basePrice}`}</p></div></div><div className="flex gap-2"><button onClick={()=>handleEditClick(p)} className="p-2 text-blue-400 hover:bg-blue-50 rounded-lg"><Edit2 size={18}/></button><button onClick={()=>setDeleteConfirm({show:true,id:p._id})} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><Trash2 size={18}/></button></div></div>))}</div>
+           <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] md:col-span-1 h-fit md:sticky md:top-4">
+             <h3 className="font-bold text-lg mb-4 text-[#4E342E]">{editingId ? "Edit Item" : "Add New Item"}</h3>
+             <form onSubmit={handleProductSubmit} className="space-y-4">
+               
+               {/* Image Upload */}
+               <div>
+                 <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Product Image</label>
+                 <div className="border-2 border-dashed border-[#F2E3DB] rounded-lg p-4 text-center hover:bg-[#FFF8F3] relative cursor-pointer">
+                   <input type="file" accept="image/*" onChange={(e)=>setFormData({...formData, image:e.target.files?.[0]||null})} className="absolute inset-0 opacity-0 cursor-pointer"/>
+                   <ImageIcon className="mx-auto text-[#D98292] mb-2"/>
+                   <p className="text-xs text-[#8D6E63] truncate">{formData.image ? formData.image.name : "Tap to upload"}</p>
+                 </div>
+                 {/* HELPER TEXT ADDED HERE */}
+                 <p className="text-[10px] text-[#8D6E63] mt-1 text-center">Best size for image (1:1 square ratio and 1024x1024 px)</p>
+               </div>
+
+               {/* Name Input */}
+               <div>
+                 <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Product Name</label>
+                 <input type="text" placeholder="e.g. Chocolate Truffle" value={formData.name} onChange={(e)=>setFormData({...formData, name:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292]"/>
+               </div>
+
+               {/* Category Input */}
+               <div>
+                 <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Category</label>
+                 <select value={formData.category} onChange={(e)=>setFormData({...formData, category:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm bg-white focus:outline-none focus:border-[#D98292]">
+                   <option value="CAKE">Cake</option>
+                   <option value="CHOCOLATE">Chocolate</option>
+                   <option value="JAR">Jar</option>
+                   <option value="GIFT_BOX">Gift Box</option>
+                   <option value="CUSTOM">Custom</option>
+                 </select>
+               </div>
+
+               {/* Price / Variants Section */}
+               <div className="bg-[#FFF8F3] p-3 rounded-lg border border-[#F2E3DB]">
+                 <div className="flex items-center gap-2 mb-3">
+                   <input type="checkbox" checked={formData.hasVariants} onChange={(e)=>setFormData({...formData, hasVariants:e.target.checked})} className="w-4 h-4 text-[#D98292] rounded accent-[#D98292]"/>
+                   <label className="text-sm font-bold text-[#4E342E]">Has Multiple Sizes?</label>
+                 </div>
+                 
+                 {!formData.hasVariants ? (
+                   <div>
+                     <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Base Price (₹)</label>
+                     <input type="number" placeholder="0" value={formData.basePrice} onChange={(e)=>setFormData({...formData, basePrice:e.target.value})} className="w-full p-2 rounded border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292]"/>
+                   </div>
+                 ) : (
+                   <div className="space-y-2">
+                     <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Variants (Size & Price)</label>
+                     {formData.variants.map((v,i)=>(
+                       <div key={i} className="flex gap-2">
+                         <input type="text" placeholder="Size (e.g. 1kg)" value={v.name} onChange={(e)=>updateVariant(i,"name",e.target.value)} className="w-1/2 p-2 rounded border border-[#F2E3DB] text-xs focus:outline-none focus:border-[#D98292]"/>
+                         <input type="number" placeholder="₹ Price" value={v.price} onChange={(e)=>updateVariant(i,"price",e.target.value)} className="w-1/3 p-2 rounded border border-[#F2E3DB] text-xs focus:outline-none focus:border-[#D98292]"/>
+                         <button type="button" onClick={()=>removeVariant(i)} className="text-red-400 hover:text-red-600"><X size={16}/></button>
+                       </div>
+                     ))}
+                     <button type="button" onClick={addVariant} className="text-xs font-bold text-[#D98292] mt-2 flex items-center gap-1 hover:underline"><Plus size={14}/> Add Size</button>
+                   </div>
+                 )}
+               </div>
+
+               {/* Description Input */}
+               <div>
+                 <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Description</label>
+                 <textarea placeholder="Describe the product..." value={formData.description} onChange={(e)=>setFormData({...formData, description:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm h-20 focus:outline-none focus:border-[#D98292]"></textarea>
+               </div>
+
+               <div className="flex gap-2">
+                 <button type="submit" disabled={isUploading} className="flex-1 py-3 bg-[#4E342E] text-white font-bold rounded-xl hover:bg-[#3d2924] disabled:opacity-50 transition-colors">
+                   {isUploading ? "Saving..." : editingId ? "Update Item" : "Add Item"}
+                 </button>
+                 {editingId && (
+                   <button type="button" onClick={()=>{setEditingId(null); setFormData({name:"",category:"CAKE",description:"",image:null,hasVariants:false,basePrice:"",variants:[]})}} className="px-4 py-3 bg-gray-100 text-gray-500 font-bold rounded-xl hover:bg-gray-200 transition-colors">
+                     Cancel
+                   </button>
+                 )}
+               </div>
+             </form>
+           </div>
+
+           <div className="md:col-span-2 space-y-4">
+             <div className="flex justify-between items-center">
+               <h3 className="font-bold text-lg text-[#4E342E]">Menu ({getFilteredProducts().length})</h3>
+               <div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB]">
+                 {["ALL","CAKE","CHOCOLATE","JAR"].map(c=>(
+                   <button key={c} onClick={()=>setMenuFilter(c)} className={`px-3 py-1 text-[10px] font-bold rounded-md transition ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63] hover:bg-[#FFF8F3]"}`}>{c}</button>
+                 ))}
+               </div>
+             </div>
+             {getFilteredProducts().map(p=>(
+               <div key={p._id} className="bg-white p-4 rounded-xl border border-[#F2E3DB] flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+                 <div className="flex items-center gap-4">
+                   <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden border border-[#F2E3DB]">
+                     {p.images[0] ? <img src={p.images[0]} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-[#D98292]/30 font-bold">{p.name[0]}</div>}
+                   </div>
+                   <div>
+                     <h4 className="font-bold text-[#4E342E]">{p.name}</h4>
+                     <p className="text-xs text-[#8D6E63]">{p.category} • {p.variants?.length ? `${p.variants.length} Sizes` : `₹${p.basePrice}`}</p>
+                   </div>
+                 </div>
+                 <div className="flex gap-2">
+                   <button onClick={()=>handleEditClick(p)} className="p-2 text-blue-400 hover:bg-blue-50 rounded-lg transition-colors"><Edit2 size={18}/></button>
+                   <button onClick={()=>setDeleteConfirm({show:true,id:p._id})} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={18}/></button>
+                 </div>
+               </div>
+             ))}
+           </div>
         </div>
       ) : (
+        // ... (No changes to the Orders View section) ...
         <div className="space-y-4">
            {activeTab === "HISTORY" && (
              <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm border border-[#F2E3DB]">
                 <div className="flex items-center gap-2 text-sm font-bold text-[#8D6E63] w-full md:w-auto">
                   <Filter size={16} /> Filters:
                 </div>
-                
-                {/* Date Filter */}
                 <select value={historyDateFilter} onChange={(e) => setHistoryDateFilter(e.target.value)} className="w-full md:w-auto px-4 py-2 rounded-lg border border-[#F2E3DB] text-sm text-[#4E342E] bg-[#FFF8F3] focus:outline-none"><option value="ALL">All Dates</option><option value="7">Last 7 Days</option><option value="15">Last 15 Days</option><option value="30">Last 30 Days</option></select>
-                
-                {/* Status Filter */}
                 <select value={historyStatusFilter} onChange={(e) => setHistoryStatusFilter(e.target.value)} className="w-full md:w-auto px-4 py-2 rounded-lg border border-[#F2E3DB] text-sm text-[#4E342E] bg-[#FFF8F3] focus:outline-none"><option value="ALL">All Status</option><option value="DELIVERED">Delivered</option><option value="CANCELLED">Rejected</option></select>
-
-                {/* SORT OPTIONS */}
                 <div className="flex items-center gap-2 w-full md:w-auto md:ml-auto border-l border-[#F2E3DB] md:pl-4 pt-4 md:pt-0 border-t md:border-t-0 mt-2 md:mt-0">
                   <ArrowDownUp size={16} className="text-[#8D6E63]" />
                   <select value={sortBy} onChange={(e) => setSortBy(e.target.value as "UPDATED" | "CREATED")} className="w-full md:w-auto px-4 py-2 rounded-lg border border-[#F2E3DB] text-sm text-[#4E342E] bg-[#FFF8F3] focus:outline-none font-medium">
@@ -523,13 +684,11 @@ export default function AdminDashboard() {
            paginatedOrders.length === 0 ? <div className="text-center py-12 bg-white/50 rounded-2xl border border-[#F2E3DB] border-dashed"><p className="text-[#8D6E63]">No orders found.</p></div> : 
            paginatedOrders.map((order) => (
               <div key={order._id} className="bg-white p-5 rounded-2xl shadow-sm border border-[#F2E3DB] flex flex-col md:flex-row justify-between gap-6 relative overflow-hidden">
-                {/* UNIFIED DATE BOX */}
                 <div className="absolute top-0 right-0 bg-[#FFF8F3] px-4 py-2 rounded-bl-xl border-b border-l border-[#F2E3DB] text-xs">
                   <div className="flex flex-col items-end gap-1">
                     <div className="text-[#8D6E63] font-medium flex items-center gap-1.5 opacity-80">
                       <Clock size={10} /> {formatDate(order.createdAt)}
                     </div>
-                    {/* UPDATED DATE LINE (In same box) */}
                     {order.updatedAt && (
                       <div className={`flex items-center gap-1.5 ${
                         order.status === 'DELIVERED' ? 'text-green-600' : 
@@ -543,7 +702,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="absolute bottom-0 right-0 bg-[#FFF8F3] px-4 py-1.5 rounded-tl-xl border-t border-l border-[#F2E3DB] text-xs text-[#8D6E63] font-bold">ID: #{order._id.slice(-6).toUpperCase()}</div>
-                <div className="flex-1 mt-14 md:mt-0"> {/* Adjusted margin for mobile to clear larger date box */}
+                <div className="flex-1 mt-14 md:mt-0">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-bold text-[#4E342E] text-lg">{order.customerName}</h3>
                     <span className={`px-3 py-1 text-xs font-bold rounded-full border ${statusColors[order.status] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
