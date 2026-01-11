@@ -2,10 +2,12 @@
 
 // import { useState, useEffect } from "react";
 // import { useParams, useRouter } from "next/navigation";
-// import { motion } from "framer-motion";
-// import { Star, ShieldCheck, Heart, Award, Info, ShoppingCart, ChevronRight, CheckCircle2, ChevronLeft } from "lucide-react";
+// import { motion, AnimatePresence } from "framer-motion";
+// import { Star, ShieldCheck, Heart, Award, Info, ShoppingCart, ChevronRight, CheckCircle2, ChevronLeft, PenLine, ArrowLeft } from "lucide-react";
 // import { useCart } from "@/context/CartContext";
 // import { Toast } from "@/components/ui/Toast";
+// import { useSession } from "next-auth/react";
+// import Link from "next/link"; // Import Link
 
 // interface ProductVariant {
 //   name: string;
@@ -38,40 +40,76 @@
 //   const { id } = useParams();
 //   const router = useRouter();
 //   const { addToCart } = useCart();
+//   const { data: session } = useSession();
   
 //   const [product, setProduct] = useState<Product | null>(null);
 //   const [loading, setLoading] = useState(true);
 //   const [selectedVariantIdx, setSelectedVariantIdx] = useState(0);
 //   const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success"|"error" });
   
-//   // Review Pagination State
+//   // Review System States
 //   const [reviewPage, setReviewPage] = useState(1);
+//   const [canReview, setCanReview] = useState(false);
+//   const [isWritingReview, setIsWritingReview] = useState(false);
+//   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
+//   const [submittingReview, setSubmittingReview] = useState(false);
 
 //   useEffect(() => {
-//     async function fetchProduct() {
+//     async function fetchData() {
 //       try {
-//         const res = await fetch(`/api/products/${id}`);
-//         const data = await res.json();
-//         if (data.success) {
-//           setProduct(data.product);
+//         const productRes = await fetch(`/api/products/${id}`);
+//         const productData = await productRes.json();
+//         if (productData.success) setProduct(productData.product);
+
+//         if (session) {
+//           const eligibilityRes = await fetch(`/api/products/${id}/review`);
+//           const eligibilityData = await eligibilityRes.json();
+//           if (eligibilityData.canReview) setCanReview(true);
 //         }
 //       } catch (e) {
-//         console.error("Failed to load product");
+//         console.error("Error loading page data");
 //       } finally {
 //         setLoading(false);
 //       }
 //     }
-//     if (id) fetchProduct();
-//   }, [id]);
+//     if (id) fetchData();
+//   }, [id, session]);
+
+//   const handleReviewSubmit = async () => {
+//     if (!reviewForm.comment.trim()) {
+//       setToast({ show: true, message: "Please write a comment", type: "error" });
+//       return;
+//     }
+//     setSubmittingReview(true);
+//     try {
+//       const res = await fetch(`/api/products/${id}/review`, {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify(reviewForm),
+//       });
+//       const data = await res.json();
+      
+//       if (data.success) {
+//         setToast({ show: true, message: "Review Submitted!", type: "success" });
+//         setProduct(prev => prev ? { ...prev, reviews: [data.newReview, ...prev.reviews], reviewsCount: prev.reviewsCount + 1 } : null);
+//         setIsWritingReview(false);
+//         setCanReview(false); 
+//       } else {
+//         setToast({ show: true, message: data.error || "Failed to submit review", type: "error" });
+//       }
+//     } catch (e) {
+//       setToast({ show: true, message: "Server Error", type: "error" });
+//     } finally {
+//       setSubmittingReview(false);
+//     }
+//   };
 
 //   if (loading) return <div className="min-h-screen flex items-center justify-center text-[#8D6E63] font-playfair animate-pulse">Loading Delight...</div>;
 //   if (!product) return <div className="min-h-screen flex items-center justify-center text-[#8D6E63]">Product not found.</div>;
 
-//   // Derived State
 //   const hasVariants = product.variants && product.variants.length > 0;
 //   const activePrice = hasVariants ? product.variants[selectedVariantIdx].price : product.basePrice;
   
-//   // Pagination Logic
 //   const allReviews = product.reviews && product.reviews.length > 0 ? product.reviews : []; 
 //   const totalReviewPages = Math.ceil(allReviews.length / REVIEWS_PER_PAGE);
 //   const currentReviews = allReviews.slice((reviewPage - 1) * REVIEWS_PER_PAGE, reviewPage * REVIEWS_PER_PAGE);
@@ -88,10 +126,26 @@
 //   };
 
 //   return (
-//     <div className="min-h-screen bg-[#FFF8F3] pb-24">
+//     <div className="min-h-screen bg-[#FFF8F3] pb-32">
 //       <Toast message={toast.message} type={toast.type} isVisible={toast.show} onClose={() => setToast({ ...toast, show: false })} />
       
-//       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row min-h-[calc(100vh-80px)]">
+//       {/* --- NEW: Back to Menu Button (Fixed Top Left) --- */}
+//       <motion.div 
+//         initial={{ opacity: 0, x: -20 }}
+//         animate={{ opacity: 1, x: 0 }}
+//         className="fixed top-24 left-4 z-50 md:left-8" // Positioned below navbar (approx 80px)
+//       >
+//         <Link href="/menu">
+//           <button className="group flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-[#F2E3DB] px-4 py-2 rounded-full shadow-sm hover:shadow-md transition-all duration-300 hover:border-[#D98292]/50">
+//             <ArrowLeft size={16} className="text-[#8D6E63] group-hover:text-[#D98292] transition-colors" />
+//             <span className="text-sm font-bold text-[#4E342E] group-hover:text-[#D98292] transition-colors">
+//               Back to Menu
+//             </span>
+//           </button>
+//         </Link>
+//       </motion.div>
+
+//       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row min-h-[calc(100vh-80px)] pt-12 lg:pt-0"> {/* Added padding top for mobile button clearance */}
           
 //         {/* LEFT: Image Section */}
 //         <div className="lg:w-1/2 relative bg-[#FFF8F3] flex items-center justify-center p-6 md:p-12 lg:sticky lg:top-20 lg:h-screen">
@@ -126,10 +180,10 @@
 //             </h1>
 //             <div className="flex items-center gap-3">
 //               <div className="flex items-center bg-[#4E342E] text-white px-3 py-1 rounded-full text-xs font-bold gap-1 shadow-sm">
-//                 {product.averageRating || 4.8} <Star size={10} className="fill-[#D98292] text-[#D98292]" />
+//                 {product.reviewsCount > 0 ? product.averageRating : "0.0"} <Star size={10} className="fill-[#D98292] text-[#D98292]" />
 //               </div>
 //               <span className="text-[#8D6E63] text-sm font-medium border-b border-[#D98292]/30 pb-0.5">
-//                 {product.reviewsCount || 124} verified ratings
+//                 {product.reviewsCount || 0} verified ratings
 //               </span>
 //             </div>
 //           </div>
@@ -212,11 +266,54 @@
 //             </div>
 //           </div>
 
-//           {/* Reviews Section with Pagination */}
-//           <div>
-//             <h3 className="font-playfair font-bold text-2xl text-[#4E342E] mb-6 flex items-center gap-2">
-//               Reviews <span className="text-sm font-sans font-normal text-[#8D6E63]">({product.reviewsCount || allReviews.length})</span>
-//             </h3>
+//           {/* Reviews Section */}
+//           <div id="reviews">
+//             <div className="flex items-center justify-between mb-6">
+//               <h3 className="font-playfair font-bold text-2xl text-[#4E342E] flex items-center gap-2">
+//                 Reviews <span className="text-sm font-sans font-normal text-[#8D6E63]">({product.reviewsCount || 0})</span>
+//               </h3>
+              
+//               {canReview && !isWritingReview && (
+//                 <button 
+//                   onClick={() => setIsWritingReview(true)} 
+//                   className="text-xs font-bold text-[#D98292] border border-[#D98292] px-4 py-2 rounded-full hover:bg-[#D98292] hover:text-white transition-all flex items-center gap-2"
+//                 >
+//                   <PenLine size={14} /> Write a Review
+//                 </button>
+//               )}
+//             </div>
+
+//             <AnimatePresence>
+//               {isWritingReview && (
+//                 <motion.div 
+//                   initial={{ height: 0, opacity: 0 }} 
+//                   animate={{ height: "auto", opacity: 1 }} 
+//                   exit={{ height: 0, opacity: 0 }} 
+//                   className="overflow-hidden mb-8 bg-[#FFF8F3] rounded-2xl border border-[#F2E3DB] p-6"
+//                 >
+//                   <h4 className="font-bold text-[#4E342E] mb-4">Rate this Delight</h4>
+//                   <div className="flex gap-2 mb-4">
+//                     {[1,2,3,4,5].map(star => (
+//                       <button key={star} onClick={() => setReviewForm({...reviewForm, rating: star})}>
+//                         <Star size={24} className={`${star <= reviewForm.rating ? "fill-[#D98292] text-[#D98292]" : "text-[#D98292]/30"}`} />
+//                       </button>
+//                     ))}
+//                   </div>
+//                   <textarea 
+//                     placeholder="What did you like about it?" 
+//                     value={reviewForm.comment}
+//                     onChange={(e) => setReviewForm({...reviewForm, comment: e.target.value})}
+//                     className="w-full p-3 rounded-xl border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292] mb-4 h-24"
+//                   ></textarea>
+//                   <div className="flex gap-3 justify-end">
+//                     <button onClick={() => setIsWritingReview(false)} className="text-sm text-[#8D6E63] font-bold px-4 py-2">Cancel</button>
+//                     <button onClick={handleReviewSubmit} disabled={submittingReview} className="bg-[#D98292] text-white text-sm font-bold px-6 py-2 rounded-xl shadow-lg hover:bg-[#c46b7d] disabled:opacity-50">
+//                       {submittingReview ? "Submitting..." : "Submit Review"}
+//                     </button>
+//                   </div>
+//                 </motion.div>
+//               )}
+//             </AnimatePresence>
             
 //             {allReviews.length === 0 ? (
 //               <p className="text-[#8D6E63] italic text-sm">No reviews yet. Be the first to taste!</p>
@@ -238,17 +335,18 @@
 //                           </div>
 //                         </div>
 //                       </div>
-//                       <span className="text-[10px] text-[#8D6E63] bg-[#FFF8F3] px-2 py-1 rounded-full">Verified</span>
+//                       <span className="text-[10px] text-[#8D6E63] bg-[#FFF8F3] px-2 py-1 rounded-full">
+//                         {new Date(review.date).toLocaleDateString()}
+//                       </span>
 //                     </div>
 //                     <p className="text-xs text-[#8D6E63] leading-relaxed mt-2 pl-10">
-//                       {review.comment || "Delicious!"}
+//                       {review.comment}
 //                     </p>
 //                   </div>
 //                 ))}
 //               </div>
 //             )}
 
-//             {/* Pagination Controls */}
 //             {totalReviewPages > 1 && (
 //               <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-[#F2E3DB] border-dashed">
 //                 <button 
@@ -273,25 +371,29 @@
 //         </div>
 //       </div>
 
-//       {/* Sticky Action Buttons - Simplified & Styled */}
-//       <div className="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-[#F2E3DB] p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-40">
-//         <div className="max-w-7xl mx-auto flex gap-3">
+//       {/* FLOATING ACTION BUTTONS CONTAINER */}
+//       <div className="fixed bottom-6 left-0 w-full z-40 px-4 pointer-events-none">
+//         <div className="max-w-7xl mx-auto flex gap-4">
           
-//           <div className="flex-1">
+//           {/* Add to Cart */}
+//           <div className="flex-1 pointer-events-auto">
 //             <motion.button 
+//               whileHover={{ scale: 1.02 }}
 //               whileTap={{ scale: 0.95 }}
 //               onClick={handleAddToCart}
-//               className="h-14 w-full bg-white border-2 border-[#4E342E] text-[#4E342E] font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-[#4E342E] hover:text-white transition-all shadow-sm"
+//               className="h-14 w-full bg-white border-2 border-[#4E342E] text-[#4E342E] font-bold rounded-2xl flex items-center justify-center gap-2 shadow-xl hover:shadow-2xl transition-all duration-300"
 //             >
 //               <ShoppingCart size={20} /> Add to Cart
 //             </motion.button>
 //           </div>
 
-//           <div className="flex-1">
+//           {/* Order Now */}
+//           <div className="flex-1 pointer-events-auto">
 //             <motion.button 
+//               whileHover={{ scale: 1.02 }}
 //               whileTap={{ scale: 0.95 }}
 //               onClick={handleOrderNow}
-//               className="h-14 w-full bg-[#D98292] text-white font-bold rounded-xl shadow-lg hover:bg-[#c46b7d] transition-colors flex items-center justify-center gap-2 border-2 border-[#D98292]"
+//               className="h-14 w-full bg-[#D98292] border-2 border-[#D98292] text-white font-bold rounded-2xl flex items-center justify-center gap-2 shadow-xl hover:bg-[#c46b7d] hover:border-[#c46b7d] hover:shadow-2xl transition-all duration-300"
 //             >
 //               Order Now <ChevronRight size={20} />
 //             </motion.button>
@@ -316,17 +418,16 @@
 
 
 
-
-
 "use client";
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, ShieldCheck, Heart, Award, Info, ShoppingCart, ChevronRight, CheckCircle2, ChevronLeft, PenLine } from "lucide-react";
+import { Star, ShieldCheck, Heart, Award, Info, ShoppingCart, ChevronRight, CheckCircle2, ChevronLeft, PenLine, ArrowLeft, Trash2, Edit2, X, Check } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { Toast } from "@/components/ui/Toast";
 import { useSession } from "next-auth/react";
+import Link from "next/link"; 
 
 interface ProductVariant {
   name: string;
@@ -334,10 +435,13 @@ interface ProductVariant {
 }
 
 interface Review {
+  _id: string;
   user: string;
+  userEmail?: string;
   rating: number;
   comment: string;
   date: string;
+  isEdited?: boolean;
 }
 
 interface Product {
@@ -373,6 +477,12 @@ export default function ProductDetailPage() {
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
   const [submittingReview, setSubmittingReview] = useState(false);
 
+  // Edit State
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [editComment, setEditComment] = useState("");
+
+  const isAdmin = (session?.user as any)?.role === "admin";
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -383,8 +493,6 @@ export default function ProductDetailPage() {
         if (session) {
           const eligibilityRes = await fetch(`/api/products/${id}/review`);
           const eligibilityData = await eligibilityRes.json();
-          // Logic: The API returns false if user has ALREADY reviewed.
-          // So this will correctly hide the button on page load.
           if (eligibilityData.canReview) setCanReview(true);
         }
       } catch (e) {
@@ -412,10 +520,7 @@ export default function ProductDetailPage() {
       
       if (data.success) {
         setToast({ show: true, message: "Review Submitted!", type: "success" });
-        // Update local state to show new review immediately
         setProduct(prev => prev ? { ...prev, reviews: [data.newReview, ...prev.reviews], reviewsCount: prev.reviewsCount + 1 } : null);
-        
-        // Hide the form and the button immediately
         setIsWritingReview(false);
         setCanReview(false); 
       } else {
@@ -425,6 +530,61 @@ export default function ProductDetailPage() {
       setToast({ show: true, message: "Server Error", type: "error" });
     } finally {
       setSubmittingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!window.confirm("Are you sure you want to delete this review?")) return;
+
+    try {
+      const res = await fetch(`/api/products/${id}/review`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviewId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToast({ show: true, message: "Review Deleted", type: "success" });
+        setProduct(prev => prev ? {
+          ...prev,
+          reviews: prev.reviews.filter(r => r._id !== reviewId),
+          reviewsCount: Math.max(0, prev.reviewsCount - 1)
+        } : null);
+      } else {
+        setToast({ show: true, message: "Failed to delete", type: "error" });
+      }
+    } catch (e) {
+      setToast({ show: true, message: "Error deleting review", type: "error" });
+    }
+  };
+
+  const startEditing = (review: Review) => {
+    setEditingReviewId(review._id);
+    setEditComment(review.comment);
+  };
+
+  const saveEdit = async () => {
+    if (!window.confirm("Are you sure you want to save changes to your review?")) return;
+    
+    try {
+      const res = await fetch(`/api/products/${id}/review`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ comment: editComment }), // Add rating here if you want to allow rating edit
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToast({ show: true, message: "Review Updated", type: "success" });
+        setProduct(prev => prev ? {
+          ...prev,
+          reviews: prev.reviews.map(r => r._id === editingReviewId ? { ...r, comment: editComment, isEdited: true } : r)
+        } : null);
+        setEditingReviewId(null);
+      } else {
+        setToast({ show: true, message: "Failed to update", type: "error" });
+      }
+    } catch (e) {
+      setToast({ show: true, message: "Error updating", type: "error" });
     }
   };
 
@@ -453,7 +613,23 @@ export default function ProductDetailPage() {
     <div className="min-h-screen bg-[#FFF8F3] pb-32">
       <Toast message={toast.message} type={toast.type} isVisible={toast.show} onClose={() => setToast({ ...toast, show: false })} />
       
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row min-h-[calc(100vh-80px)]">
+      {/* Back to Menu Button */}
+      <motion.div 
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="fixed top-24 left-4 z-50 md:left-8"
+      >
+        <Link href="/menu">
+          <button className="group flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-[#F2E3DB] px-4 py-2 rounded-full shadow-sm hover:shadow-md transition-all duration-300 hover:border-[#D98292]/50">
+            <ArrowLeft size={16} className="text-[#8D6E63] group-hover:text-[#D98292] transition-colors" />
+            <span className="text-sm font-bold text-[#4E342E] group-hover:text-[#D98292] transition-colors">
+              Back to Menu
+            </span>
+          </button>
+        </Link>
+      </motion.div>
+
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row min-h-[calc(100vh-80px)] pt-12 lg:pt-0">
           
         {/* LEFT: Image Section */}
         <div className="lg:w-1/2 relative bg-[#FFF8F3] flex items-center justify-center p-6 md:p-12 lg:sticky lg:top-20 lg:h-screen">
@@ -488,10 +664,10 @@ export default function ProductDetailPage() {
             </h1>
             <div className="flex items-center gap-3">
               <div className="flex items-center bg-[#4E342E] text-white px-3 py-1 rounded-full text-xs font-bold gap-1 shadow-sm">
-                {product.averageRating || 4.8} <Star size={10} className="fill-[#D98292] text-[#D98292]" />
+                {product.reviewsCount > 0 ? product.averageRating : "0.0"} <Star size={10} className="fill-[#D98292] text-[#D98292]" />
               </div>
               <span className="text-[#8D6E63] text-sm font-medium border-b border-[#D98292]/30 pb-0.5">
-                {product.reviewsCount || 124} verified ratings
+                {product.reviewsCount || 0} verified ratings
               </span>
             </div>
           </div>
@@ -578,10 +754,9 @@ export default function ProductDetailPage() {
           <div id="reviews">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-playfair font-bold text-2xl text-[#4E342E] flex items-center gap-2">
-                Reviews <span className="text-sm font-sans font-normal text-[#8D6E63]">({product.reviewsCount || allReviews.length})</span>
+                Reviews <span className="text-sm font-sans font-normal text-[#8D6E63]">({product.reviewsCount || 0})</span>
               </h3>
               
-              {/* Only show button if user CAN review and IS NOT currently writing one */}
               {canReview && !isWritingReview && (
                 <button 
                   onClick={() => setIsWritingReview(true)} 
@@ -592,6 +767,7 @@ export default function ProductDetailPage() {
               )}
             </div>
 
+            {/* WRITE REVIEW FORM */}
             <AnimatePresence>
               {isWritingReview && (
                 <motion.div 
@@ -624,12 +800,13 @@ export default function ProductDetailPage() {
               )}
             </AnimatePresence>
             
+            {/* REVIEWS LIST */}
             {allReviews.length === 0 ? (
               <p className="text-[#8D6E63] italic text-sm">No reviews yet. Be the first to taste!</p>
             ) : (
               <div className="space-y-4">
                 {currentReviews.map((review: any, i) => (
-                  <div key={i} className="border-b border-[#F2E3DB] pb-4 last:border-0">
+                  <div key={i} className="border-b border-[#F2E3DB] pb-4 last:border-0 relative group/review">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-[#4E342E] text-white flex items-center justify-center font-bold text-xs">
@@ -637,20 +814,66 @@ export default function ProductDetailPage() {
                         </div>
                         <div>
                           <span className="font-bold text-[#4E342E] text-sm block">{review.user || "Customer"}</span>
-                          <div className="flex gap-0.5 mt-0.5">
+                          <div className="flex gap-0.5 mt-0.5 items-center">
                              {[1,2,3,4,5].map(star => (
                                <Star key={star} size={8} className={`${star <= (review.rating || 5) ? "fill-[#D98292] text-[#D98292]" : "text-[#F2E3DB]"}`} />
                              ))}
+                             {review.isEdited && <span className="text-[9px] text-[#8D6E63] ml-1 opacity-70">(edited)</span>}
                           </div>
                         </div>
                       </div>
-                      <span className="text-[10px] text-[#8D6E63] bg-[#FFF8F3] px-2 py-1 rounded-full">
-                        {new Date(review.date).toLocaleDateString()}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-[#8D6E63] bg-[#FFF8F3] px-2 py-1 rounded-full">
+                          {new Date(review.date).toLocaleDateString()}
+                        </span>
+                        
+                        {/* Actions for User (Edit) & Admin (Delete) */}
+                        <div className="flex gap-1">
+                          {session?.user?.email === review.userEmail && editingReviewId !== review._id && (
+                            <button 
+                              onClick={() => startEditing(review)}
+                              className="p-1.5 text-[#8D6E63] hover:text-[#D98292] hover:bg-[#FFF8F3] rounded-full transition-colors"
+                              title="Edit Review"
+                            >
+                              <Edit2 size={12} />
+                            </button>
+                          )}
+                          {isAdmin && (
+                            <button 
+                              onClick={() => handleDeleteReview(review._id)}
+                              className="p-1.5 text-[#8D6E63] hover:text-red-500 hover:bg-[#FFF8F3] rounded-full transition-colors"
+                              title="Delete Review"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-xs text-[#8D6E63] leading-relaxed mt-2 pl-10">
-                      {review.comment}
-                    </p>
+
+                    {/* EDIT MODE vs DISPLAY MODE */}
+                    {editingReviewId === review._id ? (
+                      <div className="mt-2 animate-in fade-in zoom-in-95">
+                        <textarea 
+                          value={editComment}
+                          onChange={(e) => setEditComment(e.target.value)}
+                          className="w-full p-2 rounded-lg border border-[#D98292] text-xs focus:outline-none bg-[#FFF8F3] text-[#4E342E]"
+                          rows={2}
+                        />
+                        <div className="flex gap-2 mt-2 justify-end">
+                          <button onClick={() => setEditingReviewId(null)} className="p-1 bg-gray-100 rounded hover:bg-gray-200">
+                            <X size={14} className="text-gray-500" />
+                          </button>
+                          <button onClick={saveEdit} className="p-1 bg-[#D98292] rounded hover:bg-[#c46b7d]">
+                            <Check size={14} className="text-white" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-[#8D6E63] leading-relaxed mt-2 pl-10 break-words">
+                        {review.comment}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

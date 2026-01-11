@@ -6,7 +6,7 @@
 // import { ShoppingCart, ArrowRight } from "lucide-react";
 
 // export default function FloatingCartBtn() {
-//   const { cartCount, cartTotal } = useCart(); // Assuming cartTotal is available in context
+//   const { cartCount } = useCart(); 
 //   const pathname = usePathname();
 //   const router = useRouter();
 
@@ -23,19 +23,22 @@
 //           animate={{ y: 0, opacity: 1 }}
 //           exit={{ y: 100, opacity: 0 }}
 //           transition={{ type: "spring", stiffness: 260, damping: 20 }}
-//           className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none" // pointer-events-none to let clicks pass through container
+//           className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none"
 //         >
 //           <motion.button
 //             whileHover={{ scale: 1.05 }}
 //             whileTap={{ scale: 0.95 }}
+//             // Updated Shadow Animation to match the Brown (#72514D is approx 114, 81, 77)
 //             animate={{ 
-//               boxShadow: ["0px 0px 0px rgba(217, 130, 146, 0)", "0px 0px 20px rgba(217, 130, 146, 0.6)", "0px 0px 0px rgba(217, 130, 146, 0)"]
+//               boxShadow: ["0px 0px 0px rgba(114, 81, 77, 0)", "0px 0px 20px rgba(114, 81, 77, 0.5)", "0px 0px 0px rgba(114, 81, 77, 0)"]
 //             }}
 //             transition={{ 
 //               boxShadow: { duration: 2, repeat: Infinity } 
 //             }}
 //             onClick={() => router.push("/cart")}
-//             className="pointer-events-auto bg-[#D98292] text-white px-6 py-3 rounded-full shadow-xl flex items-center justify-between gap-6 min-w-[300px] md:min-w-[350px] cursor-pointer border border-white/20 backdrop-blur-sm"
+//             // CHANGED: bg-[#D98292] -> bg-[#72514D] (Navbar Brown)
+//             // ADDED: hover:bg-[#5e403b] (Darker brown for interaction)
+//             className="pointer-events-auto bg-[#72514D] hover:bg-[#5e403b] text-white px-6 py-3 rounded-full shadow-xl flex items-center justify-between gap-6 min-w-[300px] md:min-w-[350px] cursor-pointer border border-white/20 backdrop-blur-sm transition-colors duration-300"
 //           >
 //             {/* Left: Count & Icon */}
 //             <div className="flex items-center gap-2 font-bold">
@@ -48,10 +51,9 @@
 //             {/* Center: Text */}
 //             <span className="text-sm font-bold uppercase tracking-wider">View Cart</span>
 
-//             {/* Right: Total & Arrow (Optional Total display) */}
+//             {/* Right: Arrow (Icon color changed to match theme) */}
 //             <div className="flex items-center gap-2">
-//                {/* Un-comment next line if you want to show price: <span className="text-xs opacity-90">₹{cartTotal}</span> */}
-//                <div className="bg-white text-[#D98292] p-1 rounded-full">
+//                <div className="bg-white text-[#72514D] p-1 rounded-full">
 //                  <ArrowRight size={14} strokeWidth={3} />
 //                </div>
 //             </div>
@@ -86,6 +88,9 @@ export default function FloatingCartBtn() {
     return null;
   }
 
+  // Check if we are on a Product Detail Page
+  const isProductPage = pathname.startsWith("/product/");
+
   return (
     <AnimatePresence>
       {cartCount > 0 && (
@@ -94,12 +99,16 @@ export default function FloatingCartBtn() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: "spring", stiffness: 260, damping: 20 }}
-          className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none"
+          // DYNAMIC POSITIONING:
+          // If on Product Page -> bottom-28 (Higher to clear buttons)
+          // Else -> bottom-6 (Standard position)
+          className={`fixed left-0 right-0 z-50 flex justify-center px-4 pointer-events-none transition-all duration-500 ${
+            isProductPage ? "bottom-24" : "bottom-6"
+          }`}
         >
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            // Updated Shadow Animation to match the Brown (#72514D is approx 114, 81, 77)
             animate={{ 
               boxShadow: ["0px 0px 0px rgba(114, 81, 77, 0)", "0px 0px 20px rgba(114, 81, 77, 0.5)", "0px 0px 0px rgba(114, 81, 77, 0)"]
             }}
@@ -107,8 +116,6 @@ export default function FloatingCartBtn() {
               boxShadow: { duration: 2, repeat: Infinity } 
             }}
             onClick={() => router.push("/cart")}
-            // CHANGED: bg-[#D98292] -> bg-[#72514D] (Navbar Brown)
-            // ADDED: hover:bg-[#5e403b] (Darker brown for interaction)
             className="pointer-events-auto bg-[#72514D] hover:bg-[#5e403b] text-white px-6 py-3 rounded-full shadow-xl flex items-center justify-between gap-6 min-w-[300px] md:min-w-[350px] cursor-pointer border border-white/20 backdrop-blur-sm transition-colors duration-300"
           >
             {/* Left: Count & Icon */}
@@ -122,7 +129,7 @@ export default function FloatingCartBtn() {
             {/* Center: Text */}
             <span className="text-sm font-bold uppercase tracking-wider">View Cart</span>
 
-            {/* Right: Arrow (Icon color changed to match theme) */}
+            {/* Right: Arrow */}
             <div className="flex items-center gap-2">
                <div className="bg-white text-[#72514D] p-1 rounded-full">
                  <ArrowRight size={14} strokeWidth={3} />

@@ -1,7 +1,9 @@
 // import mongoose, { Schema, model, models } from "mongoose";
 
 // const ReviewSchema = new Schema({
-//   user: { type: String, required: true }, // Stores customer name
+//   user: { type: String, required: true }, 
+//   // FIX: Set to false so old reviews without emails don't cause crashes
+//   userEmail: { type: String, required: false }, 
 //   rating: { type: Number, required: true, min: 1, max: 5 },
 //   comment: { type: String, required: true },
 //   date: { type: Date, default: Date.now },
@@ -9,7 +11,7 @@
 
 // const ProductSchema = new Schema({
 //   name: { type: String, required: true },
-//   description: { type: String, default: "A delicious homemade treat made with premium ingredients." }, // Added Description
+//   description: { type: String, default: "A delicious homemade treat made with premium ingredients." },
 //   category: { 
 //     type: String, 
 //     enum: ["CAKE", "CHOCOLATE", "JAR", "GIFT_BOX", "CUSTOM"], 
@@ -29,7 +31,7 @@
 //   ],
   
 //   // Rating System
-//   reviews: [ReviewSchema], // Array of review objects
+//   reviews: [ReviewSchema], 
 //   averageRating: { type: Number, default: 0 },
 //   reviewsCount: { type: Number, default: 0 },
   
@@ -44,15 +46,16 @@
 
 
 
+
 import mongoose, { Schema, model, models } from "mongoose";
 
 const ReviewSchema = new Schema({
   user: { type: String, required: true }, 
-  // FIX: Set to false so old reviews without emails don't cause crashes
   userEmail: { type: String, required: false }, 
   rating: { type: Number, required: true, min: 1, max: 5 },
   comment: { type: String, required: true },
   date: { type: Date, default: Date.now },
+  isEdited: { type: Boolean, default: false } // NEW FIELD
 });
 
 const ProductSchema = new Schema({
