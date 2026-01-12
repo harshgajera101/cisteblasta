@@ -194,10 +194,10 @@ export default function Navbar() {
             </Link>
           )}
 
-          {/* Search Icon */}
+          {/* Search Icon
           <button className="hidden md:block p-2 hover:bg-white/10 rounded-full transition-colors text-white" title="Search Products">
             <Search className="h-5 w-5" />
-          </button>
+          </button> */}
 
           {/* NEW: Wishlist Icon */}
           <Link 

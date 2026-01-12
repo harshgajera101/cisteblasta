@@ -9,7 +9,7 @@
 //   Trash2, Plus, Minus, MapPin, Navigation, ArrowRight,
 //   Phone, Mail, Edit2, Check, LogIn, AlertCircle, Info
 // } from "lucide-react";
-// import { Toast } from "@/components/ui/Toast"; // Imported Toast
+// import { Toast } from "@/components/ui/Toast";
 // import Link from "next/link";
 // import {
 //   calculateDistance,
@@ -36,7 +36,7 @@
   
 //   // UI States
 //   const [showSuccessModal, setShowSuccessModal] = useState(false);
-//   const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success"|"error" }); // Toast State
+//   const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success"|"error" });
 
 //   // Auto-fill Contact & Address
 //   useEffect(() => {
@@ -252,9 +252,21 @@
 //                   exit={{ opacity: 0, x: -100 }}
 //                   className="flex gap-4 md:gap-6 p-4 bg-white rounded-2xl shadow-sm border border-[#F2E3DB]"
 //                 >
-//                   <div className="h-24 w-24 shrink-0 rounded-xl bg-[#FFF8F3] flex items-center justify-center text-[#D98292]/30 font-playfair font-bold text-2xl relative overflow-hidden">
-//                     {item.name.charAt(0)}
+//                   {/* CHANGED: Image Logic */}
+//                   <div className="h-24 w-24 shrink-0 rounded-xl bg-[#FFF8F3] flex items-center justify-center overflow-hidden border border-[#F2E3DB]">
+//                     {item.image ? (
+//                       <img 
+//                         src={item.image} 
+//                         alt={item.name} 
+//                         className="h-full w-full object-cover" 
+//                       />
+//                     ) : (
+//                       <span className="text-[#D98292]/30 font-playfair font-bold text-2xl">
+//                         {item.name.charAt(0)}
+//                       </span>
+//                     )}
 //                   </div>
+                  
 //                   <div className="flex-1 flex flex-col justify-between">
 //                     <div>
 //                       <h3 className="font-bold text-[#4E342E] text-lg leading-tight">{item.name}</h3>
@@ -353,7 +365,6 @@
 //           )}
 //           <div className="bg-[#FFF8F3] p-6 rounded-2xl border border-[#F2E3DB] space-y-4"><h3 className="font-playfair font-bold text-xl text-[#4E342E]">Order Summary</h3><div className="space-y-2 text-sm text-[#4E342E]/80"><div className="flex justify-between"><span>Item Total</span><span className="font-bold">₹{cartTotal}</span></div><div className="flex justify-between"><span>Delivery Charges</span><span className={deliveryDistance ? "font-bold" : "text-[#8D6E63] italic"}>{deliveryDistance ? `₹${deliveryCharge}` : "Calculated at checkout"}</span></div></div><div className="h-px bg-[#F2E3DB] w-full" /><div className="flex justify-between text-lg font-bold text-[#4E342E]"><span>Grand Total</span><span>₹{grandTotal}</span></div>{session ? (
             
-//             // MODIFIED: Button is enabled to allow validation check
 //             <button 
 //               onClick={handleOrder} 
 //               disabled={isOrdering} 
@@ -368,8 +379,6 @@
 //     </div>
 //   );
 // }
-
-
 
 
 
@@ -435,11 +444,14 @@ export default function CartPage() {
   const fetchSavedAddress = async () => {
     try {
       const res = await fetch("/api/user/profile");
+      if (!res.ok) throw new Error("Failed"); // FIX: Prevent JSON parse error
       const data = await res.json();
       if (data.success && data.user.address) {
         setAddress(data.user.address);
       }
-    } catch (e) { console.error("Address fetch failed"); }
+    } catch (e) { 
+      // console.debug("Address fetch failed"); 
+    }
   };
 
   const deliveryCharge = deliveryDistance
