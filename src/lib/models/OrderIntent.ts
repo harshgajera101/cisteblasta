@@ -4,12 +4,12 @@
 //   {
 //     customerName: { type: String, required: true },
 //     phone: { type: String, required: true },
-    
-//     // CRITICAL: Links order to the user account
 //     email: { type: String, required: true }, 
-    
 //     address: { type: String, required: true },
     
+//     // CRITICAL: This field must exist to save the instructions
+//     notes: { type: String }, 
+
 //     items: [
 //       {
 //         name: { type: String, required: true },
@@ -40,6 +40,7 @@
 //   { timestamps: true }
 // );
 
+// // This ensures we use the existing model if it exists, preventing overwrite errors
 // const OrderIntent = models.OrderIntent || model("OrderIntent", OrderIntentSchema);
 // export default OrderIntent;
 
@@ -48,6 +49,10 @@
 
 
 
+
+
+
+// order delete
 
 import mongoose, { Schema, model, models } from "mongoose";
 
@@ -58,7 +63,6 @@ const OrderIntentSchema = new Schema(
     email: { type: String, required: true }, 
     address: { type: String, required: true },
     
-    // CRITICAL: This field must exist to save the instructions
     notes: { type: String }, 
 
     items: [
@@ -87,10 +91,11 @@ const OrderIntentSchema = new Schema(
       ], 
       default: "PENDING" 
     },
+    // NEW: To store why the order was rejected
+    rejectionReason: { type: String },
   },
   { timestamps: true }
 );
 
-// This ensures we use the existing model if it exists, preventing overwrite errors
 const OrderIntent = models.OrderIntent || model("OrderIntent", OrderIntentSchema);
 export default OrderIntent;

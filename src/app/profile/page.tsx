@@ -347,7 +347,7 @@
 //                     <ChevronLeft size={20} />
 //                   </button>
 //                   <span className="text-sm font-bold text-[#8D6E63]">
-//                     Page {currentPage} of {totalPages}
+//                     Page <span className="text-[#D98292] text-base">{currentPage}</span> of {totalPages}
 //                   </span>
 //                   <button 
 //                     onClick={() => changePage(Math.min(totalPages, currentPage + 1))}
@@ -371,6 +371,15 @@
 
 
 
+
+
+
+
+
+
+
+
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -378,7 +387,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { 
   User, Phone, Mail, LogOut, Package, Clock, MapPin, 
-  Edit2, AlertCircle, Truck, ChevronLeft, ChevronRight, Info 
+  Edit2, AlertCircle, Truck, ChevronLeft, ChevronRight, Info, AlertTriangle 
 } from "lucide-react";
 import { Toast } from "@/components/ui/Toast";
 import Link from "next/link";
@@ -676,6 +685,17 @@ export default function ProfilePage() {
                         <div className="w-full min-w-0">
                           <span className="font-bold text-[#4E342E] uppercase text-xs block">Note from You:</span>
                           <span className="text-[#8D6E63] italic break-words whitespace-pre-wrap block">{order.notes}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* --- NEW: REJECTION REASON DISPLAY --- */}
+                    {order.rejectionReason && (
+                      <div className="flex items-start gap-2 mb-3 p-2 bg-red-50 rounded-lg border border-red-100 text-sm w-full">
+                        <AlertTriangle size={16} className="mt-0.5 text-red-500 shrink-0" />
+                        <div className="w-full min-w-0">
+                          <span className="font-bold text-red-700 uppercase text-xs block">Reason for Cancellation:</span>
+                          <span className="text-red-600 italic break-words whitespace-pre-wrap block">{order.rejectionReason}</span>
                         </div>
                       </div>
                     )}
