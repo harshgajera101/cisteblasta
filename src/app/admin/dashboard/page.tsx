@@ -5,7 +5,7 @@
 //   RefreshCw, ChefHat, Truck, Package, Clock, Plus, Trash2, Edit2, 
 //   Image as ImageIcon, RotateCcw, X, AlertTriangle, MapPin, Phone, Mail,
 //   ChevronLeft, ChevronRight, Filter, Calendar, Info, Check, ArrowDownUp,
-//   XCircle, History, Gift, Search
+//   XCircle, History, Gift, Search, XOctagon
 // } from "lucide-react";
 // import { Toast } from "@/components/ui/Toast";
 
@@ -29,7 +29,8 @@
 //   items: OrderItem[];
 //   createdAt: string;
 //   updatedAt: string;
-//   notes?: string; 
+//   notes?: string;
+//   rejectionReason?: string; 
 // };
 
 // type Variant = { name: string; price: number };
@@ -47,6 +48,7 @@
 
 // const ITEMS_PER_PAGE = 7;
 // const OCCASION_OPTIONS = ["Birthday", "Anniversary", "Kids", "Wedding", "Festival", "Gift"];
+// const REJECTION_REASONS = ["Not available stock", "Payment is not done", "Invalid Order", "Other"];
 
 // // Status Colors
 // const statusColors: Record<string, string> = {
@@ -78,6 +80,10 @@
 //   const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success"|"error"|"warning" });
 //   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean, id: string | null }>({ show: false, id: null });
   
+//   // Rejection Modal State
+//   const [rejectModal, setRejectModal] = useState<{ show: boolean, orderId: string | null }>({ show: false, orderId: null });
+//   const [selectedRejectionReason, setSelectedRejectionReason] = useState(REJECTION_REASONS[0]);
+
 //   const [formData, setFormData] = useState({
 //     name: "", category: "CAKE", description: "", image: null as File | null,
 //     hasVariants: false, basePrice: "", variants: [] as { name: string; price: string }[],
@@ -109,15 +115,25 @@
 
 //   const showToast = (message: string, type: "success"|"error"|"warning") => { setToast({ show: true, message, type }); };
 
-//   const updateStatus = async (orderId: string, newStatus: string) => {
+//   const updateStatus = async (orderId: string, newStatus: string, reason?: string) => {
 //     try {
 //       const res = await fetch("/api/admin/update-status", {
 //         method: "PUT",
 //         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({ orderId, newStatus }),
+//         body: JSON.stringify({ orderId, newStatus, rejectionReason: reason }),
 //       });
-//       if (res.ok) { fetchOrders(); showToast(`Order updated: ${newStatus}`, "success"); }
+//       if (res.ok) { 
+//         fetchOrders(); 
+//         showToast(`Order updated: ${newStatus}`, "success");
+//         if(newStatus === "CANCELLED") setRejectModal({ show: false, orderId: null });
+//       }
 //     } catch (error) { showToast("Failed to update", "error"); }
+//   };
+
+//   const handleConfirmReject = () => {
+//     if (rejectModal.orderId) {
+//       updateStatus(rejectModal.orderId, "CANCELLED", selectedRejectionReason);
+//     }
 //   };
 
 //   const updatePrice = async (orderId: string) => {
@@ -288,7 +304,46 @@
 //   return (
 //     <div className="min-h-screen bg-[#FFF8F3] p-4 md:p-8">
 //       <Toast message={toast.message} type={toast.type} isVisible={toast.show} onClose={() => setToast({ ...toast, show: false })} />
+      
+//       {/* DELETE CONFIRM MODAL */}
 //       {deleteConfirm.show && (<div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"><div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"><div className="text-center"><div className="mb-4 inline-block rounded-full bg-red-100 p-3"><AlertTriangle className="h-8 w-8 text-red-600"/></div><h3 className="mb-2 text-xl font-bold text-[#4E342E]">Delete Item?</h3><div className="grid grid-cols-2 gap-3 mt-6"><button onClick={()=>setDeleteConfirm({show:false,id:null})} className="rounded-xl border border-[#F2E3DB] py-3 font-bold text-[#8D6E63]">Cancel</button><button onClick={confirmDelete} className="rounded-xl bg-red-500 py-3 font-bold text-white">Delete</button></div></div></div></div>)}
+      
+//       {/* REJECT ORDER MODAL */}
+//       {rejectModal.show && (
+//         <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+//           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl border border-[#F2E3DB]">
+//             <div className="text-center mb-4">
+//               <div className="inline-block rounded-full bg-red-100 p-3 mb-2">
+//                 <XOctagon className="h-8 w-8 text-red-600"/>
+//               </div>
+//               <h3 className="text-xl font-bold text-[#4E342E]">Reject Order?</h3>
+//               <p className="text-xs text-[#8D6E63]">Select a reason for rejection.</p>
+//             </div>
+            
+//             <div className="space-y-2 mb-6">
+//               {REJECTION_REASONS.map(reason => (
+//                 <button
+//                   key={reason}
+//                   onClick={() => setSelectedRejectionReason(reason)}
+//                   className={`w-full p-3 rounded-xl text-sm font-bold border transition-all ${
+//                     selectedRejectionReason === reason 
+//                     ? "bg-red-50 border-red-500 text-red-700" 
+//                     : "bg-white border-[#F2E3DB] text-[#8D6E63] hover:bg-[#FFF8F3]"
+//                   }`}
+//                 >
+//                   {reason}
+//                 </button>
+//               ))}
+//             </div>
+
+//             <div className="grid grid-cols-2 gap-3">
+//               <button onClick={() => setRejectModal({ show: false, orderId: null })} className="rounded-xl border border-[#F2E3DB] py-3 font-bold text-[#8D6E63] hover:bg-[#FFF8F3]">Cancel</button>
+//               <button onClick={handleConfirmReject} className="rounded-xl bg-red-500 py-3 font-bold text-white hover:bg-red-600 shadow-md">Reject</button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+
 //       <div className="flex justify-between items-center mb-6"><h1 className="text-2xl md:text-3xl font-playfair font-bold text-[#4E342E]">Admin Dashboard</h1><button onClick={() => { fetchOrders(); fetchProducts(); }} className="p-2 bg-white rounded-full shadow text-[#D98292] hover:rotate-180 transition duration-500"><RefreshCw size={20} /></button></div>
 //       <div ref={dashboardTopRef} className="grid grid-cols-2 md:flex gap-3 mb-8 scroll-mt-24">{[{ id: "LEADS", label: "Leads", icon: <Clock size={18} /> }, { id: "PENDING", label: "To Make", icon: <ChefHat size={18} /> }, { id: "ONGOING", label: "Ongoing", icon: <Truck size={18} /> }, { id: "HISTORY", label: "History", icon: <Package size={18} /> }, { id: "PRODUCTS", label: "Menu Editor", icon: <Plus size={18} /> }].map((tab) => (<button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex flex-col md:flex-row items-center justify-center gap-2 p-3 md:px-5 rounded-xl font-bold transition-all text-sm ${tab.id === "PRODUCTS" ? "col-span-2" : ""} ${activeTab === tab.id ? "bg-[#D98292] text-white shadow-lg" : "bg-white text-[#8D6E63]"}`}>{tab.icon} <span>{tab.label}</span></button>))}</div>
       
@@ -323,6 +378,7 @@
 //                    <option value="JAR">Jar</option>
 //                    <option value="GIFT_BOX">Gift Box</option>
 //                    <option value="CUSTOM">Custom</option>
+//                    <option value="HAMPER">Hamper</option>
 //                  </select>
 //                </div>
 
@@ -388,38 +444,28 @@
 
 //            {/* RIGHT: MENU LIST */}
 //            <div className="md:col-span-2 space-y-4">
-             
-//              {/* === MOBILE LAYOUT === */}
-//              <div className="md:hidden flex flex-col gap-3">
-//                <div className="flex justify-between items-center">
-//                  <h3 className="font-bold text-lg text-[#4E342E]">Menu ({getFilteredProducts().length})</h3>
-//                  <div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB]">
-//                    {["ALL","CAKE","CHOCOLATE","JAR"].map(c=>(
-//                      <button key={c} onClick={()=>setMenuFilter(c)} className={`px-2 py-1 text-[10px] font-bold rounded-md transition whitespace-nowrap ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63] hover:bg-[#FFF8F3]"}`}>{c}</button>
-//                    ))}
-//                  </div>
-//                </div>
-//                <div className="relative w-full">
+//              {/* HEADER ROW */}
+//              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+//                <h3 className="font-bold text-lg text-[#4E342E] whitespace-nowrap">Menu ({getFilteredProducts().length})</h3>
+               
+//                {/* SEARCH BAR (Center on Desktop, Below Header on Mobile) */}
+//                <div className="relative w-full md:flex-1 md:max-w-xs md:mx-auto">
 //                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8D6E63]" size={16} />
-//                   <input type="text" placeholder="Search menu..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292] bg-white"/>
+//                   <input 
+//                     type="text" 
+//                     placeholder="Search menu..." 
+//                     value={searchQuery}
+//                     onChange={(e) => setSearchQuery(e.target.value)}
+//                     className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292] bg-white"
+//                   />
 //                </div>
-//              </div>
 
-//              {/* === DESKTOP LAYOUT === */}
-//              <div className="hidden md:grid grid-cols-3 items-center gap-4">
-//                <div className="justify-self-start">
-//                  <h3 className="font-bold text-lg text-[#4E342E]">Menu ({getFilteredProducts().length})</h3>
-//                </div>
-//                <div className="justify-self-center">
-//                  <div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB]">
-//                    {["ALL","CAKE","CHOCOLATE","JAR"].map(c=>(
-//                      <button key={c} onClick={()=>setMenuFilter(c)} className={`px-3 py-1 text-[10px] font-bold rounded-md transition whitespace-nowrap ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63] hover:bg-[#FFF8F3]"}`}>{c}</button>
-//                    ))}
-//                  </div>
-//                </div>
-//                <div className="justify-self-end w-64 relative">
-//                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8D6E63]" size={16} />
-//                   <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292] bg-white"/>
+//                {/* Filter Pills */}
+//                <div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB] overflow-x-auto shrink-0 max-w-[60%] lg:max-w-none">
+//                  {/* ADDED HAMPER HERE */}
+//                  {["ALL","CAKE","CHOCOLATE","JAR","HAMPER"].map(c=>(
+//                    <button key={c} onClick={()=>setMenuFilter(c)} className={`px-2 py-1 lg:px-3 text-[10px] font-bold rounded-md transition whitespace-nowrap ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63] hover:bg-[#FFF8F3]"}`}>{c === "HAMPER" ? "HAMPER" : c}</button>
+//                  ))}
 //                </div>
 //              </div>
 
@@ -432,9 +478,11 @@
 //                    </div>
 //                    <div>
 //                      <h4 className="font-bold text-[#4E342E]">{p.name}</h4>
+                     
 //                      <p className="text-xs text-[#8D6E63]">
 //                         {p.category} • {p.variants?.length ? `${p.variants.length} Sizes` : "Standard"} • <span className="font-bold text-[#D98292]">{getPriceDisplay(p)}</span>
 //                      </p>
+
 //                      {p.occasions && p.occasions.length > 0 && (
 //                        <div className="flex flex-wrap gap-1 mt-1.5">
 //                          {p.occasions.map(occ => (
@@ -512,7 +560,7 @@
 //                 <div className="flex flex-col gap-2 justify-center min-w-[180px] pt-4 md:pt-0 pb-8">{activeTab === "LEADS" && (<><button onClick={() => updateStatus(order._id, "CONFIRMED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Accept</button><button onClick={() => updateStatus(order._id, "CANCELLED")} className="w-full py-2 text-red-400 text-xs underline">Reject</button></>)}{activeTab === "PENDING" && (<><button onClick={() => updateStatus(order._id, "PREPARING")} className="w-full py-2 bg-orange-100 text-orange-700 rounded-lg font-bold text-sm flex justify-center gap-2"><ChefHat size={16}/> Bake</button><button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "ONGOING" && (<>{order.status === "PREPARING" && <button onClick={() => updateStatus(order._id, "READY")} className="w-full py-2 bg-yellow-100 text-yellow-700 rounded-lg font-bold text-sm">Mark Ready</button>}{order.status === "READY" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="w-full py-2 bg-blue-100 text-blue-700 rounded-lg font-bold text-sm">Dispatch</button>}{order.status === "OUT_FOR_DELIVERY" && <button onClick={() => updateStatus(order._id, "DELIVERED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Delivered</button>}<button onClick={() => {if(order.status === "PREPARING") updateStatus(order._id, "CONFIRMED");if(order.status === "READY") updateStatus(order._id, "PREPARING");if(order.status === "OUT_FOR_DELIVERY") updateStatus(order._id, "READY");}} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "HISTORY" && (<>{order.status === "DELIVERED" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="flex items-center justify-center gap-1 text-xs text-red-400 py-1"><RotateCcw size={12}/> Not Delivered</button>}{order.status === "CANCELLED" && <button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Re-open</button>}</>)}</div>
 //               </div>
 //            ))}
-//            {totalPages > 1 && (<div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t border-[#F2E3DB] border-dashed"><button onClick={() => changePage(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"><ChevronLeft size={20} /></button><span className="text-sm font-bold text-[#8D6E63]">Page <span className="text-[#D98292] text-base">{currentPage}</span> of {totalPages}</span><button onClick={() => changePage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"><ChevronRight size={20} /></button></div>)}
+//            {totalPages > 1 && (<div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t border-[#F2E3DB] border-dashed"><button onClick={() => changePage(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"><ChevronLeft size={20} /></button><span className="text-sm font-bold text-[#8D6E63]">Page {currentPage} of {totalPages}</span><button onClick={() => changePage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"><ChevronRight size={20} /></button></div>)}
 //         </div>
 //       )}
 //     </div>
@@ -533,7 +581,7 @@
 
 
 
-// order delete
+
 
 "use client";
 
@@ -567,7 +615,7 @@ type Order = {
   createdAt: string;
   updatedAt: string;
   notes?: string;
-  rejectionReason?: string; // NEW FIELD
+  rejectionReason?: string; 
 };
 
 type Variant = { name: string; price: number };
@@ -585,8 +633,7 @@ type Product = {
 
 const ITEMS_PER_PAGE = 7;
 const OCCASION_OPTIONS = ["Birthday", "Anniversary", "Kids", "Wedding", "Festival", "Gift"];
-// NEW: Rejection Reasons
-const REJECTION_REASONS = ["Not available stock", "Payment is not done", "Other"];
+const REJECTION_REASONS = ["Not available stock", "Payment is not done", "Invalid Order", "Other"];
 
 // Status Colors
 const statusColors: Record<string, string> = {
@@ -618,7 +665,7 @@ export default function AdminDashboard() {
   const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success"|"error"|"warning" });
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean, id: string | null }>({ show: false, id: null });
   
-  // NEW: Rejection Modal State
+  // Rejection Modal State
   const [rejectModal, setRejectModal] = useState<{ show: boolean, orderId: string | null }>({ show: false, orderId: null });
   const [selectedRejectionReason, setSelectedRejectionReason] = useState(REJECTION_REASONS[0]);
 
@@ -658,19 +705,16 @@ export default function AdminDashboard() {
       const res = await fetch("/api/admin/update-status", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        // Send rejectionReason if provided
         body: JSON.stringify({ orderId, newStatus, rejectionReason: reason }),
       });
       if (res.ok) { 
         fetchOrders(); 
         showToast(`Order updated: ${newStatus}`, "success");
-        // Close modal if it was open
-        if (rejectModal.show) setRejectModal({ show: false, orderId: null });
+        if(newStatus === "CANCELLED") setRejectModal({ show: false, orderId: null });
       }
     } catch (error) { showToast("Failed to update", "error"); }
   };
 
-  // Helper to confirm rejection from modal
   const handleConfirmReject = () => {
     if (rejectModal.orderId) {
       updateStatus(rejectModal.orderId, "CANCELLED", selectedRejectionReason);
@@ -824,6 +868,21 @@ export default function AdminDashboard() {
   const totalPages = Math.ceil(allFilteredOrders.length / ITEMS_PER_PAGE);
   const paginatedOrders = allFilteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
   
+  // NEW: Helper to get the count text
+  const getOrderCountText = () => {
+    const count = allFilteredOrders.length;
+    if (activeTab === "LEADS") return `Total Leads: ${count}`;
+    if (activeTab === "PENDING") return `Orders To Make: ${count}`;
+    if (activeTab === "ONGOING") return `Total Ongoing: ${count}`;
+    if (activeTab === "HISTORY") {
+      let type = "History";
+      if (historyStatusFilter === "DELIVERED") type = "Delivered";
+      if (historyStatusFilter === "CANCELLED") type = "Rejected";
+      return `Total ${type} Orders: ${count}`;
+    }
+    return "";
+  };
+
   const getFilteredProducts = () => { 
     let filtered = products;
     if (menuFilter !== "ALL") {
@@ -849,7 +908,7 @@ export default function AdminDashboard() {
       {/* DELETE CONFIRM MODAL */}
       {deleteConfirm.show && (<div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"><div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"><div className="text-center"><div className="mb-4 inline-block rounded-full bg-red-100 p-3"><AlertTriangle className="h-8 w-8 text-red-600"/></div><h3 className="mb-2 text-xl font-bold text-[#4E342E]">Delete Item?</h3><div className="grid grid-cols-2 gap-3 mt-6"><button onClick={()=>setDeleteConfirm({show:false,id:null})} className="rounded-xl border border-[#F2E3DB] py-3 font-bold text-[#8D6E63]">Cancel</button><button onClick={confirmDelete} className="rounded-xl bg-red-500 py-3 font-bold text-white">Delete</button></div></div></div></div>)}
       
-      {/* NEW: REJECT ORDER MODAL */}
+      {/* REJECT ORDER MODAL */}
       {rejectModal.show && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl border border-[#F2E3DB]">
@@ -918,6 +977,7 @@ export default function AdminDashboard() {
                    <option value="JAR">Jar</option>
                    <option value="GIFT_BOX">Gift Box</option>
                    <option value="CUSTOM">Custom</option>
+                   <option value="HAMPER">Hamper</option>
                  </select>
                </div>
 
@@ -983,11 +1043,11 @@ export default function AdminDashboard() {
 
            {/* RIGHT: MENU LIST */}
            <div className="md:col-span-2 space-y-4">
-             {/* ... (Search and List code same as before) ... */}
+             {/* HEADER ROW */}
              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                <h3 className="font-bold text-lg text-[#4E342E] whitespace-nowrap">Menu ({getFilteredProducts().length})</h3>
                
-               {/* SEARCH BAR (Center on Desktop, Below Header on Mobile) */}
+               {/* SEARCH BAR */}
                <div className="relative w-full md:flex-1 md:max-w-xs md:mx-auto">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8D6E63]" size={16} />
                   <input 
@@ -1001,8 +1061,8 @@ export default function AdminDashboard() {
 
                {/* Filter Pills */}
                <div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB] overflow-x-auto shrink-0 max-w-[60%] lg:max-w-none">
-                 {["ALL","CAKE","CHOCOLATE","JAR"].map(c=>(
-                   <button key={c} onClick={()=>setMenuFilter(c)} className={`px-2 py-1 lg:px-3 text-[10px] font-bold rounded-md transition whitespace-nowrap ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63] hover:bg-[#FFF8F3]"}`}>{c}</button>
+                 {["ALL","CAKE","CHOCOLATE","JAR","HAMPER"].map(c=>(
+                   <button key={c} onClick={()=>setMenuFilter(c)} className={`px-2 py-1 lg:px-3 text-[10px] font-bold rounded-md transition whitespace-nowrap ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63] hover:bg-[#FFF8F3]"}`}>{c === "HAMPER" ? "HAMPER" : c}</button>
                  ))}
                </div>
              </div>
@@ -1060,6 +1120,11 @@ export default function AdminDashboard() {
              </div>
            )}
 
+           {/* --- HELPER TEXT (COUNT) --- */}
+           <p className="text-xs font-bold text-[#8D6E63] mb-2 px-1">
+             {getOrderCountText()}
+           </p>
+
            {loading ? <p className="text-center text-[#8D6E63] animate-pulse">Loading orders...</p> : 
            paginatedOrders.length === 0 ? <div className="text-center py-12 bg-white/50 rounded-2xl border border-[#F2E3DB] border-dashed"><p className="text-[#8D6E63]">No orders found.</p></div> : 
            paginatedOrders.map((order) => (
@@ -1090,37 +1155,13 @@ export default function AdminDashboard() {
                     </span>
                   </div>
                   <div className="flex flex-col gap-2 mb-4 text-sm text-[#8D6E63]"><div className="flex items-start gap-2"><MapPin size={16} className="mt-0.5 text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Address:</span><span className="flex-1">{order.address}</span></div><div className="flex items-center gap-2"><Mail size={16} className="text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Email:</span><span>{order.email || "N/A"}</span></div><div className="flex items-center gap-2"><Phone size={16} className="text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Phone:</span><span>{order.phone || "N/A"}</span></div>
-                  {/* Notes & Rejection Reason */}
                   {order.notes && (<div className="mt-2 flex items-start gap-2 bg-[#FFF8F3] p-2 rounded-lg border border-[#F2E3DB]/50 w-full md:max-w-[45%]"><Info size={16} className="mt-0.5 text-[#D98292] shrink-0" /><div className="min-w-0 flex-1"><span className="block text-xs font-bold text-[#4E342E] uppercase tracking-wider">Note from User:</span><span className="text-xs text-[#8D6E63] italic break-words whitespace-pre-wrap">{order.notes}</span></div></div>)}
-                  
-                  {/* REJECTION REASON DISPLAY */}
-                  {order.rejectionReason && (
-                    <div className="mt-2 flex items-start gap-2 bg-red-50 p-2 rounded-lg border border-red-100 w-full md:max-w-[45%]">
-                      <AlertTriangle size={16} className="mt-0.5 text-red-500 shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <span className="block text-xs font-bold text-red-700 uppercase tracking-wider">Rejection Reason:</span>
-                        <span className="text-xs text-red-600 italic">{order.rejectionReason}</span>
-                      </div>
-                    </div>
-                  )}
+                  {order.rejectionReason && (<div className="mt-2 flex items-start gap-2 bg-red-50 p-2 rounded-lg border border-red-100 w-full md:max-w-[45%]"><AlertTriangle size={16} className="mt-0.5 text-red-500 shrink-0" /><div className="min-w-0 flex-1"><span className="block text-xs font-bold text-red-700 uppercase tracking-wider">Rejection Reason:</span><span className="text-xs text-red-600 italic">{order.rejectionReason}</span></div></div>)}
                   </div>
                   <div className="space-y-1 mb-4">{order.items.map((item, idx) => (<div key={idx} className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1"><span><span className="font-bold">{item.quantity} x</span> {item.name} {item.variant && <span className="text-[#8D6E63] text-xs"> ({item.variant})</span>}</span><span className="font-bold text-[#4E342E]">{item.price ? `₹${item.price * item.quantity}` : ''}</span></div>))}<div className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1"><span className="font-bold">Delivery Fee</span><span className="font-bold">₹{order.deliveryCharge || 0}</span></div></div>
                   <div className="flex items-center gap-3"><p className="font-bold text-[#4E342E] text-lg">Bill: {editingPriceId === order._id ? (<span className="inline-flex items-center gap-1 ml-2"><input type="number" value={newPriceValue} onChange={(e) => setNewPriceValue(e.target.value)} className="w-24 p-1 text-sm border border-[#D98292] rounded focus:outline-none" autoFocus placeholder="Cake Price" /><button onClick={() => updatePrice(order._id)} className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200"><Check size={16} /></button><button onClick={() => setEditingPriceId(null)} className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200"><X size={16} /></button><span className="text-xs text-[#8D6E63] ml-1 whitespace-nowrap">(+ ₹{order.deliveryCharge || 0} delivery)</span></span>) : (<span> ₹{order.totalAmount}</span>)}</p>{activeTab !== "HISTORY" && editingPriceId !== order._id && (<button onClick={() => { setEditingPriceId(order._id); setNewPriceValue((order.totalAmount - (order.deliveryCharge || 0)).toString()); }} className="text-[#D98292] hover:text-[#b0606f] p-1 rounded-full hover:bg-[#FFF8F3]" title="Edit Cake Price"><Edit2 size={16} /></button>)}</div>
                 </div>
-                <div className="flex flex-col gap-2 justify-center min-w-[180px] pt-4 md:pt-0 pb-8">
-                  {/* ACTIONS */}
-                  {activeTab === "LEADS" && (
-                    <>
-                      <button onClick={() => updateStatus(order._id, "CONFIRMED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Accept</button>
-                      <button 
-                        onClick={() => setRejectModal({ show: true, orderId: order._id })}
-                        className="w-full py-2 text-red-400 text-xs underline hover:text-red-600"
-                      >
-                        Reject
-                      </button>
-                    </>
-                  )}
-                  {activeTab === "PENDING" && (<><button onClick={() => updateStatus(order._id, "PREPARING")} className="w-full py-2 bg-orange-100 text-orange-700 rounded-lg font-bold text-sm flex justify-center gap-2"><ChefHat size={16}/> Bake</button><button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "ONGOING" && (<>{order.status === "PREPARING" && <button onClick={() => updateStatus(order._id, "READY")} className="w-full py-2 bg-yellow-100 text-yellow-700 rounded-lg font-bold text-sm">Mark Ready</button>}{order.status === "READY" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="w-full py-2 bg-blue-100 text-blue-700 rounded-lg font-bold text-sm">Dispatch</button>}{order.status === "OUT_FOR_DELIVERY" && <button onClick={() => updateStatus(order._id, "DELIVERED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Delivered</button>}<button onClick={() => {if(order.status === "PREPARING") updateStatus(order._id, "CONFIRMED");if(order.status === "READY") updateStatus(order._id, "PREPARING");if(order.status === "OUT_FOR_DELIVERY") updateStatus(order._id, "READY");}} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "HISTORY" && (<>{order.status === "DELIVERED" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="flex items-center justify-center gap-1 text-xs text-red-400 py-1"><RotateCcw size={12}/> Not Delivered</button>}{order.status === "CANCELLED" && <button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Re-open</button>}</>)}</div>
+                <div className="flex flex-col gap-2 justify-center min-w-[180px] pt-4 md:pt-0 pb-8">{activeTab === "LEADS" && (<><button onClick={() => updateStatus(order._id, "CONFIRMED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Accept</button><button onClick={() => setRejectModal({ show: true, orderId: order._id })} className="w-full py-2 text-red-400 text-xs underline">Reject</button></>)}{activeTab === "PENDING" && (<><button onClick={() => updateStatus(order._id, "PREPARING")} className="w-full py-2 bg-orange-100 text-orange-700 rounded-lg font-bold text-sm flex justify-center gap-2"><ChefHat size={16}/> Bake</button><button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "ONGOING" && (<>{order.status === "PREPARING" && <button onClick={() => updateStatus(order._id, "READY")} className="w-full py-2 bg-yellow-100 text-yellow-700 rounded-lg font-bold text-sm">Mark Ready</button>}{order.status === "READY" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="w-full py-2 bg-blue-100 text-blue-700 rounded-lg font-bold text-sm">Dispatch</button>}{order.status === "OUT_FOR_DELIVERY" && <button onClick={() => updateStatus(order._id, "DELIVERED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Delivered</button>}<button onClick={() => {if(order.status === "PREPARING") updateStatus(order._id, "CONFIRMED");if(order.status === "READY") updateStatus(order._id, "PREPARING");if(order.status === "OUT_FOR_DELIVERY") updateStatus(order._id, "READY");}} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "HISTORY" && (<>{order.status === "DELIVERED" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="flex items-center justify-center gap-1 text-xs text-red-400 py-1"><RotateCcw size={12}/> Not Delivered</button>}{order.status === "CANCELLED" && <button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Re-open</button>}</>)}</div>
               </div>
            ))}
            {totalPages > 1 && (<div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t border-[#F2E3DB] border-dashed"><button onClick={() => changePage(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"><ChevronLeft size={20} /></button><span className="text-sm font-bold text-[#8D6E63]">Page <span className="text-[#D98292] text-base">{currentPage}</span> of {totalPages}</span><button onClick={() => changePage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"><ChevronRight size={20} /></button></div>)}
