@@ -283,6 +283,21 @@
 //   const totalPages = Math.ceil(allFilteredOrders.length / ITEMS_PER_PAGE);
 //   const paginatedOrders = allFilteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
   
+//   // NEW: Helper to get the count text
+//   const getOrderCountText = () => {
+//     const count = allFilteredOrders.length;
+//     if (activeTab === "LEADS") return `Total Leads: ${count}`;
+//     if (activeTab === "PENDING") return `Orders To Make: ${count}`;
+//     if (activeTab === "ONGOING") return `Total Ongoing: ${count}`;
+//     if (activeTab === "HISTORY") {
+//       let type = "History";
+//       if (historyStatusFilter === "DELIVERED") type = "Delivered";
+//       if (historyStatusFilter === "CANCELLED") type = "Rejected";
+//       return `Total ${type} Orders: ${count}`;
+//     }
+//     return "";
+//   };
+
 //   const getFilteredProducts = () => { 
 //     let filtered = products;
 //     if (menuFilter !== "ALL") {
@@ -349,7 +364,6 @@
       
 //       {activeTab === "PRODUCTS" ? (
 //         <div className="grid md:grid-cols-3 gap-8">
-           
 //            {/* LEFT: FORM */}
 //            <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] md:col-span-1 h-fit">
 //              <h3 className="font-bold text-lg mb-4 text-[#4E342E]">{editingId ? "Edit Item" : "Add New Item"}</h3>
@@ -448,7 +462,7 @@
 //              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
 //                <h3 className="font-bold text-lg text-[#4E342E] whitespace-nowrap">Menu ({getFilteredProducts().length})</h3>
                
-//                {/* SEARCH BAR (Center on Desktop, Below Header on Mobile) */}
+//                {/* SEARCH BAR */}
 //                <div className="relative w-full md:flex-1 md:max-w-xs md:mx-auto">
 //                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8D6E63]" size={16} />
 //                   <input 
@@ -462,7 +476,6 @@
 
 //                {/* Filter Pills */}
 //                <div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB] overflow-x-auto shrink-0 max-w-[60%] lg:max-w-none">
-//                  {/* ADDED HAMPER HERE */}
 //                  {["ALL","CAKE","CHOCOLATE","JAR","HAMPER"].map(c=>(
 //                    <button key={c} onClick={()=>setMenuFilter(c)} className={`px-2 py-1 lg:px-3 text-[10px] font-bold rounded-md transition whitespace-nowrap ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63] hover:bg-[#FFF8F3]"}`}>{c === "HAMPER" ? "HAMPER" : c}</button>
 //                  ))}
@@ -522,6 +535,11 @@
 //              </div>
 //            )}
 
+//            {/* --- HELPER TEXT (COUNT) --- */}
+//            <p className="text-xs font-bold text-[#8D6E63] mb-2 px-1">
+//              {getOrderCountText()}
+//            </p>
+
 //            {loading ? <p className="text-center text-[#8D6E63] animate-pulse">Loading orders...</p> : 
 //            paginatedOrders.length === 0 ? <div className="text-center py-12 bg-white/50 rounded-2xl border border-[#F2E3DB] border-dashed"><p className="text-[#8D6E63]">No orders found.</p></div> : 
 //            paginatedOrders.map((order) => (
@@ -553,19 +571,28 @@
 //                   </div>
 //                   <div className="flex flex-col gap-2 mb-4 text-sm text-[#8D6E63]"><div className="flex items-start gap-2"><MapPin size={16} className="mt-0.5 text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Address:</span><span className="flex-1">{order.address}</span></div><div className="flex items-center gap-2"><Mail size={16} className="text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Email:</span><span>{order.email || "N/A"}</span></div><div className="flex items-center gap-2"><Phone size={16} className="text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Phone:</span><span>{order.phone || "N/A"}</span></div>
 //                   {order.notes && (<div className="mt-2 flex items-start gap-2 bg-[#FFF8F3] p-2 rounded-lg border border-[#F2E3DB]/50 w-full md:max-w-[45%]"><Info size={16} className="mt-0.5 text-[#D98292] shrink-0" /><div className="min-w-0 flex-1"><span className="block text-xs font-bold text-[#4E342E] uppercase tracking-wider">Note from User:</span><span className="text-xs text-[#8D6E63] italic break-words whitespace-pre-wrap">{order.notes}</span></div></div>)}
+//                   {order.rejectionReason && (<div className="mt-2 flex items-start gap-2 bg-red-50 p-2 rounded-lg border border-red-100 w-full md:max-w-[45%]"><AlertTriangle size={16} className="mt-0.5 text-red-500 shrink-0" /><div className="min-w-0 flex-1"><span className="block text-xs font-bold text-red-700 uppercase tracking-wider">Rejection Reason:</span><span className="text-xs text-red-600 italic">{order.rejectionReason}</span></div></div>)}
 //                   </div>
 //                   <div className="space-y-1 mb-4">{order.items.map((item, idx) => (<div key={idx} className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1"><span><span className="font-bold">{item.quantity} x</span> {item.name} {item.variant && <span className="text-[#8D6E63] text-xs"> ({item.variant})</span>}</span><span className="font-bold text-[#4E342E]">{item.price ? `₹${item.price * item.quantity}` : ''}</span></div>))}<div className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1"><span className="font-bold">Delivery Fee</span><span className="font-bold">₹{order.deliveryCharge || 0}</span></div></div>
 //                   <div className="flex items-center gap-3"><p className="font-bold text-[#4E342E] text-lg">Bill: {editingPriceId === order._id ? (<span className="inline-flex items-center gap-1 ml-2"><input type="number" value={newPriceValue} onChange={(e) => setNewPriceValue(e.target.value)} className="w-24 p-1 text-sm border border-[#D98292] rounded focus:outline-none" autoFocus placeholder="Cake Price" /><button onClick={() => updatePrice(order._id)} className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200"><Check size={16} /></button><button onClick={() => setEditingPriceId(null)} className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200"><X size={16} /></button><span className="text-xs text-[#8D6E63] ml-1 whitespace-nowrap">(+ ₹{order.deliveryCharge || 0} delivery)</span></span>) : (<span> ₹{order.totalAmount}</span>)}</p>{activeTab !== "HISTORY" && editingPriceId !== order._id && (<button onClick={() => { setEditingPriceId(order._id); setNewPriceValue((order.totalAmount - (order.deliveryCharge || 0)).toString()); }} className="text-[#D98292] hover:text-[#b0606f] p-1 rounded-full hover:bg-[#FFF8F3]" title="Edit Cake Price"><Edit2 size={16} /></button>)}</div>
 //                 </div>
-//                 <div className="flex flex-col gap-2 justify-center min-w-[180px] pt-4 md:pt-0 pb-8">{activeTab === "LEADS" && (<><button onClick={() => updateStatus(order._id, "CONFIRMED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Accept</button><button onClick={() => updateStatus(order._id, "CANCELLED")} className="w-full py-2 text-red-400 text-xs underline">Reject</button></>)}{activeTab === "PENDING" && (<><button onClick={() => updateStatus(order._id, "PREPARING")} className="w-full py-2 bg-orange-100 text-orange-700 rounded-lg font-bold text-sm flex justify-center gap-2"><ChefHat size={16}/> Bake</button><button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "ONGOING" && (<>{order.status === "PREPARING" && <button onClick={() => updateStatus(order._id, "READY")} className="w-full py-2 bg-yellow-100 text-yellow-700 rounded-lg font-bold text-sm">Mark Ready</button>}{order.status === "READY" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="w-full py-2 bg-blue-100 text-blue-700 rounded-lg font-bold text-sm">Dispatch</button>}{order.status === "OUT_FOR_DELIVERY" && <button onClick={() => updateStatus(order._id, "DELIVERED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Delivered</button>}<button onClick={() => {if(order.status === "PREPARING") updateStatus(order._id, "CONFIRMED");if(order.status === "READY") updateStatus(order._id, "PREPARING");if(order.status === "OUT_FOR_DELIVERY") updateStatus(order._id, "READY");}} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "HISTORY" && (<>{order.status === "DELIVERED" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="flex items-center justify-center gap-1 text-xs text-red-400 py-1"><RotateCcw size={12}/> Not Delivered</button>}{order.status === "CANCELLED" && <button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Re-open</button>}</>)}</div>
+//                 <div className="flex flex-col gap-2 justify-center min-w-[180px] pt-4 md:pt-0 pb-8">{activeTab === "LEADS" && (<><button onClick={() => updateStatus(order._id, "CONFIRMED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Accept</button><button onClick={() => setRejectModal({ show: true, orderId: order._id })} className="w-full py-2 text-red-400 text-xs underline">Reject</button></>)}{activeTab === "PENDING" && (<><button onClick={() => updateStatus(order._id, "PREPARING")} className="w-full py-2 bg-orange-100 text-orange-700 rounded-lg font-bold text-sm flex justify-center gap-2"><ChefHat size={16}/> Bake</button><button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "ONGOING" && (<>{order.status === "PREPARING" && <button onClick={() => updateStatus(order._id, "READY")} className="w-full py-2 bg-yellow-100 text-yellow-700 rounded-lg font-bold text-sm">Mark Ready</button>}{order.status === "READY" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="w-full py-2 bg-blue-100 text-blue-700 rounded-lg font-bold text-sm">Dispatch</button>}{order.status === "OUT_FOR_DELIVERY" && <button onClick={() => updateStatus(order._id, "DELIVERED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Delivered</button>}<button onClick={() => {if(order.status === "PREPARING") updateStatus(order._id, "CONFIRMED");if(order.status === "READY") updateStatus(order._id, "PREPARING");if(order.status === "OUT_FOR_DELIVERY") updateStatus(order._id, "READY");}} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "HISTORY" && (<>{order.status === "DELIVERED" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="flex items-center justify-center gap-1 text-xs text-red-400 py-1"><RotateCcw size={12}/> Not Delivered</button>}{order.status === "CANCELLED" && <button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Re-open</button>}</>)}</div>
 //               </div>
 //            ))}
-//            {totalPages > 1 && (<div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t border-[#F2E3DB] border-dashed"><button onClick={() => changePage(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"><ChevronLeft size={20} /></button><span className="text-sm font-bold text-[#8D6E63]">Page {currentPage} of {totalPages}</span><button onClick={() => changePage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"><ChevronRight size={20} /></button></div>)}
+//            {totalPages > 1 && (<div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t border-[#F2E3DB] border-dashed"><button onClick={() => changePage(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"><ChevronLeft size={20} /></button><span className="text-sm font-bold text-[#8D6E63]">Page <span className="text-[#D98292] text-base">{currentPage}</span> of {totalPages}</span><button onClick={() => changePage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"><ChevronRight size={20} /></button></div>)}
 //         </div>
 //       )}
 //     </div>
 //   );
 // }
+
+
+
+
+
+
+
+
 
 
 
@@ -709,7 +736,7 @@ export default function AdminDashboard() {
       });
       if (res.ok) { 
         fetchOrders(); 
-        showToast(`Order updated: ${newStatus}`, "success");
+        showToast(`Order updated: ${newStatus.replace(/_/g, " ")}`, "success"); // Clean toast message too
         if(newStatus === "CANCELLED") setRejectModal({ show: false, orderId: null });
       }
     } catch (error) { showToast("Failed to update", "error"); }
@@ -868,7 +895,6 @@ export default function AdminDashboard() {
   const totalPages = Math.ceil(allFilteredOrders.length / ITEMS_PER_PAGE);
   const paginatedOrders = allFilteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
   
-  // NEW: Helper to get the count text
   const getOrderCountText = () => {
     const count = allFilteredOrders.length;
     if (activeTab === "LEADS") return `Total Leads: ${count}`;
@@ -1043,7 +1069,7 @@ export default function AdminDashboard() {
 
            {/* RIGHT: MENU LIST */}
            <div className="md:col-span-2 space-y-4">
-             {/* HEADER ROW */}
+             {/* ... (Menu List Logic Same as Before) ... */}
              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                <h3 className="font-bold text-lg text-[#4E342E] whitespace-nowrap">Menu ({getFilteredProducts().length})</h3>
                
@@ -1150,8 +1176,9 @@ export default function AdminDashboard() {
                 <div className="flex-1 mt-14 md:mt-0">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-bold text-[#4E342E] text-lg">{order.customerName}</h3>
+                    {/* CHANGED: Replaced underscore with space */}
                     <span className={`px-3 py-1 text-xs font-bold rounded-full border ${statusColors[order.status] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
-                      {order.status}
+                      {order.status.replace(/_/g, " ")}
                     </span>
                   </div>
                   <div className="flex flex-col gap-2 mb-4 text-sm text-[#8D6E63]"><div className="flex items-start gap-2"><MapPin size={16} className="mt-0.5 text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Address:</span><span className="flex-1">{order.address}</span></div><div className="flex items-center gap-2"><Mail size={16} className="text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Email:</span><span>{order.email || "N/A"}</span></div><div className="flex items-center gap-2"><Phone size={16} className="text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Phone:</span><span>{order.phone || "N/A"}</span></div>

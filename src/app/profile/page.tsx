@@ -5,7 +5,7 @@
 // import { useRouter } from "next/navigation";
 // import { 
 //   User, Phone, Mail, LogOut, Package, Clock, MapPin, 
-//   Edit2, AlertCircle, Truck, ChevronLeft, ChevronRight, Info 
+//   Edit2, AlertCircle, Truck, ChevronLeft, ChevronRight, Info, AlertTriangle 
 // } from "lucide-react";
 // import { Toast } from "@/components/ui/Toast";
 // import Link from "next/link";
@@ -307,6 +307,17 @@
 //                       </div>
 //                     )}
 
+//                     {/* --- NEW: REJECTION REASON DISPLAY --- */}
+//                     {order.rejectionReason && (
+//                       <div className="flex items-start gap-2 mb-3 p-2 bg-red-50 rounded-lg border border-red-100 text-sm w-full">
+//                         <AlertTriangle size={16} className="mt-0.5 text-red-500 shrink-0" />
+//                         <div className="w-full min-w-0">
+//                           <span className="font-bold text-red-700 uppercase text-xs block">Reason for Cancellation:</span>
+//                           <span className="text-red-600 italic break-words whitespace-pre-wrap block">{order.rejectionReason}</span>
+//                         </div>
+//                       </div>
+//                     )}
+
 //                     {/* Items List + Delivery Fee */}
 //                     <div className="space-y-2 mb-4">
 //                       {order.items.map((item: any, idx: number) => (
@@ -365,7 +376,6 @@
 //     </div>
 //   );
 // }
-
 
 
 
@@ -663,9 +673,9 @@ export default function ProfilePage() {
                       <div>
                         <div className="flex items-center gap-3">
                           <span className="font-bold text-[#4E342E] text-lg">#{order._id.slice(-6).toUpperCase()}</span>
-                          {/* NEW: Colored Status Tag */}
+                          {/* CHANGED: Removed underscores here */}
                           <span className={`px-3 py-1 text-[10px] font-bold rounded-full border ${statusColors[order.status] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
-                            {order.status}
+                            {order.status.replace(/_/g, " ")}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-[#8D6E63] mt-1">
@@ -689,7 +699,7 @@ export default function ProfilePage() {
                       </div>
                     )}
 
-                    {/* --- NEW: REJECTION REASON DISPLAY --- */}
+                    {/* REJECTION REASON DISPLAY */}
                     {order.rejectionReason && (
                       <div className="flex items-start gap-2 mb-3 p-2 bg-red-50 rounded-lg border border-red-100 text-sm w-full">
                         <AlertTriangle size={16} className="mt-0.5 text-red-500 shrink-0" />
