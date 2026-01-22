@@ -54,8 +54,10 @@
 //         ) : (
 //           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
 //              {bestSellers.map((product) => (
-//                // JUST PASS THE PRODUCT OBJECT
-//                <ProductCard key={product._id} product={product} />
+//                // WRAPPED IN LINK FOR CLICK NAVIGATION
+//                <Link href={`/product/${product._id}`} key={product._id} className="block h-full group">
+//                  <ProductCard product={product} />
+//                </Link>
 //              ))}
 //           </div>
 //         )}
@@ -102,7 +104,6 @@
 //                   Start Your Design
 //                 </Link>
 //              </div>
-//              {/* Decorative Circle */}
 //              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 //           </div>
 //         </div>
@@ -151,16 +152,15 @@
 
 
 
-
-
 "use client";
 
 import { useState, useEffect } from "react";
 import Hero from "@/components/shared/Hero";
 import ProductCard from "@/components/ui/ProductCard";
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { Star, ArrowRight } from "lucide-react";
 
+// Updated Interface to match actual API response structure better
 interface ProductType {
   _id: string;
   name: string;
@@ -168,6 +168,9 @@ interface ProductType {
   category: string;
   variants?: { name: string; price: number }[];
   isBestSeller?: boolean;
+  averageRating?: number; // Needed for Top Rated
+  reviewsCount?: number;  // Needed for Most Ordered proxy
+  createdAt?: string;     // Needed for New/Trending
 }
 
 export default function Home() {
@@ -189,27 +192,79 @@ export default function Home() {
     fetchProducts();
   }, []);
 
-  const bestSellers = products.filter((p) => p.isBestSeller).slice(0, 4);
+  // --- FILTER LOGIC ---
+  
+  // 1. Trending Now (Latest 4 products added)
+  // Assuming the API returns them in some order, but sorting by createdAt is safer if available.
+  // If no createdAt, we just take the last 4 from the array (often implied as newest).
+  const trendingProducts = [...products].reverse().slice(0, 4);
+
+  // 2. Top Rated Products (Highest Average Rating)
+  const topRatedProducts = [...products]
+    .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0))
+    .slice(0, 4);
+
+  // 3. Most Ordered (Highest Reviews Count as proxy for popularity)
+  const mostOrderedProducts = [...products]
+    .sort((a, b) => (b.reviewsCount || 0) - (a.reviewsCount || 0))
+    .slice(0, 4);
 
   return (
     <>
       <Hero />
       
-      {/* --- BEST SELLERS SECTION --- */}
-      <section className="container mx-auto px-4 py-20">
+      {/* --- SECTION 1: TRENDING NOW (LATEST) --- */}
+      <section className="container mx-auto px-4 py-16 md:py-20">
         <div className="text-center mb-12 space-y-2">
-          <span className="text-[#8D6E63] font-bold uppercase tracking-widest text-sm">Customer Favorites</span>
-          <h2 className="font-playfair text-4xl md:text-5xl font-bold text-[#4E342E]">Trending Now</h2>
+          <span className="text-[#8D6E63] font-bold uppercase tracking-widest text-sm">Fresh from the Oven</span>
+          <h2 className="font-playfair text-3xl md:text-5xl font-bold text-[#4E342E]">Trending Now</h2>
         </div>
         
         {loading ? (
-           <div className="flex justify-center py-10">
-             <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#D98292]"></div>
-           </div>
+           <div className="flex justify-center py-10"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#D98292]"></div></div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-             {bestSellers.map((product) => (
-               // WRAPPED IN LINK FOR CLICK NAVIGATION
+             {trendingProducts.map((product) => (
+               <Link href={`/product/${product._id}`} key={product._id} className="block h-full group">
+                 <ProductCard product={product} />
+               </Link>
+             ))}
+          </div>
+        )}
+      </section>
+
+      {/* --- SECTION 2: TOP RATED PRODUCTS --- */}
+      <section className="container mx-auto px-4 py-8 md:py-12">
+        <div className="text-center mb-12 space-y-2">
+          <span className="text-[#8D6E63] font-bold uppercase tracking-widest text-sm">Five Star Delights</span>
+          <h2 className="font-playfair text-3xl md:text-5xl font-bold text-[#4E342E]">Top Rated Products</h2>
+        </div>
+        
+        {loading ? (
+           <div className="flex justify-center py-10"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#D98292]"></div></div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+             {topRatedProducts.map((product) => (
+               <Link href={`/product/${product._id}`} key={product._id} className="block h-full group">
+                 <ProductCard product={product} />
+               </Link>
+             ))}
+          </div>
+        )}
+      </section>
+
+      {/* --- SECTION 3: MOST ORDERED PRODUCTS --- */}
+      <section className="container mx-auto px-4 py-16 md:py-20">
+        <div className="text-center mb-12 space-y-2">
+          <span className="text-[#8D6E63] font-bold uppercase tracking-widest text-sm">Customer Favorites</span>
+          <h2 className="font-playfair text-3xl md:text-5xl font-bold text-[#4E342E]">Most Ordered Products</h2>
+        </div>
+        
+        {loading ? (
+           <div className="flex justify-center py-10"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#D98292]"></div></div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+             {mostOrderedProducts.map((product) => (
                <Link href={`/product/${product._id}`} key={product._id} className="block h-full group">
                  <ProductCard product={product} />
                </Link>
@@ -217,9 +272,10 @@ export default function Home() {
           </div>
         )}
         
-        <div className="mt-12 text-center">
-          <Link href="/menu" className="inline-block border-b-2 border-[#D98292] text-[#D98292] font-bold hover:text-[#D98292]/80 transition-colors pb-1">
-            View All Products
+        {/* VIEW ALL BUTTON */}
+        <div className="mt-16 text-center">
+          <Link href="/menu" className="inline-flex items-center gap-2 border-b-2 border-[#D98292] text-[#D98292] font-bold hover:text-[#D98292]/80 transition-colors pb-1 text-lg">
+            View All Products <ArrowRight size={20} />
           </Link>
         </div>
       </section>
