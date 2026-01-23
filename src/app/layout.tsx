@@ -64,6 +64,9 @@ import AuthProvider from "@/components/providers/AuthProvider";
 import FloatingCartBtn from "@/components/ui/FloatingCartBtn"; 
 import "./globals.css";
 
+import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -100,6 +103,8 @@ export default function RootLayout({
           <Navbar />
           <main className="min-h-screen flex flex-col">
             {children}
+            <Analytics />
+            <SpeedInsights />
           </main>
           <FloatingCartBtn /> 
           <Footer />
