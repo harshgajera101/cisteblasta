@@ -21,8 +21,9 @@
 //   createdAt?: string;     
 // }
 
-// const categories = ["All", "CAKE", "CHOCOLATE", "JAR", "GIFT_BOX"];
-// const ITEMS_PER_PAGE = 12; // Number of items per page
+// // ADDED "HAMPER" HERE
+// const categories = ["All", "CAKE", "CHOCOLATE", "JAR", "GIFT_BOX", "HAMPER"];
+// const ITEMS_PER_PAGE = 12; 
 
 // export default function MenuPage() {
 //   const [products, setProducts] = useState<ProductType[]>([]);
@@ -213,7 +214,8 @@
 //                 : "bg-white text-[#4E342E] border-[#F2E3DB] hover:border-[#D98292] hover:text-[#D98292]"
 //             }`}
 //           >
-//             {cat === "GIFT_BOX" ? "Dessert Box" : cat}
+//             {/* Display Logic for Special Names */}
+//             {cat === "GIFT_BOX" ? "Dessert Box" : cat === "HAMPER" ? "Hamper" : cat}
 //           </button>
 //         ))}
 //       </div>
@@ -345,7 +347,6 @@
 //                 <ChevronLeft size={20} />
 //               </button>
               
-//               {/* Highlighted Active Page Number */}
 //               <span className="text-sm font-bold text-[#8D6E63]">
 //                 Page <span className="text-[#D98292] text-base">{currentPage}</span> of {totalPages}
 //               </span>
@@ -387,12 +388,16 @@
 
 
 
+
+
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import ProductCard from "@/components/ui/ProductCard";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Filter, ArrowDownUp, X, RefreshCw, Search, ChevronLeft, ChevronRight } from "lucide-react"; 
 
 // Updated Interface to match Schema
@@ -410,29 +415,39 @@ interface ProductType {
   createdAt?: string;     
 }
 
-// ADDED "HAMPER" HERE
 const categories = ["All", "CAKE", "CHOCOLATE", "JAR", "GIFT_BOX", "HAMPER"];
 const ITEMS_PER_PAGE = 12; 
 
-export default function MenuPage() {
+// We separate the main logic into a component to wrap it in Suspense
+function MenuContent() {
+  const searchParams = useSearchParams();
+  const urlCategory = searchParams.get('cat');
+
   const [products, setProducts] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState(true);
   
   // --- FILTER & SEARCH STATES ---
   const [searchQuery, setSearchQuery] = useState(""); 
-  const [activeCategory, setActiveCategory] = useState("All");
+  // Read from URL on initial load if present, otherwise default to "All"
+  const [activeCategory, setActiveCategory] = useState(
+    categories.includes(urlCategory || "") ? urlCategory! : "All"
+  );
+  
   const [priceFilter, setPriceFilter] = useState("ALL");
   const [weightFilter, setWeightFilter] = useState("ALL");
   const [flavorFilter, setFlavorFilter] = useState("ALL");
   const [sortOption, setSortOption] = useState("NEWEST");
 
-  // --- PAGINATION STATE ---
   const [currentPage, setCurrentPage] = useState(1);
-
-  // --- UI FEEDBACK STATE ---
   const [isFiltering, setIsFiltering] = useState(false);
 
-  // 1. Initial Data Fetch
+  // If URL changes while on the page, update the category
+  useEffect(() => {
+    if (urlCategory && categories.includes(urlCategory)) {
+      setActiveCategory(urlCategory);
+    }
+  }, [urlCategory]);
+
   useEffect(() => {
     async function fetchProducts() {
       try {
@@ -448,11 +463,10 @@ export default function MenuPage() {
     fetchProducts();
   }, []);
 
-  // 2. Visual Feedback & Pagination Reset
   useEffect(() => {
     if (!loading) {
       setIsFiltering(true);
-      setCurrentPage(1); // RESET PAGE TO 1 ON FILTER CHANGE
+      setCurrentPage(1); 
       const timer = setTimeout(() => {
         setIsFiltering(false);
       }, 300); 
@@ -460,7 +474,6 @@ export default function MenuPage() {
     }
   }, [searchQuery, activeCategory, priceFilter, weightFilter, flavorFilter, sortOption]);
 
-  // --- HELPER: Check if any filter/search is active ---
   const isAnyFilterActive = 
     searchQuery !== "" ||
     activeCategory !== "All" || 
@@ -468,7 +481,6 @@ export default function MenuPage() {
     weightFilter !== "ALL" || 
     flavorFilter !== "ALL";
 
-  // --- HELPER: Reset Filters ---
   const clearFilters = () => {
     setSearchQuery("");
     setActiveCategory("All");
@@ -479,10 +491,8 @@ export default function MenuPage() {
     setCurrentPage(1);
   };
 
-  // --- FILTERING LOGIC ---
   const filteredProducts = products
     .filter((product) => {
-      // 0. SMART SEARCH LOGIC
       if (searchQuery) {
         const query = searchQuery.toLowerCase().trim();
         
@@ -507,15 +517,12 @@ export default function MenuPage() {
         }
       }
 
-      // 1. Category Filter
       if (activeCategory !== "All" && product.category !== activeCategory) return false;
 
-      // 2. Price Filter
       if (priceFilter === "UNDER_500" && product.basePrice >= 500) return false;
       if (priceFilter === "500_1000" && (product.basePrice < 500 || product.basePrice > 1000)) return false;
       if (priceFilter === "ABOVE_1000" && product.basePrice <= 1000) return false;
 
-      // 3. Weight Filter
       if (weightFilter !== "ALL") {
         const hasVariant = product.variants?.some((v) => 
           v.name.toLowerCase().includes(weightFilter.toLowerCase())
@@ -523,7 +530,6 @@ export default function MenuPage() {
         if (!hasVariant) return false;
       }
 
-      // 4. Flavor Filter
       if (flavorFilter !== "ALL") {
         if (!product.name.toLowerCase().includes(flavorFilter.toLowerCase())) return false;
       }
@@ -544,7 +550,6 @@ export default function MenuPage() {
       }
     });
 
-  // --- PAGINATION LOGIC ---
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
   const currentProducts = filteredProducts.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -553,12 +558,11 @@ export default function MenuPage() {
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
-    window.scrollTo({ top: 0, behavior: "smooth" }); // Scroll to top on page change
+    window.scrollTo({ top: 0, behavior: "smooth" }); 
   };
 
   return (
     <div className="container mx-auto px-4 py-16 flex-grow">
-      {/* Page Header */}
       <div className="text-center mb-10 space-y-4">
         <h1 className="font-playfair text-4xl md:text-6xl font-bold text-[#4E342E]">
           Our <span className="text-[#D98292] italic">Menu</span>
@@ -568,7 +572,6 @@ export default function MenuPage() {
         </p>
       </div>
 
-      {/* --- SMART SEARCH BAR --- */}
       <div className="max-w-md mx-auto mb-8 relative z-20">
         <div className="relative group">
           <input 
@@ -591,7 +594,6 @@ export default function MenuPage() {
         </div>
       </div>
 
-      {/* Category Pills */}
       <div className="flex flex-wrap justify-center gap-3 mb-8">
         {categories.map((cat) => (
           <button
@@ -603,16 +605,12 @@ export default function MenuPage() {
                 : "bg-white text-[#4E342E] border-[#F2E3DB] hover:border-[#D98292] hover:text-[#D98292]"
             }`}
           >
-            {/* Display Logic for Special Names */}
             {cat === "GIFT_BOX" ? "Dessert Box" : cat === "HAMPER" ? "Hamper" : cat}
           </button>
         ))}
       </div>
 
-      {/* --- ADVANCED FILTER BAR --- */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-[#F2E3DB] flex flex-col lg:flex-row justify-between items-center gap-4 mb-10 mx-auto max-w-6xl">
-        
-        {/* Left: Filters */}
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto flex-wrap justify-center lg:justify-start">
           <div className="flex items-center gap-2 text-sm font-bold text-[#8D6E63] shrink-0">
             <Filter size={16} /> Filters:
@@ -654,7 +652,6 @@ export default function MenuPage() {
             <option value="Truffle">Truffle</option>
           </select>
 
-          {/* CLEAR FILTER BUTTON */}
           <AnimatePresence>
             {isAnyFilterActive && (
               <motion.button
@@ -670,7 +667,6 @@ export default function MenuPage() {
           </AnimatePresence>
         </div>
 
-        {/* Right: Sorting */}
         <div className="flex items-center gap-2 w-full lg:w-auto border-t lg:border-t-0 lg:border-l border-[#F2E3DB] pt-4 lg:pt-0 lg:pl-4 justify-center lg:justify-start">
           <ArrowDownUp size={16} className="text-[#8D6E63] shrink-0" />
           <select 
@@ -687,9 +683,7 @@ export default function MenuPage() {
 
       </div>
 
-      {/* Product Display Area */}
       {loading || isFiltering ? (
-        // LOADING STATE
         <div className="flex flex-col justify-center items-center py-20 min-h-[400px]">
           <motion.div 
             animate={{ rotate: 360 }}
@@ -701,7 +695,6 @@ export default function MenuPage() {
           <p className="text-[#8D6E63] font-bold animate-pulse">Curating your delights...</p>
         </div>
       ) : (
-        /* Product Grid */
         <>
           <motion.div 
             layout
@@ -725,7 +718,6 @@ export default function MenuPage() {
             </AnimatePresence>
           </motion.div>
 
-          {/* PAGINATION CONTROLS */}
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-4 mt-12 py-8 border-t border-[#F2E3DB] border-dashed">
               <button 
@@ -764,5 +756,18 @@ export default function MenuPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// Next.js requires useSearchParams to be wrapped in a Suspense boundary
+export default function MenuPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center items-center py-20 min-h-screen">
+        <RefreshCw className="text-[#D98292] animate-spin" size={40} />
+      </div>
+    }>
+      <MenuContent />
+    </Suspense>
   );
 }
