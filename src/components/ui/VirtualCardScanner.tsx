@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { QrCode, X, ScanFace } from "lucide-react";
+import { QrCode, X, ScanFace, ExternalLink } from "lucide-react"; // Imported ExternalLink
 
 export default function VirtualCardScanner() {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,7 +13,6 @@ export default function VirtualCardScanner() {
       <div className="fixed bottom-6 left-4 md:bottom-8 md:left-8 z-[100]">
         <button
           onClick={() => setIsOpen(true)}
-          // Removed the gap-2 and padding-x so the pill shrinks completely around the icon
           className="group flex items-center bg-white p-3 rounded-full shadow-xl border border-[#F2E3DB] text-[#4E342E] hover:text-[#D98292] hover:border-[#D98292] transition-all duration-300 cursor-pointer"
         >
           <div className="bg-[#FFF8F3] p-1.5 rounded-full text-[#D98292] group-hover:scale-110 transition-transform">
@@ -61,20 +60,29 @@ export default function VirtualCardScanner() {
                   Ciste Blasta Virtual Card
                 </h3>
                 <p className="text-sm text-[#8D6E63] mb-6">
-                  Scan this code to know more about us or place a direct order instantly!
+                  Scan this code or click the image to open our virtual card instantly!
                 </p>
 
-                {/* IMAGE CONTAINER */}
-                <div className="w-full aspect-square bg-[#F2E3DB]/30 rounded-2xl border-2 border-dashed border-[#F2E3DB] flex items-center justify-center p-2 relative overflow-hidden">
-                  
+                {/* IMAGE CONTAINER WITH REDIRECT LINK */}
+                <a 
+                  href="https://vcard.onestopsolution.live/CISTE-BLASTA2" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="group/link relative w-full aspect-square bg-[#F2E3DB]/30 rounded-2xl border-2 border-dashed border-[#F2E3DB] flex items-center justify-center p-2 overflow-hidden cursor-pointer block"
+                >
                   {/* Your actual scanner image */}
                   <img 
                     src="/images/scanner.jpg" 
                     alt="Ciste Blasta Scanner" 
-                    className="w-full h-full object-contain rounded-xl"
+                    className="w-full h-full object-contain rounded-xl transition-transform duration-300 group-hover/link:scale-105"
                   />
                   
-                </div>
+                  {/* HOVER OVERLAY (Appears when user hovers the image) */}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/link:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center rounded-xl text-white">
+                    <ExternalLink size={32} className="mb-2" />
+                    <span className="font-bold text-sm tracking-wide">Open Virtual Card</span>
+                  </div>
+                </a>
 
                 <p className="text-xs font-bold text-[#D98292] mt-6 uppercase tracking-widest">
                   Baked with Love
