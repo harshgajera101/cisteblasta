@@ -771,6 +771,10 @@ export default function CustomCakePage() {
                 We bring your vision to life using premium ingredients and unmatched creativity.
               </p>
 
+              <p className="text-lg text-[#8D6E63] leading-relaxed">
+                From elegant wedding tiers to fun superhero themes for kids, we make it all. Fill out the form to get a quote.
+              </p>
+
               <div className="mt-8 space-y-4">
                 {[
                   { icon: Upload, title: "1. Upload Reference", desc: "Share a photo of the design you love." },
