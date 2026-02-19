@@ -70,7 +70,6 @@
 
 
 
-
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import localFont from "next/font/local"; // Import localFont
@@ -79,7 +78,8 @@ import Footer from "@/components/shared/Footer";
 import { CartProvider } from "@/context/CartContext"; 
 import AuthProvider from "@/components/providers/AuthProvider";
 import FloatingCartBtn from "@/components/ui/FloatingCartBtn"; 
-import ExitFeedbackPopup from "@/components/ui/ExitFeedbackPopup"; // NEW IMPORT
+import ExitFeedbackPopup from "@/components/ui/ExitFeedbackPopup"; 
+import VirtualCardScanner from "@/components/ui/VirtualCardScanner"; // NEW IMPORT
 import "./globals.css";
 
 import { Analytics } from "@vercel/analytics/next"
@@ -125,7 +125,8 @@ export default function RootLayout({
             <SpeedInsights />
           </main>
           <FloatingCartBtn /> 
-          <ExitFeedbackPopup /> {/* NEW: Added the popup globally */}
+          <VirtualCardScanner /> {/* NEW: Added the global scanner button */}
+          <ExitFeedbackPopup /> 
           <Footer />
         </CartProvider>
       </AuthProvider>

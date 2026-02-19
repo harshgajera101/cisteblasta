@@ -16,7 +16,7 @@ export default function Footer() {
               Handcrafted with love and premium ingredients. We bring sweetness to your celebrations with our custom cakes and artisanal chocolates.
             </p>
             <div className="flex gap-4 pt-2">
-              <SocialIcon icon={<Instagram className="h-5 w-5" />} href="#" />
+              <SocialIcon icon={<Instagram className="h-5 w-5" />} href="https://www.instagram.com/blastaciste/" />
               <SocialIcon icon={<Facebook className="h-5 w-5" />} href="#" />
               <SocialIcon icon={<Twitter className="h-5 w-5" />} href="#" />
             </div>
