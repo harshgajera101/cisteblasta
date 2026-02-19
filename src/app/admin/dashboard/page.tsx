@@ -5,7 +5,7 @@
 //   RefreshCw, ChefHat, Truck, Package, Clock, Plus, Trash2, Edit2, 
 //   Image as ImageIcon, RotateCcw, X, AlertTriangle, MapPin, Phone, Mail,
 //   ChevronLeft, ChevronRight, Filter, Calendar, Info, Check, ArrowDownUp,
-//   XCircle, History, Gift, Search, XOctagon
+//   XCircle, History, Gift, Search, XOctagon, User
 // } from "lucide-react";
 // import { Toast } from "@/components/ui/Toast";
 
@@ -31,6 +31,17 @@
 //   updatedAt: string;
 //   notes?: string;
 //   rejectionReason?: string; 
+// };
+
+// // NEW: User Type
+// type UserType = {
+//   _id: string;
+//   name: string;
+//   email: string;
+//   phone: string;
+//   createdAt: string;
+//   totalOrders: number;
+//   totalSpent: number;
 // };
 
 // type Variant = { name: string; price: number };
@@ -63,8 +74,12 @@
 
 // export default function AdminDashboard() {
 //   const [activeTab, setActiveTab] = useState("LEADS");
+  
+//   // Data States
 //   const [orders, setOrders] = useState<Order[]>([]);
 //   const [products, setProducts] = useState<Product[]>([]);
+//   const [users, setUsers] = useState<UserType[]>([]); // NEW STATE FOR USERS
+
 //   const [loading, setLoading] = useState(false);
 //   const [menuFilter, setMenuFilter] = useState("ALL");
 //   const [searchQuery, setSearchQuery] = useState(""); 
@@ -93,6 +108,7 @@
 //   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
 //   const [newPriceValue, setNewPriceValue] = useState("");
 
+//   // --- FETCHING FUNCTIONS ---
 //   const fetchOrders = async () => {
 //     setLoading(true);
 //     try {
@@ -110,7 +126,26 @@
 //     } catch (error) { console.error(error); }
 //   };
 
-//   useEffect(() => { fetchOrders(); fetchProducts(); }, []);
+//   // NEW: Fetch Users Function
+//   const fetchUsers = async () => {
+//     setLoading(true);
+//     try {
+//       const res = await fetch("/api/admin/users");
+//       const data = await res.json();
+//       if (data.success) setUsers(data.users);
+//     } catch (error) { console.error(error); } finally { setLoading(false); }
+//   };
+
+//   // Modified useEffect to fetch based on tab
+//   useEffect(() => { 
+//     if (activeTab === "USERS") {
+//       fetchUsers();
+//     } else {
+//       fetchOrders(); 
+//       fetchProducts(); 
+//     }
+//   }, [activeTab]);
+
 //   useEffect(() => { setCurrentPage(1); }, [activeTab, historyDateFilter, historyStatusFilter, sortBy]);
 
 //   const showToast = (message: string, type: "success"|"error"|"warning") => { setToast({ show: true, message, type }); };
@@ -124,7 +159,7 @@
 //       });
 //       if (res.ok) { 
 //         fetchOrders(); 
-//         showToast(`Order updated: ${newStatus}`, "success");
+//         showToast(`Order updated: ${newStatus.replace(/_/g, " ")}`, "success");
 //         if(newStatus === "CANCELLED") setRejectModal({ show: false, orderId: null });
 //       }
 //     } catch (error) { showToast("Failed to update", "error"); }
@@ -237,6 +272,7 @@
 //     window.scrollTo({ top: 0, behavior: 'smooth' });
 //   };
 
+//   // --- FILTERING LOGIC ---
 //   const getFilteredOrders = () => {
 //     let filtered = [...orders]; 
 //     switch (activeTab) {
@@ -268,36 +304,6 @@
 //     return filtered;
 //   };
 
-//   const getPriceDisplay = (p: Product) => {
-//     if (p.variants && p.variants.length > 0) {
-//       const prices = p.variants.map(v => v.price);
-//       const min = Math.min(...prices);
-//       const max = Math.max(...prices);
-//       if (min === max) return `₹${min}`;
-//       return `₹${min} - ₹${max}`;
-//     }
-//     return `₹${p.basePrice}`;
-//   };
-
-//   const allFilteredOrders = getFilteredOrders();
-//   const totalPages = Math.ceil(allFilteredOrders.length / ITEMS_PER_PAGE);
-//   const paginatedOrders = allFilteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  
-//   // NEW: Helper to get the count text
-//   const getOrderCountText = () => {
-//     const count = allFilteredOrders.length;
-//     if (activeTab === "LEADS") return `Total Leads: ${count}`;
-//     if (activeTab === "PENDING") return `Orders To Make: ${count}`;
-//     if (activeTab === "ONGOING") return `Total Ongoing: ${count}`;
-//     if (activeTab === "HISTORY") {
-//       let type = "History";
-//       if (historyStatusFilter === "DELIVERED") type = "Delivered";
-//       if (historyStatusFilter === "CANCELLED") type = "Rejected";
-//       return `Total ${type} Orders: ${count}`;
-//     }
-//     return "";
-//   };
-
 //   const getFilteredProducts = () => { 
 //     let filtered = products;
 //     if (menuFilter !== "ALL") {
@@ -314,6 +320,56 @@
 //       );
 //     }
 //     return filtered;
+//   };
+
+//   // NEW: Filter Users
+//   const getFilteredUsers = () => {
+//     let filtered = [...users];
+//     if (searchQuery) {
+//       const q = searchQuery.toLowerCase();
+//       filtered = filtered.filter(u => 
+//         u.name.toLowerCase().includes(q) || 
+//         u.email.toLowerCase().includes(q) || 
+//         u.phone.includes(q)
+//       );
+//     }
+//     return filtered;
+//   };
+
+//   const getPriceDisplay = (p: Product) => {
+//     if (p.variants && p.variants.length > 0) {
+//       const prices = p.variants.map(v => v.price);
+//       const min = Math.min(...prices);
+//       const max = Math.max(...prices);
+//       if (min === max) return `₹${min}`;
+//       return `₹${min} - ₹${max}`;
+//     }
+//     return `₹${p.basePrice}`;
+//   };
+
+//   // --- PAGINATION & HELPERS ---
+//   const allFilteredOrders = getFilteredOrders();
+//   const allFilteredUsers = getFilteredUsers();
+  
+//   // Decide which dataset to use for pagination
+//   const currentDataList = activeTab === "USERS" ? allFilteredUsers : allFilteredOrders;
+//   const totalPages = Math.ceil(currentDataList.length / ITEMS_PER_PAGE);
+//   const paginatedData = currentDataList.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  
+//   const getOrderCountText = () => {
+//     if (activeTab === "USERS") return `Total Users: ${allFilteredUsers.length}`;
+
+//     const count = allFilteredOrders.length;
+//     if (activeTab === "LEADS") return `Total Leads: ${count}`;
+//     if (activeTab === "PENDING") return `Orders To Make: ${count}`;
+//     if (activeTab === "ONGOING") return `Total Ongoing: ${count}`;
+//     if (activeTab === "HISTORY") {
+//       let type = "History";
+//       if (historyStatusFilter === "DELIVERED") type = "Delivered";
+//       if (historyStatusFilter === "CANCELLED") type = "Rejected";
+//       return `Total ${type} Orders: ${count}`;
+//     }
+//     return "";
 //   };
 
 //   return (
@@ -359,16 +415,35 @@
 //         </div>
 //       )}
 
-//       <div className="flex justify-between items-center mb-6"><h1 className="text-2xl md:text-3xl font-playfair font-bold text-[#4E342E]">Admin Dashboard</h1><button onClick={() => { fetchOrders(); fetchProducts(); }} className="p-2 bg-white rounded-full shadow text-[#D98292] hover:rotate-180 transition duration-500"><RefreshCw size={20} /></button></div>
-//       <div ref={dashboardTopRef} className="grid grid-cols-2 md:flex gap-3 mb-8 scroll-mt-24">{[{ id: "LEADS", label: "Leads", icon: <Clock size={18} /> }, { id: "PENDING", label: "To Make", icon: <ChefHat size={18} /> }, { id: "ONGOING", label: "Ongoing", icon: <Truck size={18} /> }, { id: "HISTORY", label: "History", icon: <Package size={18} /> }, { id: "PRODUCTS", label: "Menu Editor", icon: <Plus size={18} /> }].map((tab) => (<button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex flex-col md:flex-row items-center justify-center gap-2 p-3 md:px-5 rounded-xl font-bold transition-all text-sm ${tab.id === "PRODUCTS" ? "col-span-2" : ""} ${activeTab === tab.id ? "bg-[#D98292] text-white shadow-lg" : "bg-white text-[#8D6E63]"}`}>{tab.icon} <span>{tab.label}</span></button>))}</div>
+//       {/* HEADER */}
+//       <div className="flex justify-between items-center mb-6">
+//         <h1 className="text-2xl md:text-3xl font-playfair font-bold text-[#4E342E]">Admin Dashboard</h1>
+//         <button onClick={() => { activeTab==="USERS" ? fetchUsers() : (fetchOrders(), fetchProducts()); }} className="p-2 bg-white rounded-full shadow text-[#D98292] hover:rotate-180 transition duration-500"><RefreshCw size={20} /></button>
+//       </div>
+
+//       {/* TABS (Added USERS Tab) */}
+//       <div ref={dashboardTopRef} className="grid grid-cols-2 md:flex gap-3 mb-8 scroll-mt-24">
+//         {[
+//           { id: "LEADS", label: "Leads", icon: <Clock size={18} /> }, 
+//           { id: "PENDING", label: "To Make", icon: <ChefHat size={18} /> }, 
+//           { id: "ONGOING", label: "Ongoing", icon: <Truck size={18} /> }, 
+//           { id: "HISTORY", label: "History", icon: <Package size={18} /> }, 
+//           { id: "PRODUCTS", label: "Menu Editor", icon: <Plus size={18} /> },
+//           { id: "USERS", label: "Users", icon: <User size={18} /> } // NEW TAB
+//         ].map((tab) => (
+//           <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex flex-col md:flex-row items-center justify-center gap-2 p-3 md:px-5 rounded-xl font-bold transition-all text-sm ${tab.id === "PRODUCTS" ? "col-span-2 md:col-span-1" : ""} ${activeTab === tab.id ? "bg-[#D98292] text-white shadow-lg" : "bg-white text-[#8D6E63]"}`}>
+//             {tab.icon} <span>{tab.label}</span>
+//           </button>
+//         ))}
+//       </div>
       
+//       {/* --- CONTENT AREA --- */}
 //       {activeTab === "PRODUCTS" ? (
 //         <div className="grid md:grid-cols-3 gap-8">
 //            {/* LEFT: FORM */}
 //            <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] md:col-span-1 h-fit">
 //              <h3 className="font-bold text-lg mb-4 text-[#4E342E]">{editingId ? "Edit Item" : "Add New Item"}</h3>
 //              <form onSubmit={handleProductSubmit} className="space-y-4">
-//                {/* Inputs... */}
 //                <div>
 //                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Product Image</label>
 //                  <div className="border-2 border-dashed border-[#F2E3DB] rounded-lg p-4 text-center hover:bg-[#FFF8F3] relative cursor-pointer">
@@ -378,12 +453,10 @@
 //                  </div>
 //                  <p className="text-[10px] text-[#8D6E63] mt-1 text-center">Best size for image (1:1 square ratio and 1024x1024 px)</p>
 //                </div>
-
 //                <div>
 //                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Product Name</label>
 //                  <input type="text" placeholder="e.g. Chocolate Truffle" value={formData.name} onChange={(e)=>setFormData({...formData, name:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292]"/>
 //                </div>
-
 //                <div>
 //                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Category</label>
 //                  <select value={formData.category} onChange={(e)=>setFormData({...formData, category:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm bg-white focus:outline-none focus:border-[#D98292]">
@@ -395,24 +468,17 @@
 //                    <option value="HAMPER">Hamper</option>
 //                  </select>
 //                </div>
-
 //                <div>
 //                  <label className="text-xs font-bold text-[#8D6E63] mb-2 block">Occasions</label>
 //                  <div className="grid grid-cols-2 gap-2">
 //                    {OCCASION_OPTIONS.map((occ) => (
 //                      <div key={occ} className="flex items-center gap-2">
-//                        <input 
-//                          type="checkbox" 
-//                          checked={formData.occasions.includes(occ)} 
-//                          onChange={() => toggleOccasion(occ)}
-//                          className="w-3.5 h-3.5 text-[#D98292] rounded accent-[#D98292]" 
-//                        />
+//                        <input type="checkbox" checked={formData.occasions.includes(occ)} onChange={() => toggleOccasion(occ)} className="w-3.5 h-3.5 text-[#D98292] rounded accent-[#D98292]" />
 //                        <span className="text-xs text-[#4E342E]">{occ}</span>
 //                      </div>
 //                    ))}
 //                  </div>
 //                </div>
-
 //                <div className="bg-[#FFF8F3] p-3 rounded-lg border border-[#F2E3DB]">
 //                  <div className="flex items-center gap-2 mb-3">
 //                    <input type="checkbox" checked={formData.hasVariants} onChange={(e)=>setFormData({...formData, hasVariants:e.target.checked})} className="w-4 h-4 text-[#D98292] rounded accent-[#D98292]"/>
@@ -437,12 +503,10 @@
 //                    </div>
 //                  )}
 //                </div>
-
 //                <div>
 //                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Description</label>
 //                  <textarea placeholder="Describe the product..." value={formData.description} onChange={(e)=>setFormData({...formData, description:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm h-20 focus:outline-none focus:border-[#D98292]"></textarea>
 //                </div>
-
 //                <div className="flex gap-2">
 //                  <button type="submit" disabled={isUploading} className="flex-1 py-3 bg-[#4E342E] text-white font-bold rounded-xl hover:bg-[#3d2924] disabled:opacity-50 transition-colors">
 //                    {isUploading ? "Saving..." : editingId ? "Update Item" : "Add Item"}
@@ -458,31 +522,18 @@
 
 //            {/* RIGHT: MENU LIST */}
 //            <div className="md:col-span-2 space-y-4">
-//              {/* HEADER ROW */}
 //              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
 //                <h3 className="font-bold text-lg text-[#4E342E] whitespace-nowrap">Menu ({getFilteredProducts().length})</h3>
-               
-//                {/* SEARCH BAR */}
 //                <div className="relative w-full md:flex-1 md:max-w-xs md:mx-auto">
 //                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8D6E63]" size={16} />
-//                   <input 
-//                     type="text" 
-//                     placeholder="Search menu..." 
-//                     value={searchQuery}
-//                     onChange={(e) => setSearchQuery(e.target.value)}
-//                     className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292] bg-white"
-//                   />
+//                   <input type="text" placeholder="Search menu..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292] bg-white"/>
 //                </div>
-
-//                {/* Filter Pills */}
 //                <div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB] overflow-x-auto shrink-0 max-w-[60%] lg:max-w-none">
 //                  {["ALL","CAKE","CHOCOLATE","JAR","HAMPER"].map(c=>(
 //                    <button key={c} onClick={()=>setMenuFilter(c)} className={`px-2 py-1 lg:px-3 text-[10px] font-bold rounded-md transition whitespace-nowrap ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63] hover:bg-[#FFF8F3]"}`}>{c === "HAMPER" ? "HAMPER" : c}</button>
 //                  ))}
 //                </div>
 //              </div>
-
-//              {/* PRODUCTS LIST */}
 //              {getFilteredProducts().map(p=>(
 //                <div key={p._id} className="bg-white p-4 rounded-xl border border-[#F2E3DB] flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
 //                  <div className="flex items-center gap-4">
@@ -491,20 +542,8 @@
 //                    </div>
 //                    <div>
 //                      <h4 className="font-bold text-[#4E342E]">{p.name}</h4>
-                     
-//                      <p className="text-xs text-[#8D6E63]">
-//                         {p.category} • {p.variants?.length ? `${p.variants.length} Sizes` : "Standard"} • <span className="font-bold text-[#D98292]">{getPriceDisplay(p)}</span>
-//                      </p>
-
-//                      {p.occasions && p.occasions.length > 0 && (
-//                        <div className="flex flex-wrap gap-1 mt-1.5">
-//                          {p.occasions.map(occ => (
-//                            <span key={occ} className="text-[10px] bg-[#FFF8F3] text-[#8D6E63] px-2 py-0.5 rounded border border-[#F2E3DB]">
-//                              {occ}
-//                            </span>
-//                          ))}
-//                        </div>
-//                      )}
+//                      <p className="text-xs text-[#8D6E63]">{p.category} • {p.variants?.length ? `${p.variants.length} Sizes` : "Standard"} • <span className="font-bold text-[#D98292]">{getPriceDisplay(p)}</span></p>
+//                      {p.occasions && p.occasions.length > 0 && (<div className="flex flex-wrap gap-1 mt-1.5">{p.occasions.map(occ => (<span key={occ} className="text-[10px] bg-[#FFF8F3] text-[#8D6E63] px-2 py-0.5 rounded border border-[#F2E3DB]">{occ}</span>))}</div>)}
 //                    </div>
 //                  </div>
 //                  <div className="flex gap-2">
@@ -515,8 +554,120 @@
 //              ))}
 //            </div>
 //         </div>
+//       ) : activeTab === "USERS" ? (
+//         // --- USERS TAB VIEW ---
+//         <div className="space-y-4">
+//           <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-[#F2E3DB]">
+//              <p className="text-sm font-bold text-[#8D6E63]">{getOrderCountText()}</p>
+//              <div className="relative w-48">
+//                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8D6E63]" size={16} />
+//                 <input 
+//                   type="text" 
+//                   placeholder="Search user..." 
+//                   value={searchQuery}
+//                   onChange={(e) => setSearchQuery(e.target.value)}
+//                   className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292] bg-[#FFF8F3]"
+//                 />
+//              </div>
+//           </div>
+
+//           {loading ? (
+//             <p className="text-center text-[#8D6E63] animate-pulse py-12">Loading users...</p>
+//           ) : paginatedData.length === 0 ? (
+//             <div className="text-center py-12 bg-white/50 rounded-2xl border border-[#F2E3DB] border-dashed">
+//               <p className="text-[#8D6E63]">No users found.</p>
+//             </div>
+//           ) : (
+//             <div className="grid grid-cols-1 gap-4">
+//               {/* Desktop Header */}
+//               <div className="hidden md:grid grid-cols-12 gap-4 p-4 bg-[#D98292]/10 text-[#D98292] font-bold text-sm rounded-xl uppercase tracking-wider">
+//                 <div className="col-span-3">Customer</div>
+//                 <div className="col-span-3">Contact</div>
+//                 <div className="col-span-2">Joined</div>
+//                 <div className="col-span-2 text-center">Orders</div>
+//                 <div className="col-span-2 text-right">Total Spent</div>
+//               </div>
+
+//               {/* Rows / Cards */}
+//               {(paginatedData as UserType[]).map((user) => (
+//                 <div key={user._id} className="bg-white p-5 rounded-xl shadow-sm border border-[#F2E3DB] hover:shadow-md transition-all">
+//                   {/* Desktop Layout */}
+//                   <div className="hidden md:grid grid-cols-12 gap-4 items-center">
+//                     <div className="col-span-3">
+//                       <div className="font-bold text-[#4E342E] text-base">{user.name}</div>
+//                     </div>
+//                     <div className="col-span-3 text-sm text-[#8D6E63] space-y-1">
+//                       <div className="flex items-center gap-1.5"><Mail size={12}/> {user.email}</div>
+//                       <div className="flex items-center gap-1.5"><Phone size={12}/> {user.phone}</div>
+//                     </div>
+//                     <div className="col-span-2 text-sm text-[#8D6E63] flex items-center gap-1.5">
+//                       <Clock size={14}/> {new Date(user.createdAt).toLocaleDateString()}
+//                     </div>
+//                     <div className="col-span-2 text-center">
+//                       <span className="bg-[#FFF8F3] text-[#D98292] py-1 px-3 rounded-full text-xs font-bold border border-[#F2E3DB]">
+//                         {user.totalOrders} Orders
+//                       </span>
+//                     </div>
+//                     <div className="col-span-2 text-right font-bold text-[#4E342E] text-base">
+//                       ₹{user.totalSpent}
+//                     </div>
+//                   </div>
+
+//                   {/* Mobile Layout */}
+//                   <div className="md:hidden flex flex-col gap-3">
+//                     <div className="flex justify-between items-start">
+//                       <div>
+//                         <h4 className="font-bold text-[#4E342E] text-lg">{user.name}</h4>
+//                         <p className="text-xs text-[#8D6E63] mt-1 flex items-center gap-1">Joined: {new Date(user.createdAt).toLocaleDateString()}</p>
+//                       </div>
+//                       <div className="text-right">
+//                         <div className="font-bold text-[#4E342E] text-lg">₹{user.totalSpent}</div>
+//                         <div className="text-[10px] text-[#8D6E63]">Lifetime Value</div>
+//                       </div>
+//                     </div>
+//                     <div className="h-px w-full bg-[#F2E3DB]" />
+//                     <div className="grid grid-cols-2 gap-4 text-sm">
+//                       <div className="space-y-1 text-[#8D6E63]">
+//                         <div className="flex items-center gap-2"><Mail size={14} className="text-[#D98292]"/> <span className="truncate">{user.email}</span></div>
+//                         <div className="flex items-center gap-2"><Phone size={14} className="text-[#D98292]"/> {user.phone}</div>
+//                       </div>
+//                       <div className="flex justify-end items-center">
+//                          <span className="bg-[#FFF8F3] text-[#D98292] py-1.5 px-4 rounded-lg text-xs font-bold border border-[#F2E3DB]">
+//                             {user.totalOrders} Orders Placed
+//                          </span>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//               ))}
+//             </div>
+//           )}
+          
+//           {/* PAGINATION */}
+//           {totalPages > 1 && (
+//             <div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t border-[#F2E3DB] border-dashed">
+//               <button 
+//                 onClick={() => changePage(Math.max(1, currentPage - 1))}
+//                 disabled={currentPage === 1}
+//                 className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"
+//               >
+//                 <ChevronLeft size={20} />
+//               </button>
+//               <span className="text-sm font-bold text-[#8D6E63]">
+//                 Page <span className="text-[#D98292] text-base">{currentPage}</span> of {totalPages}
+//               </span>
+//               <button 
+//                 onClick={() => changePage(Math.min(totalPages, currentPage + 1))}
+//                 disabled={currentPage === totalPages}
+//                 className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"
+//               >
+//                 <ChevronRight size={20} />
+//               </button>
+//             </div>
+//           )}
+//         </div>
 //       ) : (
-//         // ... Orders View ...
+//         // --- EXISTING ORDERS VIEW ---
 //         <div className="space-y-4">
 //            {activeTab === "HISTORY" && (
 //              <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm border border-[#F2E3DB]">
@@ -541,8 +692,8 @@
 //            </p>
 
 //            {loading ? <p className="text-center text-[#8D6E63] animate-pulse">Loading orders...</p> : 
-//            paginatedOrders.length === 0 ? <div className="text-center py-12 bg-white/50 rounded-2xl border border-[#F2E3DB] border-dashed"><p className="text-[#8D6E63]">No orders found.</p></div> : 
-//            paginatedOrders.map((order) => (
+//            paginatedData.length === 0 ? <div className="text-center py-12 bg-white/50 rounded-2xl border border-[#F2E3DB] border-dashed"><p className="text-[#8D6E63]">No orders found.</p></div> : 
+//            (paginatedData as Order[]).map((order) => (
 //               <div key={order._id} className="bg-white p-5 rounded-2xl shadow-sm border border-[#F2E3DB] flex flex-col md:flex-row justify-between gap-6 relative overflow-hidden">
 //                 <div className="absolute top-0 right-0 bg-[#FFF8F3] px-4 py-2 rounded-bl-xl border-b border-l border-[#F2E3DB] text-xs">
 //                   <div className="flex flex-col items-end gap-1">
@@ -566,7 +717,7 @@
 //                   <div className="flex items-center gap-3 mb-2">
 //                     <h3 className="font-bold text-[#4E342E] text-lg">{order.customerName}</h3>
 //                     <span className={`px-3 py-1 text-xs font-bold rounded-full border ${statusColors[order.status] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
-//                       {order.status}
+//                       {order.status.replace(/_/g, " ")}
 //                     </span>
 //                   </div>
 //                   <div className="flex flex-col gap-2 mb-4 text-sm text-[#8D6E63]"><div className="flex items-start gap-2"><MapPin size={16} className="mt-0.5 text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Address:</span><span className="flex-1">{order.address}</span></div><div className="flex items-center gap-2"><Mail size={16} className="text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Email:</span><span>{order.email || "N/A"}</span></div><div className="flex items-center gap-2"><Phone size={16} className="text-[#D98292] shrink-0" /><span className="font-bold text-[#4E342E]">Phone:</span><span>{order.phone || "N/A"}</span></div>
@@ -600,16 +751,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -617,7 +758,7 @@ import {
   RefreshCw, ChefHat, Truck, Package, Clock, Plus, Trash2, Edit2, 
   Image as ImageIcon, RotateCcw, X, AlertTriangle, MapPin, Phone, Mail,
   ChevronLeft, ChevronRight, Filter, Calendar, Info, Check, ArrowDownUp,
-  XCircle, History, Gift, Search, XOctagon
+  XCircle, History, Gift, Search, XOctagon, User
 } from "lucide-react";
 import { Toast } from "@/components/ui/Toast";
 
@@ -643,6 +784,17 @@ type Order = {
   updatedAt: string;
   notes?: string;
   rejectionReason?: string; 
+};
+
+// NEW: User Type
+type UserType = {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  createdAt: string;
+  totalOrders: number;
+  totalSpent: number;
 };
 
 type Variant = { name: string; price: number };
@@ -675,8 +827,12 @@ const statusColors: Record<string, string> = {
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("LEADS");
+  
+  // Data States
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [users, setUsers] = useState<UserType[]>([]);
+
   const [loading, setLoading] = useState(false);
   const [menuFilter, setMenuFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState(""); 
@@ -705,6 +861,7 @@ export default function AdminDashboard() {
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [newPriceValue, setNewPriceValue] = useState("");
 
+  // --- FETCHING FUNCTIONS ---
   const fetchOrders = async () => {
     setLoading(true);
     try {
@@ -722,7 +879,24 @@ export default function AdminDashboard() {
     } catch (error) { console.error(error); }
   };
 
-  useEffect(() => { fetchOrders(); fetchProducts(); }, []);
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/users");
+      const data = await res.json();
+      if (data.success) setUsers(data.users);
+    } catch (error) { console.error(error); } finally { setLoading(false); }
+  };
+
+  useEffect(() => { 
+    if (activeTab === "USERS") {
+      fetchUsers();
+    } else {
+      fetchOrders(); 
+      fetchProducts(); 
+    }
+  }, [activeTab]);
+
   useEffect(() => { setCurrentPage(1); }, [activeTab, historyDateFilter, historyStatusFilter, sortBy]);
 
   const showToast = (message: string, type: "success"|"error"|"warning") => { setToast({ show: true, message, type }); };
@@ -736,7 +910,7 @@ export default function AdminDashboard() {
       });
       if (res.ok) { 
         fetchOrders(); 
-        showToast(`Order updated: ${newStatus.replace(/_/g, " ")}`, "success"); // Clean toast message too
+        showToast(`Order updated: ${newStatus.replace(/_/g, " ")}`, "success");
         if(newStatus === "CANCELLED") setRejectModal({ show: false, orderId: null });
       }
     } catch (error) { showToast("Failed to update", "error"); }
@@ -849,6 +1023,7 @@ export default function AdminDashboard() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // --- FILTERING LOGIC ---
   const getFilteredOrders = () => {
     let filtered = [...orders]; 
     switch (activeTab) {
@@ -880,35 +1055,6 @@ export default function AdminDashboard() {
     return filtered;
   };
 
-  const getPriceDisplay = (p: Product) => {
-    if (p.variants && p.variants.length > 0) {
-      const prices = p.variants.map(v => v.price);
-      const min = Math.min(...prices);
-      const max = Math.max(...prices);
-      if (min === max) return `₹${min}`;
-      return `₹${min} - ₹${max}`;
-    }
-    return `₹${p.basePrice}`;
-  };
-
-  const allFilteredOrders = getFilteredOrders();
-  const totalPages = Math.ceil(allFilteredOrders.length / ITEMS_PER_PAGE);
-  const paginatedOrders = allFilteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  
-  const getOrderCountText = () => {
-    const count = allFilteredOrders.length;
-    if (activeTab === "LEADS") return `Total Leads: ${count}`;
-    if (activeTab === "PENDING") return `Orders To Make: ${count}`;
-    if (activeTab === "ONGOING") return `Total Ongoing: ${count}`;
-    if (activeTab === "HISTORY") {
-      let type = "History";
-      if (historyStatusFilter === "DELIVERED") type = "Delivered";
-      if (historyStatusFilter === "CANCELLED") type = "Rejected";
-      return `Total ${type} Orders: ${count}`;
-    }
-    return "";
-  };
-
   const getFilteredProducts = () => { 
     let filtered = products;
     if (menuFilter !== "ALL") {
@@ -925,6 +1071,60 @@ export default function AdminDashboard() {
       );
     }
     return filtered;
+  };
+
+  const getFilteredUsers = () => {
+    let filtered = [...users];
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(u => 
+        u.name.toLowerCase().includes(q) || 
+        u.email.toLowerCase().includes(q) || 
+        u.phone.includes(q)
+      );
+    }
+    return filtered;
+  };
+
+  // FORMAT PRICE HELPER
+  const formatPrice = (price: number) => {
+    return price.toLocaleString('en-IN');
+  };
+
+  const getPriceDisplay = (p: Product) => {
+    if (p.variants && p.variants.length > 0) {
+      const prices = p.variants.map(v => v.price);
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+      if (min === max) return `₹${formatPrice(min)}`;
+      return `₹${formatPrice(min)} - ₹${formatPrice(max)}`;
+    }
+    return `₹${formatPrice(p.basePrice)}`;
+  };
+
+  // --- PAGINATION & HELPERS ---
+  const allFilteredOrders = getFilteredOrders();
+  const allFilteredUsers = getFilteredUsers();
+  
+  // Decide which dataset to use for pagination
+  const currentDataList = activeTab === "USERS" ? allFilteredUsers : allFilteredOrders;
+  const totalPages = Math.ceil(currentDataList.length / ITEMS_PER_PAGE);
+  const paginatedData = currentDataList.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  
+  const getOrderCountText = () => {
+    if (activeTab === "USERS") return `Total Users: ${allFilteredUsers.length}`;
+
+    const count = allFilteredOrders.length;
+    if (activeTab === "LEADS") return `Total Leads: ${count}`;
+    if (activeTab === "PENDING") return `Orders To Make: ${count}`;
+    if (activeTab === "ONGOING") return `Total Ongoing: ${count}`;
+    if (activeTab === "HISTORY") {
+      let type = "History";
+      if (historyStatusFilter === "DELIVERED") type = "Delivered";
+      if (historyStatusFilter === "CANCELLED") type = "Rejected";
+      return `Total ${type} Orders: ${count}`;
+    }
+    return "";
   };
 
   return (
@@ -970,16 +1170,35 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-6"><h1 className="text-2xl md:text-3xl font-playfair font-bold text-[#4E342E]">Admin Dashboard</h1><button onClick={() => { fetchOrders(); fetchProducts(); }} className="p-2 bg-white rounded-full shadow text-[#D98292] hover:rotate-180 transition duration-500"><RefreshCw size={20} /></button></div>
-      <div ref={dashboardTopRef} className="grid grid-cols-2 md:flex gap-3 mb-8 scroll-mt-24">{[{ id: "LEADS", label: "Leads", icon: <Clock size={18} /> }, { id: "PENDING", label: "To Make", icon: <ChefHat size={18} /> }, { id: "ONGOING", label: "Ongoing", icon: <Truck size={18} /> }, { id: "HISTORY", label: "History", icon: <Package size={18} /> }, { id: "PRODUCTS", label: "Menu Editor", icon: <Plus size={18} /> }].map((tab) => (<button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex flex-col md:flex-row items-center justify-center gap-2 p-3 md:px-5 rounded-xl font-bold transition-all text-sm ${tab.id === "PRODUCTS" ? "col-span-2" : ""} ${activeTab === tab.id ? "bg-[#D98292] text-white shadow-lg" : "bg-white text-[#8D6E63]"}`}>{tab.icon} <span>{tab.label}</span></button>))}</div>
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl md:text-3xl font-playfair font-bold text-[#4E342E]">Admin Dashboard</h1>
+        <button onClick={() => { activeTab==="USERS" ? fetchUsers() : (fetchOrders(), fetchProducts()); }} className="p-2 bg-white rounded-full shadow text-[#D98292] hover:rotate-180 transition duration-500"><RefreshCw size={20} /></button>
+      </div>
+
+      {/* TABS */}
+      <div ref={dashboardTopRef} className="grid grid-cols-2 md:flex gap-3 mb-8 scroll-mt-24">
+        {[
+          { id: "LEADS", label: "Leads", icon: <Clock size={18} /> }, 
+          { id: "PENDING", label: "To Make", icon: <ChefHat size={18} /> }, 
+          { id: "ONGOING", label: "Ongoing", icon: <Truck size={18} /> }, 
+          { id: "HISTORY", label: "History", icon: <Package size={18} /> }, 
+          { id: "PRODUCTS", label: "Menu Editor", icon: <Plus size={18} /> },
+          { id: "USERS", label: "Users", icon: <User size={18} /> }
+        ].map((tab) => (
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex flex-col md:flex-row items-center justify-center gap-2 p-3 md:px-5 rounded-xl font-bold transition-all text-sm ${tab.id === "PRODUCTS" ? "col-span-2 md:col-span-1" : ""} ${activeTab === tab.id ? "bg-[#D98292] text-white shadow-lg" : "bg-white text-[#8D6E63]"}`}>
+            {tab.icon} <span>{tab.label}</span>
+          </button>
+        ))}
+      </div>
       
+      {/* --- CONTENT AREA --- */}
       {activeTab === "PRODUCTS" ? (
         <div className="grid md:grid-cols-3 gap-8">
            {/* LEFT: FORM */}
            <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#F2E3DB] md:col-span-1 h-fit">
              <h3 className="font-bold text-lg mb-4 text-[#4E342E]">{editingId ? "Edit Item" : "Add New Item"}</h3>
              <form onSubmit={handleProductSubmit} className="space-y-4">
-               {/* Inputs... */}
                <div>
                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Product Image</label>
                  <div className="border-2 border-dashed border-[#F2E3DB] rounded-lg p-4 text-center hover:bg-[#FFF8F3] relative cursor-pointer">
@@ -989,12 +1208,10 @@ export default function AdminDashboard() {
                  </div>
                  <p className="text-[10px] text-[#8D6E63] mt-1 text-center">Best size for image (1:1 square ratio and 1024x1024 px)</p>
                </div>
-
                <div>
                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Product Name</label>
                  <input type="text" placeholder="e.g. Chocolate Truffle" value={formData.name} onChange={(e)=>setFormData({...formData, name:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292]"/>
                </div>
-
                <div>
                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Category</label>
                  <select value={formData.category} onChange={(e)=>setFormData({...formData, category:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm bg-white focus:outline-none focus:border-[#D98292]">
@@ -1006,24 +1223,17 @@ export default function AdminDashboard() {
                    <option value="HAMPER">Hamper</option>
                  </select>
                </div>
-
                <div>
                  <label className="text-xs font-bold text-[#8D6E63] mb-2 block">Occasions</label>
                  <div className="grid grid-cols-2 gap-2">
                    {OCCASION_OPTIONS.map((occ) => (
                      <div key={occ} className="flex items-center gap-2">
-                       <input 
-                         type="checkbox" 
-                         checked={formData.occasions.includes(occ)} 
-                         onChange={() => toggleOccasion(occ)}
-                         className="w-3.5 h-3.5 text-[#D98292] rounded accent-[#D98292]" 
-                       />
+                       <input type="checkbox" checked={formData.occasions.includes(occ)} onChange={() => toggleOccasion(occ)} className="w-3.5 h-3.5 text-[#D98292] rounded accent-[#D98292]" />
                        <span className="text-xs text-[#4E342E]">{occ}</span>
                      </div>
                    ))}
                  </div>
                </div>
-
                <div className="bg-[#FFF8F3] p-3 rounded-lg border border-[#F2E3DB]">
                  <div className="flex items-center gap-2 mb-3">
                    <input type="checkbox" checked={formData.hasVariants} onChange={(e)=>setFormData({...formData, hasVariants:e.target.checked})} className="w-4 h-4 text-[#D98292] rounded accent-[#D98292]"/>
@@ -1048,12 +1258,10 @@ export default function AdminDashboard() {
                    </div>
                  )}
                </div>
-
                <div>
                  <label className="text-xs font-bold text-[#8D6E63] mb-1 block">Description</label>
                  <textarea placeholder="Describe the product..." value={formData.description} onChange={(e)=>setFormData({...formData, description:e.target.value})} className="w-full p-3 rounded-lg border border-[#F2E3DB] text-sm h-20 focus:outline-none focus:border-[#D98292]"></textarea>
                </div>
-
                <div className="flex gap-2">
                  <button type="submit" disabled={isUploading} className="flex-1 py-3 bg-[#4E342E] text-white font-bold rounded-xl hover:bg-[#3d2924] disabled:opacity-50 transition-colors">
                    {isUploading ? "Saving..." : editingId ? "Update Item" : "Add Item"}
@@ -1069,31 +1277,18 @@ export default function AdminDashboard() {
 
            {/* RIGHT: MENU LIST */}
            <div className="md:col-span-2 space-y-4">
-             {/* ... (Menu List Logic Same as Before) ... */}
              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                <h3 className="font-bold text-lg text-[#4E342E] whitespace-nowrap">Menu ({getFilteredProducts().length})</h3>
-               
-               {/* SEARCH BAR */}
                <div className="relative w-full md:flex-1 md:max-w-xs md:mx-auto">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8D6E63]" size={16} />
-                  <input 
-                    type="text" 
-                    placeholder="Search menu..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292] bg-white"
-                  />
+                  <input type="text" placeholder="Search menu..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292] bg-white"/>
                </div>
-
-               {/* Filter Pills */}
                <div className="flex gap-1 bg-white p-1 rounded-lg border border-[#F2E3DB] overflow-x-auto shrink-0 max-w-[60%] lg:max-w-none">
                  {["ALL","CAKE","CHOCOLATE","JAR","HAMPER"].map(c=>(
                    <button key={c} onClick={()=>setMenuFilter(c)} className={`px-2 py-1 lg:px-3 text-[10px] font-bold rounded-md transition whitespace-nowrap ${menuFilter===c?"bg-[#D98292] text-white":"text-[#8D6E63] hover:bg-[#FFF8F3]"}`}>{c === "HAMPER" ? "HAMPER" : c}</button>
                  ))}
                </div>
              </div>
-
-             {/* PRODUCTS LIST */}
              {getFilteredProducts().map(p=>(
                <div key={p._id} className="bg-white p-4 rounded-xl border border-[#F2E3DB] flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
                  <div className="flex items-center gap-4">
@@ -1102,20 +1297,8 @@ export default function AdminDashboard() {
                    </div>
                    <div>
                      <h4 className="font-bold text-[#4E342E]">{p.name}</h4>
-                     
-                     <p className="text-xs text-[#8D6E63]">
-                        {p.category} • {p.variants?.length ? `${p.variants.length} Sizes` : "Standard"} • <span className="font-bold text-[#D98292]">{getPriceDisplay(p)}</span>
-                     </p>
-
-                     {p.occasions && p.occasions.length > 0 && (
-                       <div className="flex flex-wrap gap-1 mt-1.5">
-                         {p.occasions.map(occ => (
-                           <span key={occ} className="text-[10px] bg-[#FFF8F3] text-[#8D6E63] px-2 py-0.5 rounded border border-[#F2E3DB]">
-                             {occ}
-                           </span>
-                         ))}
-                       </div>
-                     )}
+                     <p className="text-xs text-[#8D6E63]">{p.category} • {p.variants?.length ? `${p.variants.length} Sizes` : "Standard"} • <span className="font-bold text-[#D98292]">{getPriceDisplay(p)}</span></p>
+                     {p.occasions && p.occasions.length > 0 && (<div className="flex flex-wrap gap-1 mt-1.5">{p.occasions.map(occ => (<span key={occ} className="text-[10px] bg-[#FFF8F3] text-[#8D6E63] px-2 py-0.5 rounded border border-[#F2E3DB]">{occ}</span>))}</div>)}
                    </div>
                  </div>
                  <div className="flex gap-2">
@@ -1126,8 +1309,120 @@ export default function AdminDashboard() {
              ))}
            </div>
         </div>
+      ) : activeTab === "USERS" ? (
+        // --- USERS TAB VIEW ---
+        <div className="space-y-4">
+          <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-[#F2E3DB]">
+             <p className="text-sm font-bold text-[#8D6E63]">{getOrderCountText()}</p>
+             <div className="relative w-48">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8D6E63]" size={16} />
+                <input 
+                  type="text" 
+                  placeholder="Search user..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#F2E3DB] text-sm focus:outline-none focus:border-[#D98292] bg-[#FFF8F3]"
+                />
+             </div>
+          </div>
+
+          {loading ? (
+            <p className="text-center text-[#8D6E63] animate-pulse py-12">Loading users...</p>
+          ) : paginatedData.length === 0 ? (
+            <div className="text-center py-12 bg-white/50 rounded-2xl border border-[#F2E3DB] border-dashed">
+              <p className="text-[#8D6E63]">No users found.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {/* Desktop Header */}
+              <div className="hidden md:grid grid-cols-12 gap-4 p-4 bg-[#D98292]/10 text-[#D98292] font-bold text-sm rounded-xl uppercase tracking-wider">
+                <div className="col-span-3">Customer</div>
+                <div className="col-span-3">Contact</div>
+                <div className="col-span-2">Joined</div>
+                <div className="col-span-2 text-center">Orders</div>
+                <div className="col-span-2 text-right">Total Spent</div>
+              </div>
+
+              {/* Rows / Cards */}
+              {(paginatedData as UserType[]).map((user) => (
+                <div key={user._id} className="bg-white p-5 rounded-xl shadow-sm border border-[#F2E3DB] hover:shadow-md transition-all">
+                  {/* Desktop Layout */}
+                  <div className="hidden md:grid grid-cols-12 gap-4 items-center">
+                    <div className="col-span-3">
+                      <div className="font-bold text-[#4E342E] text-base">{user.name}</div>
+                    </div>
+                    <div className="col-span-3 text-sm text-[#8D6E63] space-y-1">
+                      <div className="flex items-center gap-1.5"><Mail size={12}/> {user.email}</div>
+                      <div className="flex items-center gap-1.5"><Phone size={12}/> {user.phone}</div>
+                    </div>
+                    <div className="col-span-2 text-sm text-[#8D6E63] flex items-center gap-1.5">
+                      <Clock size={14}/> {new Date(user.createdAt).toLocaleDateString()}
+                    </div>
+                    <div className="col-span-2 text-center">
+                      <span className="bg-[#FFF8F3] text-[#D98292] py-1 px-3 rounded-full text-xs font-bold border border-[#F2E3DB]">
+                        {user.totalOrders} Orders
+                      </span>
+                    </div>
+                    <div className="col-span-2 text-right font-bold text-[#4E342E] text-base">
+                      ₹{formatPrice(user.totalSpent)}
+                    </div>
+                  </div>
+
+                  {/* Mobile Layout */}
+                  <div className="md:hidden flex flex-col gap-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-bold text-[#4E342E] text-lg">{user.name}</h4>
+                        <p className="text-xs text-[#8D6E63] mt-1 flex items-center gap-1">Joined: {new Date(user.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-[#4E342E] text-lg">₹{formatPrice(user.totalSpent)}</div>
+                        <div className="text-[10px] text-[#8D6E63]">Lifetime Value</div>
+                      </div>
+                    </div>
+                    <div className="h-px w-full bg-[#F2E3DB]" />
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="space-y-1 text-[#8D6E63]">
+                        <div className="flex items-center gap-2"><Mail size={14} className="text-[#D98292]"/> <span className="truncate">{user.email}</span></div>
+                        <div className="flex items-center gap-2"><Phone size={14} className="text-[#D98292]"/> {user.phone}</div>
+                      </div>
+                      <div className="flex justify-end items-center">
+                         <span className="bg-[#FFF8F3] text-[#D98292] py-1.5 px-4 rounded-lg text-xs font-bold border border-[#F2E3DB]">
+                            {user.totalOrders} Orders Placed
+                         </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* PAGINATION */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t border-[#F2E3DB] border-dashed">
+              <button 
+                onClick={() => changePage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <span className="text-sm font-bold text-[#8D6E63]">
+                Page <span className="text-[#D98292] text-base">{currentPage}</span> of {totalPages}
+              </span>
+              <button 
+                onClick={() => changePage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-lg border border-[#F2E3DB] text-[#4E342E] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
+        </div>
       ) : (
-        // ... Orders View ...
+        // --- EXISTING ORDERS VIEW ---
         <div className="space-y-4">
            {activeTab === "HISTORY" && (
              <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm border border-[#F2E3DB]">
@@ -1152,8 +1447,8 @@ export default function AdminDashboard() {
            </p>
 
            {loading ? <p className="text-center text-[#8D6E63] animate-pulse">Loading orders...</p> : 
-           paginatedOrders.length === 0 ? <div className="text-center py-12 bg-white/50 rounded-2xl border border-[#F2E3DB] border-dashed"><p className="text-[#8D6E63]">No orders found.</p></div> : 
-           paginatedOrders.map((order) => (
+           paginatedData.length === 0 ? <div className="text-center py-12 bg-white/50 rounded-2xl border border-[#F2E3DB] border-dashed"><p className="text-[#8D6E63]">No orders found.</p></div> : 
+           (paginatedData as Order[]).map((order) => (
               <div key={order._id} className="bg-white p-5 rounded-2xl shadow-sm border border-[#F2E3DB] flex flex-col md:flex-row justify-between gap-6 relative overflow-hidden">
                 <div className="absolute top-0 right-0 bg-[#FFF8F3] px-4 py-2 rounded-bl-xl border-b border-l border-[#F2E3DB] text-xs">
                   <div className="flex flex-col items-end gap-1">
@@ -1176,7 +1471,6 @@ export default function AdminDashboard() {
                 <div className="flex-1 mt-14 md:mt-0">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-bold text-[#4E342E] text-lg">{order.customerName}</h3>
-                    {/* CHANGED: Replaced underscore with space */}
                     <span className={`px-3 py-1 text-xs font-bold rounded-full border ${statusColors[order.status] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
                       {order.status.replace(/_/g, " ")}
                     </span>
@@ -1185,8 +1479,8 @@ export default function AdminDashboard() {
                   {order.notes && (<div className="mt-2 flex items-start gap-2 bg-[#FFF8F3] p-2 rounded-lg border border-[#F2E3DB]/50 w-full md:max-w-[45%]"><Info size={16} className="mt-0.5 text-[#D98292] shrink-0" /><div className="min-w-0 flex-1"><span className="block text-xs font-bold text-[#4E342E] uppercase tracking-wider">Note from User:</span><span className="text-xs text-[#8D6E63] italic break-words whitespace-pre-wrap">{order.notes}</span></div></div>)}
                   {order.rejectionReason && (<div className="mt-2 flex items-start gap-2 bg-red-50 p-2 rounded-lg border border-red-100 w-full md:max-w-[45%]"><AlertTriangle size={16} className="mt-0.5 text-red-500 shrink-0" /><div className="min-w-0 flex-1"><span className="block text-xs font-bold text-red-700 uppercase tracking-wider">Rejection Reason:</span><span className="text-xs text-red-600 italic">{order.rejectionReason}</span></div></div>)}
                   </div>
-                  <div className="space-y-1 mb-4">{order.items.map((item, idx) => (<div key={idx} className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1"><span><span className="font-bold">{item.quantity} x</span> {item.name} {item.variant && <span className="text-[#8D6E63] text-xs"> ({item.variant})</span>}</span><span className="font-bold text-[#4E342E]">{item.price ? `₹${item.price * item.quantity}` : ''}</span></div>))}<div className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1"><span className="font-bold">Delivery Fee</span><span className="font-bold">₹{order.deliveryCharge || 0}</span></div></div>
-                  <div className="flex items-center gap-3"><p className="font-bold text-[#4E342E] text-lg">Bill: {editingPriceId === order._id ? (<span className="inline-flex items-center gap-1 ml-2"><input type="number" value={newPriceValue} onChange={(e) => setNewPriceValue(e.target.value)} className="w-24 p-1 text-sm border border-[#D98292] rounded focus:outline-none" autoFocus placeholder="Cake Price" /><button onClick={() => updatePrice(order._id)} className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200"><Check size={16} /></button><button onClick={() => setEditingPriceId(null)} className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200"><X size={16} /></button><span className="text-xs text-[#8D6E63] ml-1 whitespace-nowrap">(+ ₹{order.deliveryCharge || 0} delivery)</span></span>) : (<span> ₹{order.totalAmount}</span>)}</p>{activeTab !== "HISTORY" && editingPriceId !== order._id && (<button onClick={() => { setEditingPriceId(order._id); setNewPriceValue((order.totalAmount - (order.deliveryCharge || 0)).toString()); }} className="text-[#D98292] hover:text-[#b0606f] p-1 rounded-full hover:bg-[#FFF8F3]" title="Edit Cake Price"><Edit2 size={16} /></button>)}</div>
+                  <div className="space-y-1 mb-4">{order.items.map((item, idx) => (<div key={idx} className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1"><span><span className="font-bold">{item.quantity} x</span> {item.name} {item.variant && <span className="text-[#8D6E63] text-xs"> ({item.variant})</span>}</span><span className="font-bold text-[#4E342E]">{item.price ? `₹${formatPrice(item.price * item.quantity)}` : ''}</span></div>))}<div className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1"><span className="font-bold">Delivery Fee</span><span className="font-bold">₹{formatPrice(order.deliveryCharge || 0)}</span></div></div>
+                  <div className="flex items-center gap-3"><p className="font-bold text-[#4E342E] text-lg">Bill: {editingPriceId === order._id ? (<span className="inline-flex items-center gap-1 ml-2"><input type="number" value={newPriceValue} onChange={(e) => setNewPriceValue(e.target.value)} className="w-24 p-1 text-sm border border-[#D98292] rounded focus:outline-none" autoFocus placeholder="Cake Price" /><button onClick={() => updatePrice(order._id)} className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200"><Check size={16} /></button><button onClick={() => setEditingPriceId(null)} className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200"><X size={16} /></button><span className="text-xs text-[#8D6E63] ml-1 whitespace-nowrap">(+ ₹{formatPrice(order.deliveryCharge || 0)} delivery)</span></span>) : (<span> ₹{formatPrice(order.totalAmount)}</span>)}</p>{activeTab !== "HISTORY" && editingPriceId !== order._id && (<button onClick={() => { setEditingPriceId(order._id); setNewPriceValue((order.totalAmount - (order.deliveryCharge || 0)).toString()); }} className="text-[#D98292] hover:text-[#b0606f] p-1 rounded-full hover:bg-[#FFF8F3]" title="Edit Cake Price"><Edit2 size={16} /></button>)}</div>
                 </div>
                 <div className="flex flex-col gap-2 justify-center min-w-[180px] pt-4 md:pt-0 pb-8">{activeTab === "LEADS" && (<><button onClick={() => updateStatus(order._id, "CONFIRMED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Accept</button><button onClick={() => setRejectModal({ show: true, orderId: order._id })} className="w-full py-2 text-red-400 text-xs underline">Reject</button></>)}{activeTab === "PENDING" && (<><button onClick={() => updateStatus(order._id, "PREPARING")} className="w-full py-2 bg-orange-100 text-orange-700 rounded-lg font-bold text-sm flex justify-center gap-2"><ChefHat size={16}/> Bake</button><button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "ONGOING" && (<>{order.status === "PREPARING" && <button onClick={() => updateStatus(order._id, "READY")} className="w-full py-2 bg-yellow-100 text-yellow-700 rounded-lg font-bold text-sm">Mark Ready</button>}{order.status === "READY" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="w-full py-2 bg-blue-100 text-blue-700 rounded-lg font-bold text-sm">Dispatch</button>}{order.status === "OUT_FOR_DELIVERY" && <button onClick={() => updateStatus(order._id, "DELIVERED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Delivered</button>}<button onClick={() => {if(order.status === "PREPARING") updateStatus(order._id, "CONFIRMED");if(order.status === "READY") updateStatus(order._id, "PREPARING");if(order.status === "OUT_FOR_DELIVERY") updateStatus(order._id, "READY");}} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "HISTORY" && (<>{order.status === "DELIVERED" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="flex items-center justify-center gap-1 text-xs text-red-400 py-1"><RotateCcw size={12}/> Not Delivered</button>}{order.status === "CANCELLED" && <button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Re-open</button>}</>)}</div>
               </div>
