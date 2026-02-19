@@ -27,8 +27,8 @@
 //     <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#72514D] text-white shadow-md">
 //       <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
         
-//         {/* Logo */}
-//         <Link href="/" className="font-playfair text-3xl font-bold tracking-tight hover:text-[#F6E5D6] transition-colors" title="Home">
+//         {/* Logo - Updated Font */}
+//         <Link href="/" className="font-gistesy text-4xl tracking-wide hover:text-[#F6E5D6] transition-colors" title="Home">
 //           Ciste Blasta
 //         </Link>
 
@@ -52,11 +52,6 @@
 //               <LayoutDashboard className="h-5 w-5" />
 //             </Link>
 //           )}
-
-//           {/* Search Icon
-//           <button className="hidden md:block p-2 hover:bg-white/10 rounded-full transition-colors text-white" title="Search Products">
-//             <Search className="h-5 w-5" />
-//           </button> */}
 
 //           {/* NEW: Wishlist Icon */}
 //           <Link 
@@ -144,6 +139,17 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 "use client";
 
 import { useState } from "react";
@@ -184,6 +190,7 @@ export default function Navbar() {
           <Link href="/menu" className="hover:text-[#F6E5D6] transition-colors opacity-90 hover:opacity-100" title="View Full Menu">Menu</Link>
           <Link href="/custom-cake" className="hover:text-[#F6E5D6] transition-colors opacity-90 hover:opacity-100" title="Order Custom Cake">Custom Cakes</Link>
           <Link href="/about" className="hover:text-[#F6E5D6] transition-colors opacity-90 hover:opacity-100" title="Read Our Story">Our Story</Link>
+          <Link href="/contact" className="hover:text-[#F6E5D6] transition-colors opacity-90 hover:opacity-100" title="Contact Us">Contact Us</Link>
         </div>
 
         {/* Actions */}
@@ -254,6 +261,7 @@ export default function Navbar() {
               <Link href="/custom-cake" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-[#F6E5D6] transition-colors">Custom Cakes</Link>
               <Link href="/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-[#F6E5D6] transition-colors">My Wishlist</Link>
               <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-[#F6E5D6] transition-colors">Our Story</Link>
+              <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-[#F6E5D6] transition-colors">Contact Us</Link>
               
               {isAdmin && (
                 <Link 
