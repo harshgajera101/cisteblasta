@@ -389,7 +389,6 @@
 
 
 
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -419,8 +418,9 @@ export default function ProfilePage() {
   const { data: session, status, update } = useSession();
   const router = useRouter();
   
-  // Ref for scrolling
+  // Refs
   const ordersTopRef = useRef<HTMLHeadingElement>(null);
+  const hasFetchedData = useRef(false); // PERFORMANCE: Prevent infinite re-fetching
 
   // Data States
   const [orders, setOrders] = useState<any[]>([]);
@@ -441,59 +441,92 @@ export default function ProfilePage() {
   const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success"|"error" });
 
   useEffect(() => {
-    if (status === "unauthenticated") router.push("/login");
-    
-    if (session?.user) {
-      setEditForm({ 
-        name: session.user.name || "", 
-        phone: (session.user as any).phone || "",
-        address: "" 
-      });
+    if (status === "unauthenticated") {
+      router.push("/login");
+    } else if (status === "authenticated" && !hasFetchedData.current) {
+      // Initialize with session data before fetch completes
+      setEditForm(prev => ({ 
+        name: session.user?.name || prev.name, 
+        phone: (session.user as any)?.phone || prev.phone,
+        address: prev.address 
+      }));
+      
+      hasFetchedData.current = true;
       fetchProfile(); 
       fetchOrders();
     }
-  }, [session, status, router]);
+  }, [status, session, router]);
 
   const fetchProfile = async () => {
     try {
-      const res = await fetch("/api/user/profile");
+      // SECURITY & FIX: Force no-cache so we never load stale data after logging in
+      const res = await fetch("/api/user/profile", { 
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" }
+      });
       const data = await res.json();
+      
       if (data.success && data.user) {
-        setEditForm(prev => ({
-          ...prev,
-          name: data.user.name || prev.name,
-          phone: data.user.phone || prev.phone,
+        setEditForm({
+          name: data.user.name || "",
+          phone: data.user.phone || "",
           address: data.user.address || "" 
-        }));
+        });
       }
-    } catch (e) { console.error("Profile fetch error"); }
+    } catch (e) { 
+      console.error("Profile fetch error", e); 
+    }
   };
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch("/api/user/orders");
+      // FIX: Force no-cache for orders as well
+      const res = await fetch("/api/user/orders", { 
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" }
+      });
       const data = await res.json();
       if (data.success) setOrders(data.orders);
     } catch (error) {
-      console.error("Failed to load orders");
+      console.error("Failed to load orders", error);
     } finally {
       setLoadingOrders(false);
     }
   };
 
   const handleUpdateProfile = async () => {
+    // SECURITY & PERFORMANCE: Sanitize and validate before sending to server
+    const trimmedName = editForm.name.trim();
+    const trimmedPhone = editForm.phone.trim();
+    const trimmedAddress = editForm.address.trim();
+
+    if (!trimmedName || !trimmedPhone || !trimmedAddress) {
+      setToast({ show: true, message: "All fields are required.", type: "error" });
+      return;
+    }
+
+    if (trimmedPhone.length !== 10 || !/^\d+$/.test(trimmedPhone)) {
+      setToast({ show: true, message: "Enter a valid 10-digit phone number.", type: "error" });
+      return;
+    }
+
     setIsSaving(true);
     try {
       const res = await fetch("/api/user/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify({
+          name: trimmedName,
+          phone: trimmedPhone,
+          address: trimmedAddress
+        }),
       });
       
       if (res.ok) {
-        await update(); 
+        await update(); // Tell NextAuth to update session token
         setIsEditing(false);
         setToast({ show: true, message: "Profile updated successfully!", type: "success" });
+        fetchProfile(); // Re-fetch to guarantee sync with DB
       } else {
         setToast({ show: true, message: "Update failed", type: "error" });
       }
@@ -534,13 +567,13 @@ export default function ProfilePage() {
             <div className="flex gap-3">
               <button 
                 onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 py-3 border border-[#F2E3DB] text-[#8D6E63] font-bold rounded-xl hover:bg-[#FFF8F3]"
+                className="flex-1 py-3 border border-[#F2E3DB] text-[#8D6E63] font-bold rounded-xl hover:bg-[#FFF8F3] transition-colors"
               >
                 Cancel
               </button>
               <button 
                 onClick={() => signOut({ callbackUrl: "/login" })}
-                className="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-md"
+                className="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-md transition-colors"
               >
                 Yes, Log Out
               </button>
@@ -558,12 +591,12 @@ export default function ProfilePage() {
             
             <div className="relative flex flex-col items-center text-center mt-8">
               <div className="w-24 h-24 bg-[#72514D] rounded-full flex items-center justify-center text-white text-4xl font-playfair font-bold border-4 border-white shadow-md">
-                {session?.user?.name?.charAt(0).toUpperCase() || "U"}
+                {editForm.name?.charAt(0).toUpperCase() || "U"}
               </div>
               
               {!isEditing ? (
                 <>
-                  <h2 className="mt-4 text-2xl font-bold text-[#4E342E]">{editForm.name}</h2>
+                  <h2 className="mt-4 text-2xl font-bold text-[#4E342E]">{editForm.name || "Add Name"}</h2>
                   <p className="text-sm text-[#8D6E63] font-medium">{session?.user?.email}</p>
                   
                   <div className="mt-6 w-full space-y-3">
@@ -590,37 +623,38 @@ export default function ProfilePage() {
                 </>
               ) : (
                 <div className="w-full mt-4 space-y-4">
-                  <div>
+                  <div className="text-left">
                     <label className="text-xs font-bold text-[#8D6E63] ml-1 uppercase">Full Name</label>
                     <input 
                       type="text" 
                       value={editForm.name} 
                       onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                      className="w-full p-3 rounded-xl border border-[#D98292] text-sm text-[#4E342E] focus:outline-none bg-[#FFF8F3]"
+                      className="w-full p-3 rounded-xl border border-[#D98292] text-sm text-[#4E342E] focus:outline-none focus:ring-2 focus:ring-[#D98292]/50 bg-[#FFF8F3] transition-all"
                     />
                   </div>
-                  <div>
+                  <div className="text-left">
                     <label className="text-xs font-bold text-[#8D6E63] ml-1 uppercase">Phone Number</label>
                     <input 
                       type="tel" 
+                      maxLength={10}
                       value={editForm.phone} 
-                      onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
-                      className="w-full p-3 rounded-xl border border-[#D98292] text-sm text-[#4E342E] focus:outline-none bg-[#FFF8F3]"
+                      onChange={(e) => setEditForm({...editForm, phone: e.target.value.replace(/\D/g, '')})}
+                      className="w-full p-3 rounded-xl border border-[#D98292] text-sm text-[#4E342E] focus:outline-none focus:ring-2 focus:ring-[#D98292]/50 bg-[#FFF8F3] transition-all"
                     />
                   </div>
-                  <div>
+                  <div className="text-left">
                     <label className="text-xs font-bold text-[#8D6E63] ml-1 uppercase">Address</label>
                     <textarea 
                       rows={3}
                       value={editForm.address} 
                       onChange={(e) => setEditForm({...editForm, address: e.target.value})}
-                      className="w-full p-3 rounded-xl border border-[#D98292] text-sm text-[#4E342E] focus:outline-none bg-[#FFF8F3] resize-none"
+                      className="w-full p-3 rounded-xl border border-[#D98292] text-sm text-[#4E342E] focus:outline-none focus:ring-2 focus:ring-[#D98292]/50 bg-[#FFF8F3] resize-none transition-all"
                     ></textarea>
                   </div>
 
                   <div className="flex gap-2 pt-2">
-                    <button onClick={() => setIsEditing(false)} className="flex-1 py-3 border border-[#F2E3DB] text-[#8D6E63] rounded-xl font-bold hover:bg-gray-50">Cancel</button>
-                    <button onClick={handleUpdateProfile} disabled={isSaving} className="flex-1 py-3 bg-[#D98292] text-white rounded-xl font-bold hover:bg-[#c46b7d] disabled:opacity-50">
+                    <button onClick={() => setIsEditing(false)} className="flex-1 py-3 border border-[#F2E3DB] text-[#8D6E63] rounded-xl font-bold hover:bg-gray-50 transition-colors">Cancel</button>
+                    <button onClick={handleUpdateProfile} disabled={isSaving} className="flex-1 py-3 bg-[#D98292] text-white rounded-xl font-bold hover:bg-[#c46b7d] disabled:opacity-50 transition-colors">
                       {isSaving ? "Saving..." : "Save"}
                     </button>
                   </div>
@@ -648,7 +682,7 @@ export default function ProfilePage() {
 
           {loadingOrders ? (
             <div className="space-y-4">
-              {[1,2,3].map(i => <div key={i} className="h-32 bg-white/50 rounded-2xl animate-pulse"></div>)}
+              {[1,2,3].map(i => <div key={i} className="h-32 bg-white/50 rounded-2xl animate-pulse border border-[#F2E3DB]"></div>)}
             </div>
           ) : orders.length === 0 ? (
             <div className="bg-white p-10 rounded-3xl border border-[#F2E3DB] border-dashed text-center">
@@ -658,7 +692,7 @@ export default function ProfilePage() {
               <h3 className="font-bold text-[#4E342E] text-lg">No orders yet</h3>
               <p className="text-[#8D6E63] text-sm mb-6">Looks like you haven't indulged in any sweets yet!</p>
               <Link href="/menu">
-                <button className="px-8 py-3 bg-[#4E342E] text-white rounded-xl font-bold hover:bg-[#3d2924] shadow-lg">
+                <button className="px-8 py-3 bg-[#4E342E] text-white rounded-xl font-bold hover:bg-[#3d2924] shadow-lg transition-colors">
                   Browse Menu
                 </button>
               </Link>
@@ -673,7 +707,6 @@ export default function ProfilePage() {
                       <div>
                         <div className="flex items-center gap-3">
                           <span className="font-bold text-[#4E342E] text-lg">#{order._id.slice(-6).toUpperCase()}</span>
-                          {/* CHANGED: Removed underscores here */}
                           <span className={`px-3 py-1 text-[10px] font-bold rounded-full border ${statusColors[order.status] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
                             {order.status.replace(/_/g, " ")}
                           </span>

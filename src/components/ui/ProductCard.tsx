@@ -200,7 +200,6 @@
 
 
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -211,6 +210,7 @@ import { useCart } from "@/context/CartContext";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Toast } from "@/components/ui/Toast";
+import Image from "next/image"; // NEW: Import Next.js Image component
 
 interface Variant {
   name: string;
@@ -230,9 +230,10 @@ interface ProductCardProps {
   product: Product;
   className?: string;
   isWishlistedInitially?: boolean;
+  priority?: boolean; // NEW: Added priority prop for LCP optimization
 }
 
-export default function ProductCard({ product, className, isWishlistedInitially = false }: ProductCardProps) {
+export default function ProductCard({ product, className, isWishlistedInitially = false, priority = false }: ProductCardProps) {
   const { addToCart } = useCart(); 
   const { data: session } = useSession();
   const router = useRouter();
@@ -255,8 +256,8 @@ export default function ProductCard({ product, className, isWishlistedInitially 
   }, [isWishlistedInitially]);
 
   const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent Link Navigation
-    e.stopPropagation(); // Stop bubble up
+    e.preventDefault(); 
+    e.stopPropagation(); 
 
     addToCart(product, selectedVariantIdx);
     setIsAdded(true);
@@ -264,7 +265,7 @@ export default function ProductCard({ product, className, isWishlistedInitially 
   };
 
   const toggleWishlist = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent Link Navigation
+    e.preventDefault(); 
     e.stopPropagation();
 
     if (!session) {
@@ -308,13 +309,16 @@ export default function ProductCard({ product, className, isWishlistedInitially 
     
     <div className={cn("group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm border border-[#F2E3DB] transition-all duration-500 hover:shadow-xl hover:-translate-y-1 h-full", className)}>
       
-      {/* 1. Image Section */}
+      {/* 1. Image Section - OPTIMIZED */}
       <div className="relative aspect-square w-full overflow-hidden bg-[#FFF8F3]">
          {displayImage ? (
-           <img 
+           <Image 
              src={displayImage} 
-             alt={product.name} 
-             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+             alt={product.name}
+             fill
+             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+             priority={priority}
+             className="object-cover transition-transform duration-500 group-hover:scale-110"
            />
          ) : (
            <div className="absolute inset-0 flex items-center justify-center text-[#D98292]/30 font-playfair text-4xl font-bold opacity-20">
@@ -323,12 +327,12 @@ export default function ProductCard({ product, className, isWishlistedInitially 
          )}
          
          <div className="absolute top-3 left-3 flex gap-2">
-            <span className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#4E342E] shadow-sm backdrop-blur-sm">
+            <span className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#4E342E] shadow-sm backdrop-blur-sm z-20">
               {product.category === "GIFT_BOX" ? "Box" : product.category}
             </span>
          </div>
 
-         {/* Wishlist Button (Stop Propagation) */}
+         {/* Wishlist Button */}
          <button 
            onClick={toggleWishlist}
            className="absolute top-3 right-3 rounded-full bg-white/90 p-2 text-[#D98292] shadow-sm backdrop-blur-sm transition-all duration-300 hover:scale-110 active:scale-95 z-20"
@@ -357,8 +361,8 @@ export default function ProductCard({ product, className, isWishlistedInitially 
               <span className="text-xs text-[#8D6E63] font-medium mb-1">Size / Weight</span>
               <select 
                 value={selectedVariantIdx}
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} // Stop Prop on Click
-                onChange={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedVariantIdx(Number(e.target.value)); }} // Stop Prop on Change
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} 
+                onChange={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedVariantIdx(Number(e.target.value)); }} 
                 className="h-9 w-28 rounded-lg border border-[#F2E3DB] bg-[#FFF8F3] px-2 text-xs font-bold text-[#4E342E] focus:border-[#D98292] focus:outline-none cursor-pointer hover:border-[#D98292] transition-colors z-20 relative"
               >
                 {product.variants!.map((variant, idx) => (
@@ -378,7 +382,7 @@ export default function ProductCard({ product, className, isWishlistedInitially 
           )}
         </div>
 
-        {/* Add to Cart Button (Stop Propagation) */}
+        {/* Add to Cart Button */}
         <motion.button 
           whileTap={{ scale: 0.95 }}
           onClick={handleAddToCart}

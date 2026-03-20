@@ -15,16 +15,42 @@
 //       async authorize(credentials) {
 //         if (!credentials?.email || !credentials?.password) return null;
 
-//         // 1. Admin Check
+//         await connectDB();
+
+//         // 1. Admin Check & Sync to DB
 //         if (
 //           credentials.email === process.env.ADMIN_EMAIL &&
 //           credentials.password === process.env.ADMIN_PASSWORD
 //         ) {
-//           return { id: "admin", name: "Sister Admin", email: credentials.email, role: "admin" };
+//           // FIX: Ensure Admin exists in MongoDB so they have an ID and Wishlist
+//           // We use findOneAndUpdate with upsert: true
+//           const adminUser = await User.findOneAndUpdate(
+//             { email: credentials.email },
+//             {
+//               $set: {
+//                 name: "Sister Admin",
+//                 role: "admin",
+//                 phone: "0000000000", // Placeholder phone
+//               },
+//               $setOnInsert: {
+//                 // Dummy hash for DB validation (won't be used for login as we check env vars first)
+//                 password: await bcrypt.hash(credentials.password, 10),
+//                 wishlist: []
+//               }
+//             },
+//             { upsert: true, new: true, setDefaultsOnInsert: true }
+//           );
+
+//           return { 
+//             id: adminUser._id.toString(), // Use the REAL MongoDB ID
+//             name: adminUser.name, 
+//             email: adminUser.email, 
+//             role: "admin",
+//             phone: adminUser.phone 
+//           };
 //         }
 
 //         // 2. Customer Check
-//         await connectDB();
 //         const user = await User.findOne({ email: credentials.email });
         
 //         if (user) {
@@ -51,7 +77,7 @@
 //         token.phone = user.phone;
 //       }
 //       // Refresh data from DB on every request (Fixes Profile Sync)
-//       if (token.id && token.id !== "admin") {
+//       if (token.id) { // Removed '&& token.id !== "admin"' since admin is now in DB
 //         try {
 //           await connectDB();
 //           const dbUser = await User.findById(token.id);
@@ -113,18 +139,17 @@ export const authOptions: NextAuthOptions = {
           credentials.email === process.env.ADMIN_EMAIL &&
           credentials.password === process.env.ADMIN_PASSWORD
         ) {
-          // FIX: Ensure Admin exists in MongoDB so they have an ID and Wishlist
-          // We use findOneAndUpdate with upsert: true
+          // FIX: Moved name and phone to $setOnInsert so they are NOT overwritten on every login!
           const adminUser = await User.findOneAndUpdate(
             { email: credentials.email },
             {
               $set: {
-                name: "Sister Admin",
-                role: "admin",
-                phone: "0000000000", // Placeholder phone
+                role: "admin", // We always want to enforce that this email remains an admin
               },
               $setOnInsert: {
-                // Dummy hash for DB validation (won't be used for login as we check env vars first)
+                name: "Sister Admin", // Only applies if the admin account is being created for the first time
+                phone: "0000000000",  // Only applies if the admin account is being created for the first time
+                // Dummy hash for DB validation
                 password: await bcrypt.hash(credentials.password, 10),
                 wishlist: []
               }
@@ -133,7 +158,7 @@ export const authOptions: NextAuthOptions = {
           );
 
           return { 
-            id: adminUser._id.toString(), // Use the REAL MongoDB ID
+            id: adminUser._id.toString(), 
             name: adminUser.name, 
             email: adminUser.email, 
             role: "admin",
@@ -168,7 +193,7 @@ export const authOptions: NextAuthOptions = {
         token.phone = user.phone;
       }
       // Refresh data from DB on every request (Fixes Profile Sync)
-      if (token.id) { // Removed '&& token.id !== "admin"' since admin is now in DB
+      if (token.id) { 
         try {
           await connectDB();
           const dbUser = await User.findById(token.id);

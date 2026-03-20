@@ -473,7 +473,6 @@
 
 
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -483,8 +482,9 @@ import { useRouter } from "next/navigation";
 import { Upload, ArrowRight, Cake, CheckCircle, Smartphone, Calendar, User, Info, Mail, Loader2, Check, MapPin, Navigation, AlertTriangle, Edit2, Camera } from "lucide-react";
 import { Toast } from "@/components/ui/Toast";
 import { calculateDistance, KITCHEN_COORDS, DELIVERY_RATE_PER_KM, MIN_DELIVERY_CHARGE } from "@/lib/utils";
+import Image from "next/image"; // NEW: Import Next.js Image component
 
-const GALLERY_SIZE = 12; // Updated to 12
+const GALLERY_SIZE = 12;
 
 export default function CustomCakePage() {
   const { data: session } = useSession();
@@ -495,7 +495,6 @@ export default function CustomCakePage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageError, setImageError] = useState(""); 
   
-  // Gallery State (12 slots)
   const [galleryImages, setGalleryImages] = useState<(string | null)[]>(Array(GALLERY_SIZE).fill(null));
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
@@ -540,14 +539,13 @@ export default function CustomCakePage() {
   const fetchSavedAddress = async () => {
     try {
       const res = await fetch("/api/user/profile");
-      if (!res.ok) throw new Error("Failed to fetch profile"); // FIX: Check response status
+      if (!res.ok) throw new Error("Failed to fetch profile"); 
       const data = await res.json();
       if (data.success && data.user.address) {
         setForm(prev => ({ ...prev, address: data.user.address }));
       }
     } catch (e) { 
-      // Silently fail or log debug info, don't break the page
-      // console.debug("Address auto-fill skipped."); 
+      // Silently fail
     }
   };
 
@@ -899,7 +897,7 @@ export default function CustomCakePage() {
           </motion.div>
         </div>
 
-        {/* --- NEW GALLERY SECTION (12 Slots) --- */}
+        {/* --- OPTIMIZED GALLERY SECTION --- */}
         <div className="py-16 border-t border-[#F2E3DB] border-dashed">
           <div className="text-center mb-12">
             <span className="text-[#D98292] text-sm font-bold uppercase tracking-widest">Inspiration</span>
@@ -913,7 +911,7 @@ export default function CustomCakePage() {
                 
                 {/* Admin Edit Overlay */}
                 {isAdmin && (
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
                     <label className="cursor-pointer bg-white text-[#4E342E] px-4 py-2 rounded-full font-bold text-sm shadow-lg flex items-center gap-2 hover:bg-[#D98292] hover:text-white transition-colors">
                       {uploadingIndex === index ? <Loader2 className="animate-spin" size={16}/> : <Camera size={16} />}
                       {imgSrc ? "Change" : "Add"}
@@ -928,8 +926,15 @@ export default function CustomCakePage() {
                   </div>
                 )}
 
+                {/* OPTIMIZED IMAGE COMPONENT */}
                 {imgSrc ? (
-                  <img src={imgSrc} alt={`Gallery ${index}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                  <Image 
+                    src={imgSrc} 
+                    alt={`Gallery Image ${index + 1}`} 
+                    fill
+                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700" 
+                  />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center bg-[#FFF8F3]">
                     <Cake className="text-[#F2E3DB]" size={48} />
