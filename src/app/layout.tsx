@@ -69,21 +69,21 @@
 
 
 
-
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import localFont from "next/font/local"; // Import localFont
+import localFont from "next/font/local"; 
 import Navbar from "@/components/shared/Navbar";
 import Footer from "@/components/shared/Footer";
 import { CartProvider } from "@/context/CartContext"; 
 import AuthProvider from "@/components/providers/AuthProvider";
 import FloatingCartBtn from "@/components/ui/FloatingCartBtn"; 
 import ExitFeedbackPopup from "@/components/ui/ExitFeedbackPopup"; 
-import VirtualCardScanner from "@/components/ui/VirtualCardScanner"; // NEW IMPORT
+import VirtualCardScanner from "@/components/ui/VirtualCardScanner"; 
 import "./globals.css";
 
-import { Analytics } from "@vercel/analytics/next"
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { GoogleAnalytics } from '@next/third-parties/google'; // Added Google Analytics Import
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -97,7 +97,7 @@ const geistMono = Geist_Mono({
 
 // Configure Custom Font (Gistesy)
 const gistesy = localFont({
-  src: "../fonts/Gistesy.ttf", // Make sure this path is correct relative to src/app/layout.tsx
+  src: "../fonts/Gistesy.ttf", 
   variable: "--font-gistesy",
   display: "swap",
 });
@@ -114,8 +114,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      {/* Add the font variable to the body class */}
       <body className={`${geistSans.variable} ${geistMono.variable} ${gistesy.variable} antialiased bg-[#FFF8F3] text-[#4E342E]`}>
+      
+      {/* NEW: Google Analytics Component with your Measurement ID */}
+      <GoogleAnalytics gaId="G-MTSDW5NDQF" />
+
       <AuthProvider>
         <CartProvider>
           <Navbar />
@@ -125,7 +128,7 @@ export default function RootLayout({
             <SpeedInsights />
           </main>
           <FloatingCartBtn /> 
-          <VirtualCardScanner /> {/* NEW: Added the global scanner button */}
+          <VirtualCardScanner /> 
           <ExitFeedbackPopup /> 
           <Footer />
         </CartProvider>
