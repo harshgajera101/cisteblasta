@@ -105,6 +105,9 @@ const gistesy = localFont({
 export const metadata: Metadata = {
   title: "Ciste Blasta | Premium Homemade Cakes",
   description: "Homemade cakes and chocolates, baked with love.",
+  // icons: {
+  //   icon: "/favicon.png",
+  // },
 };
 
 export default function RootLayout({
