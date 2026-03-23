@@ -17,11 +17,15 @@
 //     const category = formData.get("category") as string;
 //     const description = formData.get("description") as string;
     
-//     // Parse variants (sent as stringified JSON from frontend)
+//     // Parse variants
 //     const variantsStr = formData.get("variants") as string;
 //     const variants = variantsStr ? JSON.parse(variantsStr) : [];
+
+//     // NEW: Parse Occasions
+//     const occasionsStr = formData.get("occasions") as string;
+//     const occasions = occasionsStr ? JSON.parse(occasionsStr) : [];
     
-//     // Base Price logic: use explicitly sent basePrice OR take the first variant's price
+//     // Base Price logic
 //     let basePrice = parseFloat(formData.get("price") as string);
 //     if ((!basePrice || isNaN(basePrice)) && variants.length > 0) {
 //       basePrice = variants[0].price;
@@ -50,7 +54,8 @@
 //       category,
 //       description,
 //       images: imageUrl ? [imageUrl] : [],
-//       variants: variants, // Save the array of {name, price}
+//       variants: variants,
+//       occasions: occasions, // Save occasions
 //     });
 
 //     return NextResponse.json({ success: true, product: newProduct });
@@ -69,6 +74,10 @@
     
 //     const variantsStr = formData.get("variants") as string;
 //     const variants = variantsStr ? JSON.parse(variantsStr) : [];
+
+//     // NEW: Parse Occasions for Update
+//     const occasionsStr = formData.get("occasions") as string;
+//     const occasions = occasionsStr ? JSON.parse(occasionsStr) : [];
     
 //     let basePrice = parseFloat(formData.get("price") as string);
 //     if ((!basePrice || isNaN(basePrice)) && variants.length > 0) {
@@ -81,6 +90,7 @@
 //       category: formData.get("category"),
 //       description: formData.get("description"),
 //       variants: variants,
+//       occasions: occasions, // Update occasions
 //     };
 
 //     if (file && file.size > 0) {
@@ -123,6 +133,13 @@
 
 
 
+
+
+
+
+
+
+
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import Product from "@/lib/models/Product";
@@ -146,7 +163,7 @@ export async function POST(request: Request) {
     const variantsStr = formData.get("variants") as string;
     const variants = variantsStr ? JSON.parse(variantsStr) : [];
 
-    // NEW: Parse Occasions
+    // Parse Occasions
     const occasionsStr = formData.get("occasions") as string;
     const occasions = occasionsStr ? JSON.parse(occasionsStr) : [];
     
@@ -180,7 +197,8 @@ export async function POST(request: Request) {
       description,
       images: imageUrl ? [imageUrl] : [],
       variants: variants,
-      occasions: occasions, // Save occasions
+      occasions: occasions,
+      isVisible: true, // NEW: Ensure it is visible by default when created
     });
 
     return NextResponse.json({ success: true, product: newProduct });
@@ -194,13 +212,26 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const formData = await request.formData();
+    
+    // --- NEW: Handle Visibility Toggle ---
+    const action = formData.get("action");
+    if (action === "toggle_visibility") {
+      const id = formData.get("id") as string;
+      const isVisible = formData.get("isVisible") === "true";
+      
+      await connectDB();
+      const updatedProduct = await Product.findByIdAndUpdate(id, { isVisible }, { new: true });
+      return NextResponse.json({ success: true, product: updatedProduct });
+    }
+    // -------------------------------------
+
     const id = formData.get("id") as string;
     const file = formData.get("image") as File;
     
     const variantsStr = formData.get("variants") as string;
     const variants = variantsStr ? JSON.parse(variantsStr) : [];
 
-    // NEW: Parse Occasions for Update
+    // Parse Occasions for Update
     const occasionsStr = formData.get("occasions") as string;
     const occasions = occasionsStr ? JSON.parse(occasionsStr) : [];
     
@@ -215,7 +246,7 @@ export async function PUT(request: Request) {
       category: formData.get("category"),
       description: formData.get("description"),
       variants: variants,
-      occasions: occasions, // Update occasions
+      occasions: occasions, 
     };
 
     if (file && file.size > 0) {

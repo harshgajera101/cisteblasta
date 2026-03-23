@@ -6,7 +6,6 @@
 //     basePrice: { type: Number, required: true },
 //     category: {
 //       type: String,
-//       // Added HAMPER to the list
 //       enum: ["CAKE", "CHOCOLATE", "JAR", "GIFT_BOX", "CUSTOM", "HAMPER"],
 //       default: "CAKE",
 //     },
@@ -22,6 +21,10 @@
 //     isBestSeller: { type: Boolean, default: false },
 //     averageRating: { type: Number, default: 0 },
 //     reviewsCount: { type: Number, default: 0 },
+    
+//     // NEW FIELD: Tracks total quantity sold for Analytics & Sorting
+//     soldCount: { type: Number, default: 0 },
+
 //     reviews: [
 //       {
 //         user: String,
@@ -47,11 +50,6 @@
 
 
 
-
-
-
-
-
 import mongoose, { Schema, model, models } from "mongoose";
 
 const ProductSchema = new Schema(
@@ -65,6 +63,10 @@ const ProductSchema = new Schema(
     },
     images: [{ type: String }],
     description: { type: String },
+    
+    // NEW: Visibility Toggle
+    isVisible: { type: Boolean, default: true },
+
     variants: [
       {
         name: { type: String, required: true },
@@ -76,7 +78,7 @@ const ProductSchema = new Schema(
     averageRating: { type: Number, default: 0 },
     reviewsCount: { type: Number, default: 0 },
     
-    // NEW FIELD: Tracks total quantity sold for Analytics & Sorting
+    // Tracks total quantity sold for Analytics & Sorting
     soldCount: { type: Number, default: 0 },
 
     reviews: [

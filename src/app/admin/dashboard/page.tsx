@@ -78,7 +78,7 @@
 //   // Data States
 //   const [orders, setOrders] = useState<Order[]>([]);
 //   const [products, setProducts] = useState<Product[]>([]);
-//   const [users, setUsers] = useState<UserType[]>([]); // NEW STATE FOR USERS
+//   const [users, setUsers] = useState<UserType[]>([]);
 
 //   const [loading, setLoading] = useState(false);
 //   const [menuFilter, setMenuFilter] = useState("ALL");
@@ -126,7 +126,6 @@
 //     } catch (error) { console.error(error); }
 //   };
 
-//   // NEW: Fetch Users Function
 //   const fetchUsers = async () => {
 //     setLoading(true);
 //     try {
@@ -136,7 +135,6 @@
 //     } catch (error) { console.error(error); } finally { setLoading(false); }
 //   };
 
-//   // Modified useEffect to fetch based on tab
 //   useEffect(() => { 
 //     if (activeTab === "USERS") {
 //       fetchUsers();
@@ -322,7 +320,6 @@
 //     return filtered;
 //   };
 
-//   // NEW: Filter Users
 //   const getFilteredUsers = () => {
 //     let filtered = [...users];
 //     if (searchQuery) {
@@ -336,15 +333,20 @@
 //     return filtered;
 //   };
 
+//   // FORMAT PRICE HELPER
+//   const formatPrice = (price: number) => {
+//     return price.toLocaleString('en-IN');
+//   };
+
 //   const getPriceDisplay = (p: Product) => {
 //     if (p.variants && p.variants.length > 0) {
 //       const prices = p.variants.map(v => v.price);
 //       const min = Math.min(...prices);
 //       const max = Math.max(...prices);
-//       if (min === max) return `₹${min}`;
-//       return `₹${min} - ₹${max}`;
+//       if (min === max) return `₹${formatPrice(min)}`;
+//       return `₹${formatPrice(min)} - ₹${formatPrice(max)}`;
 //     }
-//     return `₹${p.basePrice}`;
+//     return `₹${formatPrice(p.basePrice)}`;
 //   };
 
 //   // --- PAGINATION & HELPERS ---
@@ -421,7 +423,7 @@
 //         <button onClick={() => { activeTab==="USERS" ? fetchUsers() : (fetchOrders(), fetchProducts()); }} className="p-2 bg-white rounded-full shadow text-[#D98292] hover:rotate-180 transition duration-500"><RefreshCw size={20} /></button>
 //       </div>
 
-//       {/* TABS (Added USERS Tab) */}
+//       {/* TABS */}
 //       <div ref={dashboardTopRef} className="grid grid-cols-2 md:flex gap-3 mb-8 scroll-mt-24">
 //         {[
 //           { id: "LEADS", label: "Leads", icon: <Clock size={18} /> }, 
@@ -429,7 +431,7 @@
 //           { id: "ONGOING", label: "Ongoing", icon: <Truck size={18} /> }, 
 //           { id: "HISTORY", label: "History", icon: <Package size={18} /> }, 
 //           { id: "PRODUCTS", label: "Menu Editor", icon: <Plus size={18} /> },
-//           { id: "USERS", label: "Users", icon: <User size={18} /> } // NEW TAB
+//           { id: "USERS", label: "Users", icon: <User size={18} /> }
 //         ].map((tab) => (
 //           <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex flex-col md:flex-row items-center justify-center gap-2 p-3 md:px-5 rounded-xl font-bold transition-all text-sm ${tab.id === "PRODUCTS" ? "col-span-2 md:col-span-1" : ""} ${activeTab === tab.id ? "bg-[#D98292] text-white shadow-lg" : "bg-white text-[#8D6E63]"}`}>
 //             {tab.icon} <span>{tab.label}</span>
@@ -609,7 +611,7 @@
 //                       </span>
 //                     </div>
 //                     <div className="col-span-2 text-right font-bold text-[#4E342E] text-base">
-//                       ₹{user.totalSpent}
+//                       ₹{formatPrice(user.totalSpent)}
 //                     </div>
 //                   </div>
 
@@ -621,7 +623,7 @@
 //                         <p className="text-xs text-[#8D6E63] mt-1 flex items-center gap-1">Joined: {new Date(user.createdAt).toLocaleDateString()}</p>
 //                       </div>
 //                       <div className="text-right">
-//                         <div className="font-bold text-[#4E342E] text-lg">₹{user.totalSpent}</div>
+//                         <div className="font-bold text-[#4E342E] text-lg">₹{formatPrice(user.totalSpent)}</div>
 //                         <div className="text-[10px] text-[#8D6E63]">Lifetime Value</div>
 //                       </div>
 //                     </div>
@@ -724,8 +726,8 @@
 //                   {order.notes && (<div className="mt-2 flex items-start gap-2 bg-[#FFF8F3] p-2 rounded-lg border border-[#F2E3DB]/50 w-full md:max-w-[45%]"><Info size={16} className="mt-0.5 text-[#D98292] shrink-0" /><div className="min-w-0 flex-1"><span className="block text-xs font-bold text-[#4E342E] uppercase tracking-wider">Note from User:</span><span className="text-xs text-[#8D6E63] italic break-words whitespace-pre-wrap">{order.notes}</span></div></div>)}
 //                   {order.rejectionReason && (<div className="mt-2 flex items-start gap-2 bg-red-50 p-2 rounded-lg border border-red-100 w-full md:max-w-[45%]"><AlertTriangle size={16} className="mt-0.5 text-red-500 shrink-0" /><div className="min-w-0 flex-1"><span className="block text-xs font-bold text-red-700 uppercase tracking-wider">Rejection Reason:</span><span className="text-xs text-red-600 italic">{order.rejectionReason}</span></div></div>)}
 //                   </div>
-//                   <div className="space-y-1 mb-4">{order.items.map((item, idx) => (<div key={idx} className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1"><span><span className="font-bold">{item.quantity} x</span> {item.name} {item.variant && <span className="text-[#8D6E63] text-xs"> ({item.variant})</span>}</span><span className="font-bold text-[#4E342E]">{item.price ? `₹${item.price * item.quantity}` : ''}</span></div>))}<div className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1"><span className="font-bold">Delivery Fee</span><span className="font-bold">₹{order.deliveryCharge || 0}</span></div></div>
-//                   <div className="flex items-center gap-3"><p className="font-bold text-[#4E342E] text-lg">Bill: {editingPriceId === order._id ? (<span className="inline-flex items-center gap-1 ml-2"><input type="number" value={newPriceValue} onChange={(e) => setNewPriceValue(e.target.value)} className="w-24 p-1 text-sm border border-[#D98292] rounded focus:outline-none" autoFocus placeholder="Cake Price" /><button onClick={() => updatePrice(order._id)} className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200"><Check size={16} /></button><button onClick={() => setEditingPriceId(null)} className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200"><X size={16} /></button><span className="text-xs text-[#8D6E63] ml-1 whitespace-nowrap">(+ ₹{order.deliveryCharge || 0} delivery)</span></span>) : (<span> ₹{order.totalAmount}</span>)}</p>{activeTab !== "HISTORY" && editingPriceId !== order._id && (<button onClick={() => { setEditingPriceId(order._id); setNewPriceValue((order.totalAmount - (order.deliveryCharge || 0)).toString()); }} className="text-[#D98292] hover:text-[#b0606f] p-1 rounded-full hover:bg-[#FFF8F3]" title="Edit Cake Price"><Edit2 size={16} /></button>)}</div>
+//                   <div className="space-y-1 mb-4">{order.items.map((item, idx) => (<div key={idx} className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1"><span><span className="font-bold">{item.quantity} x</span> {item.name} {item.variant && <span className="text-[#8D6E63] text-xs"> ({item.variant})</span>}</span><span className="font-bold text-[#4E342E]">{item.price ? `₹${formatPrice(item.price * item.quantity)}` : ''}</span></div>))}<div className="flex justify-between text-sm text-[#4E342E] max-w-md border-b border-dashed border-[#F2E3DB] pb-1 mb-1"><span className="font-bold">Delivery Fee</span><span className="font-bold">₹{formatPrice(order.deliveryCharge || 0)}</span></div></div>
+//                   <div className="flex items-center gap-3"><p className="font-bold text-[#4E342E] text-lg">Bill: {editingPriceId === order._id ? (<span className="inline-flex items-center gap-1 ml-2"><input type="number" value={newPriceValue} onChange={(e) => setNewPriceValue(e.target.value)} className="w-24 p-1 text-sm border border-[#D98292] rounded focus:outline-none" autoFocus placeholder="Cake Price" /><button onClick={() => updatePrice(order._id)} className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200"><Check size={16} /></button><button onClick={() => setEditingPriceId(null)} className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200"><X size={16} /></button><span className="text-xs text-[#8D6E63] ml-1 whitespace-nowrap">(+ ₹{formatPrice(order.deliveryCharge || 0)} delivery)</span></span>) : (<span> ₹{formatPrice(order.totalAmount)}</span>)}</p>{activeTab !== "HISTORY" && editingPriceId !== order._id && (<button onClick={() => { setEditingPriceId(order._id); setNewPriceValue((order.totalAmount - (order.deliveryCharge || 0)).toString()); }} className="text-[#D98292] hover:text-[#b0606f] p-1 rounded-full hover:bg-[#FFF8F3]" title="Edit Cake Price"><Edit2 size={16} /></button>)}</div>
 //                 </div>
 //                 <div className="flex flex-col gap-2 justify-center min-w-[180px] pt-4 md:pt-0 pb-8">{activeTab === "LEADS" && (<><button onClick={() => updateStatus(order._id, "CONFIRMED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Accept</button><button onClick={() => setRejectModal({ show: true, orderId: order._id })} className="w-full py-2 text-red-400 text-xs underline">Reject</button></>)}{activeTab === "PENDING" && (<><button onClick={() => updateStatus(order._id, "PREPARING")} className="w-full py-2 bg-orange-100 text-orange-700 rounded-lg font-bold text-sm flex justify-center gap-2"><ChefHat size={16}/> Bake</button><button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "ONGOING" && (<>{order.status === "PREPARING" && <button onClick={() => updateStatus(order._id, "READY")} className="w-full py-2 bg-yellow-100 text-yellow-700 rounded-lg font-bold text-sm">Mark Ready</button>}{order.status === "READY" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="w-full py-2 bg-blue-100 text-blue-700 rounded-lg font-bold text-sm">Dispatch</button>}{order.status === "OUT_FOR_DELIVERY" && <button onClick={() => updateStatus(order._id, "DELIVERED")} className="w-full py-2 bg-green-100 text-green-700 rounded-lg font-bold text-sm">Delivered</button>}<button onClick={() => {if(order.status === "PREPARING") updateStatus(order._id, "CONFIRMED");if(order.status === "READY") updateStatus(order._id, "PREPARING");if(order.status === "OUT_FOR_DELIVERY") updateStatus(order._id, "READY");}} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Undo</button></>)}{activeTab === "HISTORY" && (<>{order.status === "DELIVERED" && <button onClick={() => updateStatus(order._id, "OUT_FOR_DELIVERY")} className="flex items-center justify-center gap-1 text-xs text-red-400 py-1"><RotateCcw size={12}/> Not Delivered</button>}{order.status === "CANCELLED" && <button onClick={() => updateStatus(order._id, "PENDING")} className="flex items-center justify-center gap-1 text-xs text-[#8D6E63] py-1"><RotateCcw size={12}/> Re-open</button>}</>)}</div>
 //               </div>
@@ -751,6 +753,8 @@
 
 
 
+
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -758,7 +762,7 @@ import {
   RefreshCw, ChefHat, Truck, Package, Clock, Plus, Trash2, Edit2, 
   Image as ImageIcon, RotateCcw, X, AlertTriangle, MapPin, Phone, Mail,
   ChevronLeft, ChevronRight, Filter, Calendar, Info, Check, ArrowDownUp,
-  XCircle, History, Gift, Search, XOctagon, User
+  XCircle, History, Gift, Search, XOctagon, User, Eye, EyeOff // NEW IMPORTS
 } from "lucide-react";
 import { Toast } from "@/components/ui/Toast";
 
@@ -786,7 +790,6 @@ type Order = {
   rejectionReason?: string; 
 };
 
-// NEW: User Type
 type UserType = {
   _id: string;
   name: string;
@@ -808,6 +811,7 @@ type Product = {
   description?: string;
   variants?: Variant[];
   occasions?: string[]; 
+  isVisible?: boolean; // NEW: Added to type
 };
 
 const ITEMS_PER_PAGE = 7;
@@ -938,6 +942,33 @@ export default function AdminDashboard() {
         showToast("Failed to update price", "error");
       }
     } catch (error) { showToast("Server error", "error"); }
+  };
+
+  // NEW: Toggle Product Visibility
+  const toggleVisibility = async (product: Product) => {
+    try {
+      const currentStatus = product.isVisible === undefined ? true : product.isVisible;
+      const newStatus = !currentStatus;
+      
+      const formData = new FormData();
+      formData.append("action", "toggle_visibility");
+      formData.append("id", product._id);
+      formData.append("isVisible", String(newStatus));
+
+      const res = await fetch("/api/admin/products", {
+        method: "PUT",
+        body: formData,
+      });
+
+      if (res.ok) {
+        showToast(`Product ${newStatus ? 'Visible' : 'Hidden'}`, "success");
+        fetchProducts(); // Refresh list
+      } else {
+        showToast("Failed to update visibility", "error");
+      }
+    } catch (error) {
+      showToast("Server error", "error");
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -1290,18 +1321,34 @@ export default function AdminDashboard() {
                </div>
              </div>
              {getFilteredProducts().map(p=>(
-               <div key={p._id} className="bg-white p-4 rounded-xl border border-[#F2E3DB] flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+               <div key={p._id} className={`bg-white p-4 rounded-xl border flex items-center justify-between shadow-sm hover:shadow-md transition-all ${p.isVisible === false ? 'border-gray-300 opacity-60' : 'border-[#F2E3DB]'}`}>
                  <div className="flex items-center gap-4">
-                   <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden border border-[#F2E3DB] shrink-0">
+                   <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden border border-[#F2E3DB] shrink-0 relative">
+                     {p.isVisible === false && (
+                       <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10">
+                         <EyeOff size={20} className="text-gray-500" />
+                       </div>
+                     )}
                      {p.images[0] ? <img src={p.images[0]} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-[#D98292]/30 font-bold">{p.name[0]}</div>}
                    </div>
                    <div>
-                     <h4 className="font-bold text-[#4E342E]">{p.name}</h4>
+                     <h4 className="font-bold text-[#4E342E] flex items-center gap-2">
+                       {p.name} 
+                       {p.isVisible === false && <span className="text-[10px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-bold">HIDDEN</span>}
+                     </h4>
                      <p className="text-xs text-[#8D6E63]">{p.category} • {p.variants?.length ? `${p.variants.length} Sizes` : "Standard"} • <span className="font-bold text-[#D98292]">{getPriceDisplay(p)}</span></p>
                      {p.occasions && p.occasions.length > 0 && (<div className="flex flex-wrap gap-1 mt-1.5">{p.occasions.map(occ => (<span key={occ} className="text-[10px] bg-[#FFF8F3] text-[#8D6E63] px-2 py-0.5 rounded border border-[#F2E3DB]">{occ}</span>))}</div>)}
                    </div>
                  </div>
-                 <div className="flex gap-2">
+                 <div className="flex gap-1 md:gap-2">
+                   {/* NEW: Toggle Visibility Button */}
+                   <button 
+                     onClick={() => toggleVisibility(p)} 
+                     title={p.isVisible === false ? "Show on Menu" : "Hide from Menu"}
+                     className={`p-2 rounded-lg transition-colors ${p.isVisible === false ? 'text-gray-500 hover:bg-gray-100' : 'text-green-500 hover:bg-green-50'}`}
+                   >
+                     {p.isVisible === false ? <EyeOff size={18}/> : <Eye size={18}/>}
+                   </button>
                    <button onClick={()=>handleEditClick(p)} className="p-2 text-blue-400 hover:bg-blue-50 rounded-lg transition-colors"><Edit2 size={18}/></button>
                    <button onClick={()=>setDeleteConfirm({show:true,id:p._id})} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={18}/></button>
                  </div>
