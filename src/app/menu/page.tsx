@@ -605,7 +605,7 @@ function MenuContent() {
                 : "bg-white text-[#4E342E] border-[#F2E3DB] hover:border-[#D98292] hover:text-[#D98292]"
             }`}
           >
-            {cat === "GIFT_BOX" ? "Dessert Box" : cat === "HAMPER" ? "Hamper" : cat}
+            {cat === "GIFT_BOX" ? "Gift Box" : cat === "HAMPER" ? "Hamper" : cat}
           </button>
         ))}
       </div>
